@@ -43,11 +43,10 @@ public class AStarPathfinder extends AbstractPathfinder {
       Node currentNode,
       Depth depth,
       FibonacciHeap<Double, Node> nodeQueue,
-      Set<PathPosition> examinedPositions,
       List<PathFilter> filters,
       List<PathFilterStage> filterStages) {
 
-    evaluateNewNodes(nodeQueue, examinedPositions, currentNode, filters, filterStages);
+    evaluateNewNodes(nodeQueue, currentNode, filters, filterStages);
     depth.increment();
   }
 
@@ -58,13 +57,11 @@ public class AStarPathfinder extends AbstractPathfinder {
 
   private void evaluateNewNodes(
       FibonacciHeap<Double, Node> nodeQueue,
-      Set<PathPosition> examinedPositions,
       Node currentNode,
       List<PathFilter> filters,
       List<PathFilterStage> filterStages) {
 
-    Collection<Node> newNodes =
-        fetchValidNeighbours(examinedPositions, currentNode, filters, filterStages);
+    Collection<Node> newNodes = fetchValidNeighbours(currentNode, filters, filterStages);
 
     for (Node newNode : newNodes) {
       double nodeCost = newNode.getHeuristic().get();
@@ -75,16 +72,18 @@ public class AStarPathfinder extends AbstractPathfinder {
   private boolean isNodeValid(
       Node currentNode,
       Node newNode,
-      Set<PathPosition> examinedPositions,
       List<PathFilter> filters,
       List<PathFilterStage> filterStages) {
 
     if (isNodeInvalid(newNode, filters, filterStages)) return false;
 
-    if (!isDiagonalMove(currentNode, newNode)) return examinedPositions.add(newNode.getPosition());
+    /*
+     * If it is not a diagonal move and survived #isNodeInvalid,
+     * then it's definitely valid to this point.
+     */
+    if (!isDiagonalMove(currentNode, newNode)) return true;
 
-    return isReachable(currentNode, newNode, filters, filterStages)
-        && examinedPositions.add(newNode.getPosition());
+    return isReachable(currentNode, newNode, filters, filterStages);
   }
 
   private boolean isDiagonalMove(Node from, Node to) {
@@ -146,16 +145,13 @@ public class AStarPathfinder extends AbstractPathfinder {
   }
 
   private Collection<Node> fetchValidNeighbours(
-      Set<PathPosition> examinedPositions,
-      Node currentNode,
-      List<PathFilter> filters,
-      List<PathFilterStage> filterStages) {
+      Node currentNode, List<PathFilter> filters, List<PathFilterStage> filterStages) {
     Set<Node> newNodes = new HashSet<>(Offset.MERGED.getVectors().length);
 
     for (PathVector vector : Offset.MERGED.getVectors()) {
       Node newNode = createNeighbourNode(currentNode, vector);
 
-      if (isNodeValid(currentNode, newNode, examinedPositions, filters, filterStages)) {
+      if (isNodeValid(currentNode, newNode, filters, filterStages)) {
         newNodes.add(newNode);
       }
     }
