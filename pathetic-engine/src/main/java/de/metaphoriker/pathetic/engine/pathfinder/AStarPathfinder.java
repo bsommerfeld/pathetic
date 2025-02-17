@@ -29,7 +29,9 @@ public class AStarPathfinder extends AbstractPathfinder {
 
   private final NavigationPointProvider navigationPointProvider;
 
-  public AStarPathfinder(NavigationPointProvider navigationPointProvider, PathfinderConfiguration pathfinderConfiguration) {
+  public AStarPathfinder(
+      NavigationPointProvider navigationPointProvider,
+      PathfinderConfiguration pathfinderConfiguration) {
     super(pathfinderConfiguration);
     this.navigationPointProvider = navigationPointProvider;
   }
@@ -111,12 +113,16 @@ public class AStarPathfinder extends AbstractPathfinder {
         Node neighbour2 = createNeighbourNode(to, vector2);
         if (neighbour1.getPosition().equals(neighbour2.getPosition())) {
 
+          boolean heightDifferencePassable = true;
+
           /*
            * if it has a Y difference, we also need to check the nodes above or below,
            *  depending on the Y difference
            */
-          boolean heightDifferencePassable =
-              isHeightDifferencePassable(from, to, vector1, hasYDifference);
+          if (hasYDifference) {
+            heightDifferencePassable =
+                isHeightDifferencePassable(from, to, vector1, filters, filterStages);
+          }
 
           if (doAllFiltersPass(filters, neighbour1)
               && doAnyFilterStagePass(filterStages, neighbour1)
@@ -129,14 +135,14 @@ public class AStarPathfinder extends AbstractPathfinder {
   }
 
   private boolean isHeightDifferencePassable(
-      Node from, Node to, PathVector vector1, boolean hasHeightDifference) {
-    if (!hasHeightDifference) return true;
-
+      Node from,
+      Node to,
+      PathVector vector1,
+      List<PathFilter> filters,
+      List<PathFilterStage> filterStages) {
     int yDifference = from.getPosition().getFlooredY() - to.getPosition().getFlooredY();
     Node neighbour3 = createNeighbourNode(from, vector1.add(new PathVector(0, yDifference, 0)));
-
-    // TODO: 15.12.2024: do we really need to check if the block is passable, or can we use the filters?
-    return navigationPointProvider.getNavigationPoint(neighbour3.getPosition()).isTraversable();
+    return doAllFiltersPass(filters, neighbour3) && doAnyFilterStagePass(filterStages, neighbour3);
   }
 
   private Collection<Node> fetchValidNeighbours(
@@ -220,7 +226,7 @@ public class AStarPathfinder extends AbstractPathfinder {
               node.getParent() != null ? node.getParent().getPosition() : null,
               node.getStart(),
               node.getTarget(),
-            navigationPointProvider);
+              navigationPointProvider);
 
       if (!filter.filter(context)) {
         return false;
@@ -239,7 +245,7 @@ public class AStarPathfinder extends AbstractPathfinder {
               node.getParent() != null ? node.getParent().getPosition() : null,
               node.getStart(),
               node.getTarget(),
-            navigationPointProvider))) {
+              navigationPointProvider))) {
         return true;
       }
     }
