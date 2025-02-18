@@ -130,7 +130,6 @@ abstract class AbstractPathfinder implements Pathfinder {
       FibonacciHeap<Double, Node> nodeQueue = new FibonacciHeap<>();
       nodeQueue.insert(startNode.getFCost(), startNode);
 
-      Set<PathPosition> examinedPositions = new HashSet<>();
       Depth depth = Depth.of(1);
       Node fallbackNode = startNode;
 
@@ -153,7 +152,7 @@ abstract class AbstractPathfinder implements Pathfinder {
         }
 
         tick(
-            start, target, currentNode, depth, nodeQueue, examinedPositions, filters, filterStages);
+            start, target, currentNode, depth, nodeQueue, filters, filterStages);
       }
 
       aborted = false; // just in case
@@ -285,7 +284,6 @@ abstract class AbstractPathfinder implements Pathfinder {
       Node currentNode,
       Depth depth,
       FibonacciHeap<Double, Node> nodeQueue,
-      Set<PathPosition> examinedPositions,
       List<PathFilter> filters,
       List<PathFilterStage> filterStages);
 }

@@ -6,11 +6,11 @@
     <parent>
         <artifactId>pathetic-main</artifactId>
         <groupId>de.metaphoriker</groupId>
-        <version>4.0.1</version>
+        <version>4.0.2</version>
     </parent>
 
     <artifactId>pathetic-engine</artifactId>
-    <version>4.0.1</version>
+    <version>4.0.2</version>
 
     <build>
         <plugins>
@@ -144,7 +144,7 @@
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>pathetic-api</artifactId>
-            <version>4.0.1</version>
+            <version>4.0.2</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

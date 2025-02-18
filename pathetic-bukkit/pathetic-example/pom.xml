@@ -7,12 +7,12 @@
     <parent>
         <artifactId>pathetic-main</artifactId>
         <groupId>de.metaphoriker</groupId>
-        <version>4.0.1</version>
+        <version>4.0.2</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
 
     <artifactId>pathetic-example</artifactId>
-    <version>4.0.1</version>
+    <version>4.0.2</version>
     <packaging>jar</packaging>
 
     <name>pathetic-example</name>
@@ -76,7 +76,7 @@
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>pathetic-bukkit</artifactId>
-            <version>4.0.1</version>
+            <version>4.0.2</version>
         </dependency>
     </dependencies>
 </project>
