@@ -47,6 +47,7 @@ public class AStarPathfinder extends AbstractPathfinder {
       List<PathFilterStage> filterStages) {
 
     evaluateNewNodes(nodeQueue, currentNode, filters, filterStages);
+    depth.increment();
   }
 
   @Override
@@ -63,6 +64,7 @@ public class AStarPathfinder extends AbstractPathfinder {
     Collection<Node> newNodes = fetchValidNeighbours(currentNode, filters, filterStages);
 
     for (Node newNode : newNodes) {
+      // TODO 05.03.2025 b.sommerfeld: why not fCost?
       double nodeCost = newNode.getHeuristic().get();
       nodeQueue.insert(nodeCost, newNode);
     }
@@ -93,8 +95,10 @@ public class AStarPathfinder extends AbstractPathfinder {
    * Returns whether the diagonal jump is possible by checking if the adjacent nodes are passable or
    * not. With adjacent nodes are the shared overlapping neighbours meant.
    */
+  // TODO 05.03.2025 b.sommerfeld: has some validation problems and is a bit too complex with a
+  //  double loop. can be simplified
   private boolean isReachable(
-    Node from, Node to, List<PathFilter> filters, List<PathFilterStage> filterStages) {
+      Node from, Node to, List<PathFilter> filters, List<PathFilterStage> filterStages) {
     boolean hasYDifference = to.getPosition().getFlooredY() != from.getPosition().getFlooredY();
     PathVector[] offsets = Offset.VERTICAL_AND_HORIZONTAL.getVectors();
 
@@ -112,12 +116,12 @@ public class AStarPathfinder extends AbstractPathfinder {
            */
           if (hasYDifference) {
             heightDifferencePassable =
-              isHeightDifferencePassable(from, to, vector1, filters, filterStages);
+                isHeightDifferencePassable(from, to, vector1, filters, filterStages);
           }
 
           if (doAllFiltersPass(filters, neighbour1)
-            && doAnyFilterStagePass(filterStages, neighbour1)
-            && heightDifferencePassable) return true;
+              && doAnyFilterStagePass(filterStages, neighbour1)
+              && heightDifferencePassable) return true;
         }
       }
     }
@@ -126,11 +130,11 @@ public class AStarPathfinder extends AbstractPathfinder {
   }
 
   private boolean isHeightDifferencePassable(
-    Node from,
-    Node to,
-    PathVector vector1,
-    List<PathFilter> filters,
-    List<PathFilterStage> filterStages) {
+      Node from,
+      Node to,
+      PathVector vector1,
+      List<PathFilter> filters,
+      List<PathFilterStage> filterStages) {
     int yDifference = to.getPosition().getFlooredY() - from.getPosition().getFlooredY();
     Node neighbour3 = createNeighbourNode(from, vector1.add(new PathVector(0, yDifference, 0)));
     return doAllFiltersPass(filters, neighbour3) && doAnyFilterStagePass(filterStages, neighbour3);
