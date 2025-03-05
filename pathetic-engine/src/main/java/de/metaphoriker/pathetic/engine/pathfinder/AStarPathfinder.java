@@ -64,6 +64,7 @@ public class AStarPathfinder extends AbstractPathfinder {
     Collection<Node> newNodes = fetchValidNeighbours(currentNode, filters, filterStages);
 
     for (Node newNode : newNodes) {
+      // TODO 05.03.2025 b.sommerfeld: why not fCost?
       double nodeCost = newNode.getHeuristic().get();
       nodeQueue.insert(nodeCost, newNode);
     }
@@ -74,15 +75,12 @@ public class AStarPathfinder extends AbstractPathfinder {
       Node newNode,
       List<PathFilter> filters,
       List<PathFilterStage> filterStages) {
-
     if (isNodeInvalid(newNode, filters, filterStages)) return false;
-
     /*
      * If it is not a diagonal move and survived #isNodeInvalid,
      * then it's definitely valid to this point.
      */
     if (!isDiagonalMove(currentNode, newNode)) return true;
-
     return isReachable(currentNode, newNode, filters, filterStages);
   }
 
@@ -97,18 +95,16 @@ public class AStarPathfinder extends AbstractPathfinder {
    * Returns whether the diagonal jump is possible by checking if the adjacent nodes are passable or
    * not. With adjacent nodes are the shared overlapping neighbours meant.
    */
+  // TODO 05.03.2025 b.sommerfeld: has some validation problems and is a bit too complex with a
+  //  double loop. can be simplified
   private boolean isReachable(
       Node from, Node to, List<PathFilter> filters, List<PathFilterStage> filterStages) {
-    boolean hasYDifference = from.getPosition().getFlooredY() != to.getPosition().getFlooredY();
+    boolean hasYDifference = to.getPosition().getFlooredY() != from.getPosition().getFlooredY();
     PathVector[] offsets = Offset.VERTICAL_AND_HORIZONTAL.getVectors();
 
     for (PathVector vector1 : offsets) {
-      if (vector1.getY() != 0) continue;
-
       Node neighbour1 = createNeighbourNode(from, vector1);
       for (PathVector vector2 : offsets) {
-        if (vector2.getY() != 0) continue;
-
         Node neighbour2 = createNeighbourNode(to, vector2);
         if (neighbour1.getPosition().equals(neighbour2.getPosition())) {
 
@@ -139,7 +135,7 @@ public class AStarPathfinder extends AbstractPathfinder {
       PathVector vector1,
       List<PathFilter> filters,
       List<PathFilterStage> filterStages) {
-    int yDifference = from.getPosition().getFlooredY() - to.getPosition().getFlooredY();
+    int yDifference = to.getPosition().getFlooredY() - from.getPosition().getFlooredY();
     Node neighbour3 = createNeighbourNode(from, vector1.add(new PathVector(0, yDifference, 0)));
     return doAllFiltersPass(filters, neighbour3) && doAnyFilterStagePass(filterStages, neighbour3);
   }

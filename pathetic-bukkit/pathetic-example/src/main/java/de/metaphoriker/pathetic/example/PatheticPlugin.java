@@ -3,6 +3,7 @@ package de.metaphoriker.pathetic.example;
 import de.metaphoriker.pathetic.api.factory.PathfinderFactory;
 import de.metaphoriker.pathetic.api.factory.PathfinderInitializer;
 import de.metaphoriker.pathetic.api.pathing.Pathfinder;
+import de.metaphoriker.pathetic.api.pathing.configuration.HeuristicWeights;
 import de.metaphoriker.pathetic.api.pathing.configuration.PathfinderConfiguration;
 import de.metaphoriker.pathetic.bukkit.PatheticBukkit;
 import de.metaphoriker.pathetic.bukkit.initializer.BukkitPathfinderInitializer;
@@ -33,6 +34,8 @@ public final class PatheticPlugin extends JavaPlugin {
         PathfinderConfiguration.builder()
             .provider(new LoadingNavigationPointProvider()) // For loading chunks
             .fallback(true) // Allow fallback strategies if the primary fails
+            .heuristicWeights(
+                HeuristicWeights.create(1.0, 1.0, 1.0, 1.0, 0.0)) // custom weights for default paths
             .build();
 
     Pathfinder reusablePathfinder = factory.createPathfinder(configuration, initializer);

@@ -4,7 +4,6 @@ import de.metaphoriker.pathetic.api.pathing.configuration.HeuristicWeights;
 import de.metaphoriker.pathetic.api.wrapper.PathPosition;
 import de.metaphoriker.pathetic.api.wrapper.PathVector;
 import de.metaphoriker.pathetic.engine.util.ComputingCache;
-
 import java.util.Objects;
 
 public class Node implements Comparable<Node> {
@@ -15,8 +14,6 @@ public class Node implements Comparable<Node> {
   private final HeuristicWeights heuristicWeights;
   private final int depth;
 
-  private final ComputingCache<Double> fCostCache = new ComputingCache<>(this::calculateFCost);
-  private final ComputingCache<Double> gCostCache = new ComputingCache<>(this::calculateGCost);
   private final ComputingCache<Double> heuristic = new ComputingCache<>(this::heuristic);
 
   private Node parent;
@@ -75,7 +72,7 @@ public class Node implements Comparable<Node> {
    * @return the estimated total cost (represented by the F-Score)
    */
   public double getFCost() {
-    return fCostCache.get();
+    return calculateFCost();
   }
 
   /**
@@ -84,7 +81,7 @@ public class Node implements Comparable<Node> {
    * typically calculated by summing the movement costs from the start node to the current node.
    */
   private double getGCost() {
-    return gCostCache.get();
+    return calculateGCost();
   }
 
   private double calculateFCost() {
@@ -95,7 +92,15 @@ public class Node implements Comparable<Node> {
     if (parent == null) {
       return 0;
     }
-    return parent.getGCost() + position.distance(parent.position);
+    return parent.getGCost() + calculateMovementCost(parent.position, position);
+  }
+
+  private double calculateMovementCost(PathPosition from, PathPosition to) {
+    if (from.getFlooredX() != to.getFlooredX() && from.getFlooredZ() != to.getFlooredZ()) {
+      return Math.sqrt(2); // Diagonal
+    } else {
+      return 1.0; // Horizontal/Vertical
+    }
   }
 
   private double heuristic() {
@@ -108,6 +113,7 @@ public class Node implements Comparable<Node> {
     double octileWeight = heuristicWeights.getOctileWeight();
     double perpendicularWeight = heuristicWeights.getPerpendicularWeight();
     double heightWeight = heuristicWeights.getHeightWeight();
+    double directionalPenaltyWeight = heuristicWeights.getDirectionalPenaltyWeight();
 
     double directionalPenalty = Math.abs(this.position.getFlooredY() - start.getFlooredY());
 
@@ -115,7 +121,7 @@ public class Node implements Comparable<Node> {
         + (octileDistance * octileWeight)
         + (perpendicularDistance * perpendicularWeight)
         + (heightDifference * heightWeight)
-        + (directionalPenalty * 0.5);
+        + (directionalPenalty * directionalPenaltyWeight);
   }
 
   private double calculatePerpendicularDistance() {
