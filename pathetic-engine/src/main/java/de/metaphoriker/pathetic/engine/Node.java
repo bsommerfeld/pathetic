@@ -15,8 +15,6 @@ public class Node implements Comparable<Node> {
   private final HeuristicWeights heuristicWeights;
   private final int depth;
 
-  private final ComputingCache<Double> fCostCache = new ComputingCache<>(this::calculateFCost);
-  private final ComputingCache<Double> gCostCache = new ComputingCache<>(this::calculateGCost);
   private final ComputingCache<Double> heuristic = new ComputingCache<>(this::heuristic);
 
   private Node parent;
@@ -75,7 +73,7 @@ public class Node implements Comparable<Node> {
    * @return the estimated total cost (represented by the F-Score)
    */
   public double getFCost() {
-    return fCostCache.get();
+    return calculateFCost();
   }
 
   /**
@@ -84,7 +82,7 @@ public class Node implements Comparable<Node> {
    * typically calculated by summing the movement costs from the start node to the current node.
    */
   private double getGCost() {
-    return gCostCache.get();
+    return calculateGCost();
   }
 
   private double calculateFCost() {
