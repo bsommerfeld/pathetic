@@ -4,7 +4,6 @@ import de.metaphoriker.pathetic.api.pathing.configuration.HeuristicWeights;
 import de.metaphoriker.pathetic.api.wrapper.PathPosition;
 import de.metaphoriker.pathetic.api.wrapper.PathVector;
 import de.metaphoriker.pathetic.engine.util.ComputingCache;
-
 import java.util.Objects;
 
 public class Node implements Comparable<Node> {
@@ -93,7 +92,15 @@ public class Node implements Comparable<Node> {
     if (parent == null) {
       return 0;
     }
-    return parent.getGCost() + position.distance(parent.position);
+    return parent.getGCost() + calculateMovementCost(parent.getPosition(), this.position);
+  }
+
+  private double calculateMovementCost(PathPosition from, PathPosition to) {
+    if (from.getFlooredX() != to.getFlooredX() && from.getFlooredZ() != to.getFlooredZ()) {
+      return Math.sqrt(2); // Diagonal
+    } else {
+      return 1.0; // Horizontal/Vertical
+    }
   }
 
   private double heuristic() {
