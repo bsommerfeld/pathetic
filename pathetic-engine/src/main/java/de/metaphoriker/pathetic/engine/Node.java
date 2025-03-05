@@ -92,7 +92,7 @@ public class Node implements Comparable<Node> {
     if (parent == null) {
       return 0;
     }
-    return parent.getGCost() + calculateMovementCost(parent.getPosition(), this.position);
+    return parent.getGCost() + calculateMovementCost(parent.position, position);
   }
 
   private double calculateMovementCost(PathPosition from, PathPosition to) {
