@@ -108,6 +108,7 @@ public class Node implements Comparable<Node> {
     double octileWeight = heuristicWeights.getOctileWeight();
     double perpendicularWeight = heuristicWeights.getPerpendicularWeight();
     double heightWeight = heuristicWeights.getHeightWeight();
+    double directionalPenaltyWeight = heuristicWeights.getDirectionalPenaltyWeight();
 
     double directionalPenalty = Math.abs(this.position.getFlooredY() - start.getFlooredY());
 
@@ -115,7 +116,7 @@ public class Node implements Comparable<Node> {
         + (octileDistance * octileWeight)
         + (perpendicularDistance * perpendicularWeight)
         + (heightDifference * heightWeight)
-        + (directionalPenalty * 0.5);
+        + (directionalPenalty * directionalPenaltyWeight);
   }
 
   private double calculatePerpendicularDistance() {
