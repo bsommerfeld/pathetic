@@ -6,12 +6,12 @@
     <parent>
         <groupId>de.metaphoriker</groupId>
         <artifactId>pathetic-main</artifactId>
-        <version>4.0.2</version>
+        <version>4.0.3</version>
         <relativePath>../../../pom.xml</relativePath>
     </parent>
 
     <artifactId>spigot</artifactId>
-    <version>4.0.2</version>
+    <version>4.0.3</version>
 
     <dependencies>
         <dependency>
@@ -36,119 +36,119 @@
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>pathetic-provider</artifactId>
-            <version>4.0.2</version>
+            <version>4.0.3</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>v1_21_R3</artifactId>
-            <version>4.0.2</version>
+            <version>4.0.3</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>v1_21_R2</artifactId>
-            <version>4.0.2</version>
+            <version>4.0.3</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>v1_21_R1</artifactId>
-            <version>4.0.2</version>
+            <version>4.0.3</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>v1_20_R4</artifactId>
-            <version>4.0.2</version>
+            <version>4.0.3</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>v1_20_R3</artifactId>
-            <version>4.0.2</version>
+            <version>4.0.3</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>v1_20_R2</artifactId>
-            <version>4.0.2</version>
+            <version>4.0.3</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>v1_20_R1</artifactId>
-            <version>4.0.2</version>
+            <version>4.0.3</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>v1_19_R3</artifactId>
-            <version>4.0.2</version>
+            <version>4.0.3</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>v1_19_R2</artifactId>
-            <version>4.0.2</version>
+            <version>4.0.3</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>v1_18_R2</artifactId>
-            <version>4.0.2</version>
+            <version>4.0.3</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>v1_18</artifactId>
-            <version>4.0.2</version>
+            <version>4.0.3</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>v1_17</artifactId>
-            <version>4.0.2</version>
+            <version>4.0.3</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>v1_16</artifactId>
-            <version>4.0.2</version>
+            <version>4.0.3</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>v1_15</artifactId>
-            <version>4.0.2</version>
+            <version>4.0.3</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>v1_12</artifactId>
-            <version>4.0.2</version>
+            <version>4.0.3</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>v1_8</artifactId>
-            <version>4.0.2</version>
+            <version>4.0.3</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
