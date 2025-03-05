@@ -74,16 +74,13 @@ public class AStarPathfinder extends AbstractPathfinder {
       Node newNode,
       List<PathFilter> filters,
       List<PathFilterStage> filterStages) {
-
     if (isNodeInvalid(newNode, filters, filterStages)) return false;
-
     /*
      * If it is not a diagonal move and survived #isNodeInvalid,
      * then it's definitely valid to this point.
      */
     if (!isDiagonalMove(currentNode, newNode)) return true;
-
-    return isReachable(currentNode, newNode, filters, filterStages);
+    return isDiagonalReachable(currentNode, newNode, filters, filterStages);
   }
 
   private boolean isDiagonalMove(Node from, Node to) {
@@ -93,51 +90,34 @@ public class AStarPathfinder extends AbstractPathfinder {
     return xDifference != 0 && zDifference != 0;
   }
 
-  /**
-   * Returns whether the diagonal jump is possible by checking if the adjacent nodes are passable or
-   * not. With adjacent nodes are the shared overlapping neighbours meant.
-   */
-  private boolean isReachable(
-      Node from, Node to, List<PathFilter> filters, List<PathFilterStage> filterStages) {
-    boolean hasYDifference = to.getPosition().getFlooredY() != from.getPosition().getFlooredY();
-    PathVector[] offsets = Offset.VERTICAL_AND_HORIZONTAL.getVectors();
+  private boolean isDiagonalReachable(Node from, Node to, List<PathFilter> filters, List<PathFilterStage> filterStages) {
+    int dx = to.getPosition().getFlooredX() - from.getPosition().getFlooredX();
+    int dy = to.getPosition().getFlooredY() - from.getPosition().getFlooredY();
+    int dz = to.getPosition().getFlooredZ() - from.getPosition().getFlooredZ();
 
-    for (PathVector vector1 : offsets) {
-      Node neighbour1 = createNeighbourNode(from, vector1);
-      for (PathVector vector2 : offsets) {
-        Node neighbour2 = createNeighbourNode(to, vector2);
-        if (neighbour1.getPosition().equals(neighbour2.getPosition())) {
+    Node commonNeighbour1 = createNeighbourNode(from, new PathVector(dx, 0, 0)); // Horizontal
+    Node commonNeighbour2 = createNeighbourNode(from, new PathVector(0, 0, dz)); // Vertical
 
-          boolean heightDifferencePassable = true;
+    if (!isNodePassable(commonNeighbour1, filters, filterStages)) return false;
+    if (!isNodePassable(commonNeighbour2, filters, filterStages)) return false;
 
-          /*
-           * if it has a Y difference, we also need to check the nodes above or below,
-           *  depending on the Y difference
-           */
-          if (hasYDifference) {
-            heightDifferencePassable =
-                isHeightDifferencePassable(from, to, vector1, filters, filterStages);
-          }
+    if (dy != 0) {
+      Node heightCheckNode1 = createNeighbourNode(from, new PathVector(dx, dy, 0));
+      if (!isNodePassable(heightCheckNode1, filters, filterStages)) return false;
 
-          if (doAllFiltersPass(filters, neighbour1)
-              && doAnyFilterStagePass(filterStages, neighbour1)
-              && heightDifferencePassable) return true;
-        }
-      }
+      Node heightCheckNode2 = createNeighbourNode(from, new PathVector(0, dy, dz));
+      if (!isNodePassable(heightCheckNode2, filters, filterStages)) return false;
+
+      Node heightCheckNode3 = createNeighbourNode(to, new PathVector(-dx, 0, -dz));
+      if(!isNodePassable(heightCheckNode3, filters, filterStages)) return false;
     }
 
-    return false;
+    return true; // diagonal move is possible
   }
 
-  private boolean isHeightDifferencePassable(
-      Node from,
-      Node to,
-      PathVector vector1,
-      List<PathFilter> filters,
-      List<PathFilterStage> filterStages) {
-    int yDifference = to.getPosition().getFlooredY() - from.getPosition().getFlooredY();
-    Node neighbour3 = createNeighbourNode(from, vector1.add(new PathVector(0, yDifference, 0)));
-    return doAllFiltersPass(filters, neighbour3) && doAnyFilterStagePass(filterStages, neighbour3);
+  private boolean isNodePassable(Node node, List<PathFilter> filters, List<PathFilterStage> filterStages) {
+    if (node == null) return false; // Better save than sorry
+    return doAllFiltersPass(filters, node) && doAnyFilterStagePass(filterStages, node);
   }
 
   private Collection<Node> fetchValidNeighbours(
