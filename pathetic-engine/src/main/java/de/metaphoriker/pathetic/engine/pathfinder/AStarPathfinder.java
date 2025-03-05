@@ -64,7 +64,7 @@ public class AStarPathfinder extends AbstractPathfinder {
     Collection<Node> newNodes = fetchValidNeighbours(currentNode, filters, filterStages);
 
     for (Node newNode : newNodes) {
-      double nodeCost = newNode.getHeuristic().get();
+      double nodeCost = newNode.getFCost();
       nodeQueue.insert(nodeCost, newNode);
     }
   }
