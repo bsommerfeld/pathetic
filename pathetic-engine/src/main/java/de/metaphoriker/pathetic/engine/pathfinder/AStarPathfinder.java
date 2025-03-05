@@ -99,16 +99,12 @@ public class AStarPathfinder extends AbstractPathfinder {
    */
   private boolean isReachable(
       Node from, Node to, List<PathFilter> filters, List<PathFilterStage> filterStages) {
-    boolean hasYDifference = from.getPosition().getFlooredY() != to.getPosition().getFlooredY();
+    boolean hasYDifference = to.getPosition().getFlooredY() != from.getPosition().getFlooredY();
     PathVector[] offsets = Offset.VERTICAL_AND_HORIZONTAL.getVectors();
 
     for (PathVector vector1 : offsets) {
-      if (vector1.getY() != 0) continue;
-
       Node neighbour1 = createNeighbourNode(from, vector1);
       for (PathVector vector2 : offsets) {
-        if (vector2.getY() != 0) continue;
-
         Node neighbour2 = createNeighbourNode(to, vector2);
         if (neighbour1.getPosition().equals(neighbour2.getPosition())) {
 
@@ -139,7 +135,7 @@ public class AStarPathfinder extends AbstractPathfinder {
       PathVector vector1,
       List<PathFilter> filters,
       List<PathFilterStage> filterStages) {
-    int yDifference = from.getPosition().getFlooredY() - to.getPosition().getFlooredY();
+    int yDifference = to.getPosition().getFlooredY() - from.getPosition().getFlooredY();
     Node neighbour3 = createNeighbourNode(from, vector1.add(new PathVector(0, yDifference, 0)));
     return doAllFiltersPass(filters, neighbour3) && doAnyFilterStagePass(filterStages, neighbour3);
   }
