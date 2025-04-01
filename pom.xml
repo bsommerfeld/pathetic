@@ -40,6 +40,7 @@
         <module>pathetic-bukkit/pathetic-provider/spigot/v1_21_R2</module>
         <module>pathetic-bukkit/pathetic-provider/spigot/v1_21_R3</module>
         <module>pathetic-bukkit/pathetic-provider/resolver</module>
+        <module>pathetic-bukkit/pathetic-provider/spigot/v1_21_R4</module>
     </modules>
 
     <reporting>

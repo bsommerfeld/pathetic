@@ -42,6 +42,13 @@
 
         <dependency>
             <groupId>de.metaphoriker</groupId>
+            <artifactId>v1_21_R4</artifactId>
+            <version>4.0.3</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>de.metaphoriker</groupId>
             <artifactId>v1_21_R3</artifactId>
             <version>4.0.3</version>
             <scope>compile</scope>

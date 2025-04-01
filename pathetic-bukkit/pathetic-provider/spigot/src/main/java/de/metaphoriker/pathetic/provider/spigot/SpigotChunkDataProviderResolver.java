@@ -16,14 +16,23 @@ import de.metaphoriker.pathetic.provider.v1_20_R4.v1_20_R4ChunkDataProviderImpl;
 import de.metaphoriker.pathetic.provider.v1_21_R1.v1_21_R1ChunkDataProviderImpl;
 import de.metaphoriker.pathetic.provider.v1_21_R2.v1_21_R2ChunkDataProviderImpl;
 import de.metaphoriker.pathetic.provider.v1_21_R3ChunkDataProviderImpl;
+import de.metaphoriker.pathetic.provider.v1_21_R4ChunkDataProviderImpl;
 import de.metaphoriker.pathetic.provider.v1_8.v1_8ChunkDataProviderImpl;
 
 public class SpigotChunkDataProviderResolver {
+
+  private SpigotChunkDataProviderResolver() {
+    throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
+  }
 
   public static ChunkDataProvider resolve(int major, int minor) {
     final ChunkDataProvider chunkDataProvider;
     switch (major) {
       case 21:
+        if(minor == 5) {
+          chunkDataProvider = new v1_21_R4ChunkDataProviderImpl();
+          break;
+        }
         if(minor == 4) {
           chunkDataProvider = new v1_21_R3ChunkDataProviderImpl();
           break;
