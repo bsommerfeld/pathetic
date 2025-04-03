@@ -6,11 +6,11 @@
     <parent>
         <groupId>de.metaphoriker</groupId>
         <artifactId>pathetic-main</artifactId>
-        <version>4.0.3</version>
+        <version>4.0.4</version>
     </parent>
 
     <artifactId>pathetic-bukkit</artifactId>
-    <version>4.0.3</version>
+    <version>4.0.4</version>
 
     <dependencies>
         <dependency>
@@ -34,7 +34,7 @@
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>pathetic-engine</artifactId>
-            <version>4.0.3</version>
+            <version>4.0.4</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.google.guava</groupId>
@@ -45,13 +45,13 @@
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>resolver</artifactId>
-            <version>4.0.3</version>
+            <version>4.0.4</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>pathetic-provider</artifactId>
-            <version>4.0.3</version>
+            <version>4.0.4</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
