@@ -6,23 +6,23 @@
     <parent>
         <groupId>de.metaphoriker</groupId>
         <artifactId>pathetic-main</artifactId>
-        <version>4.0.3</version>
+        <version>4.0.4</version>
     </parent>
 
     <artifactId>pathetic-bukkit</artifactId>
-    <version>4.0.3</version>
+    <version>4.0.4</version>
 
     <dependencies>
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
-            <version>1.21.4-R0.1-SNAPSHOT</version>
+            <version>1.21.5-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.36</version>
+            <version>1.18.38</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
@@ -34,7 +34,7 @@
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>pathetic-engine</artifactId>
-            <version>4.0.3</version>
+            <version>4.0.4</version>
             <exclusions>
                 <exclusion>
                     <groupId>com.google.guava</groupId>
@@ -45,13 +45,13 @@
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>resolver</artifactId>
-            <version>4.0.3</version>
+            <version>4.0.4</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>pathetic-provider</artifactId>
-            <version>4.0.3</version>
+            <version>4.0.4</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>

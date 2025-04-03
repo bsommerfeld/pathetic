@@ -5,7 +5,7 @@
     <parent>
         <artifactId>pathetic-main</artifactId>
         <groupId>de.metaphoriker</groupId>
-        <version>4.0.3</version>
+        <version>4.0.4</version>
         <relativePath>../../../../pom.xml</relativePath>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -29,7 +29,7 @@
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>pathetic-provider</artifactId>
-            <version>4.0.3</version>
+            <version>4.0.4</version>
             <scope>compile</scope>
         </dependency>
         <dependency>

@@ -7,7 +7,7 @@
     <groupId>de.metaphoriker</groupId>
     <artifactId>pathetic-main</artifactId>
     <packaging>pom</packaging>
-    <version>4.0.3</version>
+    <version>4.0.4</version>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
@@ -18,7 +18,6 @@
     <modules>
         <module>pathetic-api</module>
         <module>pathetic-bukkit</module>
-        <module>pathetic-bukkit/pathetic-example</module>
         <module>pathetic-engine</module>
         <module>pathetic-bukkit/pathetic-provider</module>
         <module>pathetic-bukkit/pathetic-provider/paper</module>
@@ -40,6 +39,7 @@
         <module>pathetic-bukkit/pathetic-provider/spigot/v1_21_R2</module>
         <module>pathetic-bukkit/pathetic-provider/spigot/v1_21_R3</module>
         <module>pathetic-bukkit/pathetic-provider/resolver</module>
+        <module>pathetic-bukkit/pathetic-provider/spigot/v1_21_R4</module>
     </modules>
 
     <reporting>
@@ -68,7 +68,7 @@
             <dependency>
                 <groupId>de.metaphoriker</groupId>
                 <artifactId>pathetic-api</artifactId>
-                <version>4.0.3</version>
+                <version>4.0.4</version>
                 <scope>provided</scope>
             </dependency>
         </dependencies>

@@ -6,7 +6,7 @@
     <parent>
         <groupId>de.metaphoriker</groupId>
         <artifactId>pathetic-main</artifactId>
-        <version>4.0.3</version>
+        <version>4.0.4</version>
         <relativePath>../../../pom.xml</relativePath>
     </parent>
 
@@ -23,7 +23,7 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.36</version>
+            <version>1.18.38</version>
             <scope>provided</scope>
         </dependency>
 
@@ -35,14 +35,14 @@
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>paper</artifactId>
-            <version>4.0.3</version>
+            <version>4.0.4</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>de.metaphoriker</groupId>
             <artifactId>spigot</artifactId>
-            <version>4.0.3</version>
+            <version>4.0.4</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>
