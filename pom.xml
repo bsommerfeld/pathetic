@@ -18,7 +18,6 @@
     <modules>
         <module>pathetic-api</module>
         <module>pathetic-bukkit</module>
-        <module>pathetic-bukkit/pathetic-example</module>
         <module>pathetic-engine</module>
         <module>pathetic-bukkit/pathetic-provider</module>
         <module>pathetic-bukkit/pathetic-provider/paper</module>

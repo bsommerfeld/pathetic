@@ -4,13 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <artifactId>pathetic-main</artifactId>
-        <groupId>de.metaphoriker</groupId>
-        <version>4.0.3</version>
-        <relativePath>../../pom.xml</relativePath>
-    </parent>
-
+    <groupId>de.metaphoriker</groupId>
     <artifactId>pathetic-example</artifactId>
     <version>4.0.3</version>
     <packaging>jar</packaging>
@@ -64,6 +58,10 @@
             <id>sonatype</id>
             <url>https://oss.sonatype.org/content/groups/public/</url>
         </repository>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -74,7 +72,7 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>de.metaphoriker</groupId>
+            <groupId>com.github.Metaphoriker.pathetic</groupId>
             <artifactId>pathetic-bukkit</artifactId>
             <version>4.0.3</version>
         </dependency>
