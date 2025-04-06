@@ -26,7 +26,7 @@ Special thanks to [@Ollie](https://github.com/olijeffers0n), the co-founder of p
 </p>
 
 <h2>Sponsored By</h2>
-<p>Pathetic is sponsored by JetBrains.
+<p>Pathetic is sponsored by JetBrains. Thank You!
 <br><br>
 
 <img src="https://github.com/user-attachments/assets/262672b9-a673-4732-8392-5771e7aadfd0" alt="JetBrains_beam_logo" width="100"/>
