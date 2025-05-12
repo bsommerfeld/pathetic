@@ -2,7 +2,7 @@ package de.metaphoriker.pathetic.engine.util;
 
 import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnel;
-import java.util.HashSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Set;
 
 import de.metaphoriker.pathetic.api.wrapper.PathPosition;
@@ -49,7 +49,7 @@ public class GridRegionData {
                 .putInt(pathPosition.getFlooredZ());
 
     bloomFilter = BloomFilter.create(pathPositionFunnel, DEFAULT_BLOOM_FILTER_SIZE, DEFAULT_FPP);
-    regionalExaminedPositions = new HashSet<>();
+    regionalExaminedPositions = ConcurrentHashMap.newKeySet();
   }
 
   public BloomFilter<PathPosition> getBloomFilter() {
