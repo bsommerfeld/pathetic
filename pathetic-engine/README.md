@@ -14,7 +14,9 @@ A quick overview over the key features:
 
 ## What to do with it?
 To use the engine to bend it for your own purposes, you can use the following dependency:
+
 ```xml
+
 <repositories>
     <repository>
         <id>jitpack.io</id>
@@ -23,15 +25,15 @@ To use the engine to bend it for your own purposes, you can use the following de
 </repositories>
 
 <dependency>
-    <groupId>de.metaphoriker</groupId>
-    <artifactId>pathetic-engine</artifactId>
-    <version>VERSION</version>
+<groupId>de.bsommerfeld</groupId>
+<artifactId>pathetic-engine</artifactId>
+<version>VERSION</version>
 </dependency>
 
 <dependency>
-    <groupId>de.metaphoriker</groupId>
-    <artifactId>pathetic-api</artifactId>
-    <version>VERSION</version>
+<groupId>de.bsommerfeld</groupId>
+<artifactId>pathetic-api</artifactId>
+<version>VERSION</version>
 </dependency>
 ```
 
@@ -45,10 +47,10 @@ allprojects {
 }
 
 dependencies {
-    implementation 'de.metaphoriker:pathetic-engine:VERSION'
-    implementation 'de.metaphoriker:pathetic-api:VERSION'
+    implementation 'de.bsommerfeld:pathetic-engine:VERSION'
+    implementation 'de.bsommerfeld:pathetic-api:VERSION'
 }
 ```
 
 After that it is required to implement your own NavigationPointProvider and PathfinderFactory.
-You can see a full example in the [pathetic-bukkit](https://github.com/Metaphoriker/pathetic/tree/production/pathetic-bukkit) module.
+You can see a full example in the [pathetic-bukkit](https://github.com/bsommerfeld/pathetic/tree/production/pathetic-bukkit) module.

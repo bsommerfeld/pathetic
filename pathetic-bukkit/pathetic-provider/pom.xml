@@ -5,7 +5,7 @@
 
     <parent>
         <artifactId>pathetic-main</artifactId>
-        <groupId>de.metaphoriker</groupId>
+        <groupId>de.bsommerfeld</groupId>
         <version>4.0.4</version>
         <relativePath>../../pom.xml</relativePath>
     </parent>
@@ -24,7 +24,7 @@
         </dependency>
 
         <dependency>
-            <groupId>de.metaphoriker</groupId>
+            <groupId>de.bsommerfeld</groupId>
             <artifactId>pathetic-api</artifactId>
         </dependency>
     </dependencies>

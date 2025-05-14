@@ -4,9 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>de.metaphoriker</groupId>
+    <groupId>de.bsommerfeld</groupId>
     <artifactId>pathetic-example</artifactId>
-    <version>4.0.3</version>
+    <version>4.0.4</version>
     <packaging>jar</packaging>
 
     <name>pathetic-example</name>
@@ -72,9 +72,9 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.github.Metaphoriker.pathetic</groupId>
+            <groupId>com.github.bsommerfeld.pathetic</groupId>
             <artifactId>pathetic-bukkit</artifactId>
-            <version>4.0.3</version>
+            <version>4.0.4</version>
         </dependency>
     </dependencies>
 </project>

@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>pathetic-main</artifactId>
-        <groupId>de.metaphoriker</groupId>
+        <groupId>de.bsommerfeld</groupId>
         <version>4.0.4</version>
         <relativePath>../../../../pom.xml</relativePath>
     </parent>
@@ -27,13 +27,13 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>de.metaphoriker</groupId>
+            <groupId>de.bsommerfeld</groupId>
             <artifactId>pathetic-provider</artifactId>
             <version>4.0.4</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>de.metaphoriker</groupId>
+            <groupId>de.bsommerfeld</groupId>
             <artifactId>pathetic-api</artifactId>
         </dependency>
     </dependencies>

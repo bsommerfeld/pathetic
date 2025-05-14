@@ -5,7 +5,7 @@
 
     <parent>
         <artifactId>pathetic-main</artifactId>
-        <groupId>de.metaphoriker</groupId>
+        <groupId>de.bsommerfeld</groupId>
         <version>4.0.4</version>
     </parent>
 
@@ -22,23 +22,23 @@
                     <relocations>
                         <relocation>
                             <pattern>org.jheaps</pattern>
-                            <shadedPattern>de.metaphoriker.pathetic.shaded.jheaps</shadedPattern>
+                            <shadedPattern>de.bsommerfeld.pathetic.shaded.jheaps</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>org.tinylog</pattern>
-                            <shadedPattern>de.metaphoriker.pathetic.shaded.tinylog</shadedPattern>
+                            <shadedPattern>de.bsommerfeld.pathetic.shaded.tinylog</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>org.checkerframework</pattern>
-                            <shadedPattern>de.metaphoriker.pathetic.shaded.checkerframework</shadedPattern>
+                            <shadedPattern>de.bsommerfeld.pathetic.shaded.checkerframework</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>javax.annotation</pattern>
-                            <shadedPattern>de.metaphoriker.pathetic.shaded.javax</shadedPattern>
+                            <shadedPattern>de.bsommerfeld.pathetic.shaded.javax</shadedPattern>
                         </relocation>
                         <relocation>
                             <pattern>com.google</pattern>
-                            <shadedPattern>de.metaphoriker.pathetic.shaded.google</shadedPattern>
+                            <shadedPattern>de.bsommerfeld.pathetic.shaded.google</shadedPattern>
                         </relocation>
                     </relocations>
                     <filters>
@@ -142,7 +142,7 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>de.metaphoriker</groupId>
+            <groupId>de.bsommerfeld</groupId>
             <artifactId>pathetic-api</artifactId>
             <version>4.0.4</version>
             <scope>compile</scope>

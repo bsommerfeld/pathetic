@@ -20,7 +20,7 @@ To integrate pathetic into your bukkit project, follow the following steps:
 </repositories>
 
 <dependency>
-    <groupId>com.github.Metaphoriker.pathetic</groupId>
+    <groupId>com.github.bsommerfeld.pathetic</groupId>
     <artifactId>pathetic-bukkit</artifactId>
     <version>VERSION</version>
 </dependency>
@@ -36,10 +36,10 @@ allprojects {
 }
 
 dependencies {
-    implementation 'com.github.Metaphoriker.pathetic:pathetic-bukkit:VERSION'
+    implementation 'com.github.bsommerfeld.pathetic:pathetic-bukkit:VERSION'
 }
 ```
 
 <h2>Example Usage</h2>
 
-<p>See the <a href="https://github.com/Metaphoriker/pathetic/tree/trunk/pathetic-bukkit/pathetic-example">pathetic-example</a> module for a detailed bukkit example.</p>
+<p>See the <a href="https://github.com/bsommerfeld/pathetic/tree/trunk/pathetic-bukkit/pathetic-example">pathetic-example</a> module for a detailed bukkit example.</p>
