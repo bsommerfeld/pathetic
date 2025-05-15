@@ -27,7 +27,7 @@ public class ErrorLogger {
 
   public static IllegalStateException logFatalErrorWithStacktrace(String message, Throwable cause) {
     IllegalStateException exception = logFatalError(message, cause);
-    Logger.error("Stacktrace:", cause);
+    Logger.error(cause, "Stacktrace:");
     return exception;
   }
 }
