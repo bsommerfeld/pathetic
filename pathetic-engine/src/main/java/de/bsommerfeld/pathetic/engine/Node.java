@@ -92,15 +92,7 @@ public class Node implements Comparable<Node> {
     if (parent == null) {
       return 0;
     }
-    return parent.getGCost() + calculateMovementCost(parent.position, position);
-  }
-
-  private double calculateMovementCost(PathPosition from, PathPosition to) {
-    if (from.getFlooredX() != to.getFlooredX() && from.getFlooredZ() != to.getFlooredZ()) {
-      return Math.sqrt(2); // Diagonal
-    } else {
-      return 1.0; // Horizontal/Vertical
-    }
+    return parent.getGCost() + position.distance(parent.position);
   }
 
   private double heuristic() {

@@ -65,6 +65,7 @@ public class AStarPathfinder extends AbstractPathfinder {
 
     for (Node newNode : newNodes) {
       // TODO 05.03.2025 b.sommerfeld: why not fCost?
+      // TODO 15.05.2025 b.sommerfeld: this piece of code makes this algorithm to a greedy best-first search. fcost is needed
       double nodeCost = newNode.getHeuristic().get();
       nodeQueue.insert(nodeCost, newNode);
     }
@@ -75,76 +76,14 @@ public class AStarPathfinder extends AbstractPathfinder {
       Node newNode,
       List<PathFilter> filters,
       List<PathFilterStage> filterStages) {
-    if (isNodeInvalid(newNode, filters, filterStages)) return false;
-    /*
-     * If it is not a diagonal move and survived #isNodeInvalid,
-     * then it's definitely valid to this point.
-     */
-    if (!isDiagonalMove(currentNode, newNode)) return true;
-    return isReachable(currentNode, newNode, filters, filterStages);
-  }
-
-  private boolean isDiagonalMove(Node from, Node to) {
-    int xDifference = Math.abs(from.getPosition().getFlooredX() - to.getPosition().getFlooredX());
-    int zDifference = Math.abs(from.getPosition().getFlooredZ() - to.getPosition().getFlooredZ());
-
-    return xDifference != 0 && zDifference != 0;
-  }
-
-  /**
-   * Returns whether the diagonal jump is possible by checking if the adjacent nodes are passable or
-   * not. With adjacent nodes are the shared overlapping neighbours meant.
-   */
-  // TODO 05.03.2025 b.sommerfeld: has some validation problems and is a bit too complex with a
-  //  double loop. can be simplified
-  private boolean isReachable(
-      Node from, Node to, List<PathFilter> filters, List<PathFilterStage> filterStages) {
-    boolean hasYDifference = to.getPosition().getFlooredY() != from.getPosition().getFlooredY();
-    PathVector[] offsets = Offset.VERTICAL_AND_HORIZONTAL.getVectors();
-
-    for (PathVector vector1 : offsets) {
-      Node neighbour1 = createNeighbourNode(from, vector1);
-      for (PathVector vector2 : offsets) {
-        Node neighbour2 = createNeighbourNode(to, vector2);
-        if (neighbour1.getPosition().equals(neighbour2.getPosition())) {
-
-          boolean heightDifferencePassable = true;
-
-          /*
-           * if it has a Y difference, we also need to check the nodes above or below,
-           *  depending on the Y difference
-           */
-          if (hasYDifference) {
-            heightDifferencePassable =
-                isHeightDifferencePassable(from, to, vector1, filters, filterStages);
-          }
-
-          if (doAllFiltersPass(filters, neighbour1)
-              && doAnyFilterStagePass(filterStages, neighbour1)
-              && heightDifferencePassable) return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
-  private boolean isHeightDifferencePassable(
-      Node from,
-      Node to,
-      PathVector vector1,
-      List<PathFilter> filters,
-      List<PathFilterStage> filterStages) {
-    int yDifference = to.getPosition().getFlooredY() - from.getPosition().getFlooredY();
-    Node neighbour3 = createNeighbourNode(from, vector1.add(new PathVector(0, yDifference, 0)));
-    return doAllFiltersPass(filters, neighbour3) && doAnyFilterStagePass(filterStages, neighbour3);
+    return !isNodeInvalid(newNode, filters, filterStages);
   }
 
   private Collection<Node> fetchValidNeighbours(
       Node currentNode, List<PathFilter> filters, List<PathFilterStage> filterStages) {
-    Set<Node> newNodes = new HashSet<>(Offset.MERGED.getVectors().length);
+    Set<Node> newNodes = new HashSet<>(Offset.VERTICAL_AND_HORIZONTAL.getVectors().length);
 
-    for (PathVector vector : Offset.MERGED.getVectors()) {
+    for (PathVector vector : Offset.VERTICAL_AND_HORIZONTAL.getVectors()) {
       Node newNode = createNeighbourNode(currentNode, vector);
 
       if (isNodeValid(currentNode, newNode, filters, filterStages)) {
