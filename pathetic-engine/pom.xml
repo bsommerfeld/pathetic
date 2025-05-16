@@ -104,13 +104,15 @@
                                 <include>com/google/common/hash/AbstractHasher.class</include>
                                 <include>com/google/common/hash/AbstractHashFunction.class</include>
                                 <include>com/google/common/hash/AbstractStreamingHasher.class</include>
-                                <include>com/google/common/hash/Murmur3_128HashFunction$Murmur3_128Hasher.class</include>
+                                <include>com/google/common/hash/Murmur3_128HashFunction$Murmur3_128Hasher.class
+                                </include>
                                 <include>com/google/common/hash/Java8Compatibility.class</include>
                             </includes>
                         </filter>
                     </filters>
                     <transformers>
-                        <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                        <transformer
+                                implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                     </transformers>
                 </configuration>
                 <executions>
@@ -165,6 +167,12 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
+            <version>5.17.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
             <version>5.17.0</version>
             <scope>test</scope>
         </dependency>

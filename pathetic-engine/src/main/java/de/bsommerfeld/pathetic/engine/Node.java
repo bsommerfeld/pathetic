@@ -80,7 +80,7 @@ public class Node implements Comparable<Node> {
    * value represents the actual (known) cost of traversing the path to the current node. It is
    * typically calculated by summing the movement costs from the start node to the current node.
    */
-  private double getGCost() {
+  public double getGCost() {
     return calculateGCost();
   }
 
