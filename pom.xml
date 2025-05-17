@@ -7,9 +7,10 @@
     <groupId>de.bsommerfeld</groupId>
     <artifactId>pathetic-main</artifactId>
     <packaging>pom</packaging>
-    <version>4.0.4</version>
+    <version>${revision}</version>
 
     <properties>
+        <revision>4.0.4</revision>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -68,7 +69,7 @@
             <dependency>
                 <groupId>de.bsommerfeld</groupId>
                 <artifactId>pathetic-api</artifactId>
-                <version>4.0.4</version>
+                <version>${revision}</version>
                 <scope>provided</scope>
             </dependency>
         </dependencies>

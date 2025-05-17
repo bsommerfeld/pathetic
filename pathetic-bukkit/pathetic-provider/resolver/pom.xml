@@ -6,7 +6,7 @@
     <parent>
         <groupId>de.bsommerfeld</groupId>
         <artifactId>pathetic-main</artifactId>
-        <version>4.0.4</version>
+        <version>${revision}</version>
         <relativePath>../../../pom.xml</relativePath>
     </parent>
 
@@ -35,14 +35,14 @@
         <dependency>
             <groupId>de.bsommerfeld</groupId>
             <artifactId>paper</artifactId>
-            <version>4.0.4</version>
+            <version>${revision}</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>de.bsommerfeld</groupId>
             <artifactId>spigot</artifactId>
-            <version>4.0.4</version>
+            <version>${revision}</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>

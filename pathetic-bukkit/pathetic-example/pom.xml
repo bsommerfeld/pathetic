@@ -6,7 +6,7 @@
 
     <groupId>de.bsommerfeld</groupId>
     <artifactId>pathetic-example</artifactId>
-    <version>4.0.4</version>
+    <version>${revision}</version>
     <packaging>jar</packaging>
 
     <name>pathetic-example</name>
@@ -74,7 +74,7 @@
         <dependency>
             <groupId>com.github.bsommerfeld.pathetic</groupId>
             <artifactId>pathetic-bukkit</artifactId>
-            <version>4.0.4</version>
+            <version>${revision}</version>
         </dependency>
     </dependencies>
 </project>

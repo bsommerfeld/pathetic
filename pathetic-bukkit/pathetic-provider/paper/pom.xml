@@ -6,7 +6,7 @@
     <parent>
         <groupId>de.bsommerfeld</groupId>
         <artifactId>pathetic-main</artifactId>
-        <version>4.0.4</version>
+        <version>${revision}</version>
         <relativePath>../../../pom.xml</relativePath>
     </parent>
 
@@ -30,14 +30,14 @@
         <dependency>
             <groupId>de.bsommerfeld</groupId>
             <artifactId>pathetic-api</artifactId>
-            <version>4.0.4</version>
+            <version>${revision}</version>
             <scope>provided</scope>
         </dependency>
 
         <dependency>
             <groupId>de.bsommerfeld</groupId>
             <artifactId>pathetic-provider</artifactId>
-            <version>4.0.4</version>
+            <version>${revision}</version>
             <scope>compile</scope>
         </dependency>
     </dependencies>

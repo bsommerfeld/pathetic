@@ -6,11 +6,11 @@
     <parent>
         <artifactId>pathetic-main</artifactId>
         <groupId>de.bsommerfeld</groupId>
-        <version>4.0.4</version>
+        <version>${revision}</version>
     </parent>
 
     <artifactId>pathetic-engine</artifactId>
-    <version>4.0.4</version>
+    <version>${revision}</version>
 
     <build>
         <plugins>
@@ -149,7 +149,7 @@
         <dependency>
             <groupId>de.bsommerfeld</groupId>
             <artifactId>pathetic-api</artifactId>
-            <version>4.0.4</version>
+            <version>${revision}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
