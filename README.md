@@ -1,6 +1,3 @@
-<img src="https://github.com/user-attachments/assets/2f5335e3-b095-4e2f-a9de-e3ac46fbaf45" alt="Transparent" width="100" height="100" align="right" />
-<br><br>
-
 <h1>Pathetic - A Pathfinding library for 3D environments</h1>
 
 <p>A high-performance, backwards-compatible, and asynchronous easy-to-use pathfinding library written in Java for 3D environments.
