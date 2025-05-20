@@ -1,6 +1,7 @@
 package de.bsommerfeld.pathetic.bukkit.listener;
 
 import de.bsommerfeld.pathetic.bukkit.provider.FailingNavigationPointProvider;
+import org.bukkit.Bukkit;
 import org.bukkit.block.Block;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -67,9 +68,16 @@ public class ChunkInvalidateListener implements Listener {
     handleEvent(event.getBlock());
   }
 
+  @EventHandler
+  public void onChunkInvalidate(ChunkInvalidateEvent event) {
+    Block block = event.getBlock();
+    FailingNavigationPointProvider.invalidateChunk(
+        block.getWorld().getUID(), block.getChunk().getX(), block.getChunk().getZ());
+  }
+
   private void handleEvent(Block... blocks) {
-    for (Block block : blocks)
-      FailingNavigationPointProvider.invalidateChunk(
-          block.getWorld().getUID(), block.getChunk().getX(), block.getChunk().getZ());
+    for (Block block : blocks) {
+      Bukkit.getPluginManager().callEvent(new ChunkInvalidateEvent(block));
+    }
   }
 }
