@@ -4,6 +4,7 @@ import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration
 import de.bsommerfeld.pathetic.api.pathing.processing.NodeCostCalculator;
 import de.bsommerfeld.pathetic.api.pathing.processing.NodeValidator;
 import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
+import de.bsommerfeld.pathetic.api.wrapper.Depth;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 
 import java.util.Map;
@@ -32,13 +33,13 @@ public interface NodeEvaluationContext {
   PathPosition getPreviousPathPosition();
 
   /**
-   * Returns the depth of the {@link #getCurrentPathPosition() current PathPosition}
-   * in the search tree. The start node is typically at depth 0 or 1 depending on convention.
-   * This value comes from the engine's internal node representation.
+   * Returns the depth of the {@link #getCurrentPathPosition() current PathPosition} in the search
+   * tree. The start node is typically at depth 0 or 1 depending on convention. This value comes
+   * from the engine's internal node representation.
    *
-   * @return The depth of the current node.
+   * @return The {@link Depth} of the current node.
    */
-  int getCurrentNodeDepth();
+  Depth getCurrentNodeDepth();
 
   /**
    * Returns the heuristic value (H-cost) calculated by the pathfinding engine
