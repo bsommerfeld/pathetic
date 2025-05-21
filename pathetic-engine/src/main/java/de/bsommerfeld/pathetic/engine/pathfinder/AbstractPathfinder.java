@@ -4,251 +4,384 @@ import de.bsommerfeld.pathetic.api.pathing.Pathfinder;
 import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration;
 import de.bsommerfeld.pathetic.api.pathing.hook.PathfinderHook;
 import de.bsommerfeld.pathetic.api.pathing.hook.PathfindingContext;
+import de.bsommerfeld.pathetic.api.pathing.processing.NodeCostCalculator;
+import de.bsommerfeld.pathetic.api.pathing.processing.NodeValidator;
+import de.bsommerfeld.pathetic.api.pathing.processing.Processor;
+import de.bsommerfeld.pathetic.api.pathing.processing.context.SearchContext;
 import de.bsommerfeld.pathetic.api.pathing.result.Path;
 import de.bsommerfeld.pathetic.api.pathing.result.PathState;
 import de.bsommerfeld.pathetic.api.pathing.result.PathfinderResult;
+import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
 import de.bsommerfeld.pathetic.api.wrapper.Depth;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.engine.Node;
+import de.bsommerfeld.pathetic.engine.pathfinder.processing.SearchContextImpl;
 import de.bsommerfeld.pathetic.engine.result.PathImpl;
 import de.bsommerfeld.pathetic.engine.result.PathfinderResultImpl;
 import de.bsommerfeld.pathetic.engine.util.ErrorLogger;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-
+import java.util.concurrent.TimeUnit;
 import org.jheaps.tree.FibonacciHeap;
 
 /**
- * The AbstractPathfinder class provides a skeletal implementation of the Pathfinder interface and
- * defines the common behavior for all pathfinding algorithms. It provides a default implementation
- * for determining the offset and snapshot manager based on the pathing rule set.
+ * Provides a skeletal implementation of the {@link Pathfinder} interface, defining common behavior
+ * for pathfinding algorithms.
  *
- * <p>This class now operates in a tick-wise manner, meaning that the pathfinding process progresses
- * incrementally, with each "tick" representing a small step in the algorithm's execution. At each
- * tick, the algorithm evaluates nodes, updates the priority queue, and checks for conditions such
- * as reaching the target or encountering an abort signal.
+ * <p>This pathfinder operates by iteratively processing nodes from an open set (priority queue)
+ * until the target is reached or other termination conditions are met. It supports asynchronous
+ * execution and customizable hooks for observing the pathfinding steps. The "tick-wise" nature
+ * mentioned previously refers to each main loop iteration processing one node.
  */
-abstract class AbstractPathfinder implements Pathfinder {
+public abstract class AbstractPathfinder implements Pathfinder {
 
-  protected static final Set<PathPosition> EMPTY_LINKED_HASHSET =
+  protected static final Set<PathPosition> EMPTY_PATH_POSITIONS =
       Collections.unmodifiableSet(new LinkedHashSet<>(0));
 
-  private static final ExecutorService PATHING_EXECUTOR = Executors.newWorkStealingPool();
+  private static final ExecutorService PATHING_EXECUTOR_SERVICE =
+      Executors.newWorkStealingPool(Math.max(1, Runtime.getRuntime().availableProcessors() / 2));
 
   static {
-    Runtime.getRuntime().addShutdownHook(new Thread(PATHING_EXECUTOR::shutdown));
+    Runtime.getRuntime()
+        .addShutdownHook(
+            new Thread(
+                () -> {
+                  PATHING_EXECUTOR_SERVICE.shutdown();
+                  try {
+                    if (!PATHING_EXECUTOR_SERVICE.awaitTermination(5, TimeUnit.SECONDS)) {
+                      PATHING_EXECUTOR_SERVICE.shutdownNow();
+                    }
+                  } catch (InterruptedException e) {
+                    PATHING_EXECUTOR_SERVICE.shutdownNow();
+                    Thread.currentThread().interrupt();
+                  }
+                }));
   }
 
   private final Set<PathfinderHook> pathfinderHooks = new HashSet<>();
 
   protected final PathfinderConfiguration pathfinderConfiguration;
+  protected final NavigationPointProvider navigationPointProvider;
+  protected final List<NodeValidator> nodeValidators;
+  protected final List<NodeCostCalculator> nodeCostCalculators;
 
-  private volatile boolean aborted;
+  private volatile boolean abortRequested = false;
 
   protected AbstractPathfinder(PathfinderConfiguration pathfinderConfiguration) {
-    this.pathfinderConfiguration = pathfinderConfiguration;
+    this.pathfinderConfiguration =
+        Objects.requireNonNull(pathfinderConfiguration, "pathfinderConfiguration must not be null");
+
+    this.navigationPointProvider =
+        Objects.requireNonNull(
+            pathfinderConfiguration.getProvider(),
+            "NavigationPointProvider from configuration must not be null");
+    this.nodeValidators = pathfinderConfiguration.getNodeValidators();
+    this.nodeCostCalculators = pathfinderConfiguration.getNodeCostCalculators();
   }
 
   @Override
   public CompletionStage<PathfinderResult> findPath(PathPosition start, PathPosition target) {
+    Objects.requireNonNull(start, "start PathPosition must not be null");
+    Objects.requireNonNull(target, "target PathPosition must not be null");
+
     if (shouldSkipPathing(start, target)) {
       return CompletableFuture.completedFuture(
           new PathfinderResultImpl(
-              PathState.INITIALLY_FAILED, new PathImpl(start, target, EMPTY_LINKED_HASHSET)));
+              PathState.INITIALLY_FAILED, new PathImpl(start, target, EMPTY_PATH_POSITIONS)));
     }
-
+    this.abortRequested = false; // Reset abort flag for new search
     return initiatePathing(start, target);
   }
 
-  /** Give the pathfinder the final shot */
+  /**
+   * Requests the current pathfinding operation to abort. The abortion is cooperative and might not
+   * be immediate.
+   */
   @Override
   public void abort() {
-    this.aborted = true;
+    this.abortRequested = true;
   }
 
   @Override
   public void registerPathfindingHook(PathfinderHook hook) {
-    pathfinderHooks.add(hook);
+    if (hook != null) {
+      this.pathfinderHooks.add(hook);
+    }
   }
 
+  /**
+   * Determines if the pathfinding process should be skipped based on initial start and target
+   * conditions.
+   *
+   * @param start The start position.
+   * @param target The target position.
+   * @return {@code true} if pathfinding should be skipped.
+   */
   private boolean shouldSkipPathing(PathPosition start, PathPosition target) {
-    return !isSameEnvironment(start, target) || isSameBlock(start, target);
+    // Pathing doesn't make sense if start or target environments are different,
+    // or if start and target are effectively in the same block/position.
+    return !isSameEnvironment(start, target) || start.isInSameBlock(target);
   }
 
   private boolean isSameEnvironment(PathPosition start, PathPosition target) {
     return start.getPathEnvironment().equals(target.getPathEnvironment());
   }
 
-  private boolean isSameBlock(PathPosition start, PathPosition target) {
-    return start.isInSameBlock(target);
-  }
-
   private CompletionStage<PathfinderResult> initiatePathing(
       PathPosition start, PathPosition target) {
-    return pathfinderConfiguration.isAsync()
-        ? CompletableFuture.supplyAsync(
-                () -> executePathingAndCleanupFilters(start, target), PATHING_EXECUTOR)
-            .exceptionally(throwable -> handleException(start, target, throwable))
-        : initiateSyncPathing(start, target);
+    final PathPosition effectiveStart = start.floor();
+    final PathPosition effectiveTarget = target.floor();
+
+    if (pathfinderConfiguration.isAsync()) {
+      return CompletableFuture.supplyAsync(
+              () -> executePathingAlgorithm(effectiveStart, effectiveTarget),
+              PATHING_EXECUTOR_SERVICE)
+          .exceptionally(throwable -> handlePathingException(start, target, throwable));
+    } else {
+      try {
+        return CompletableFuture.completedFuture(
+            executePathingAlgorithm(effectiveStart, effectiveTarget));
+      } catch (Exception e) {
+        // Synchronous execution exceptions are wrapped to be consistent with async reporting
+        return CompletableFuture.completedFuture(handlePathingException(start, target, e));
+      }
+    }
   }
 
-  private PathfinderResult executePathing(PathPosition start, PathPosition target) {
+  /**
+   * Core pathfinding execution logic.
+   *
+   * @param start The effective (e.g., floored) start position.
+   * @param target The effective (e.g., floored) target position.
+   * @return The result of the pathfinding operation.
+   */
+  private PathfinderResult executePathingAlgorithm(PathPosition start, PathPosition target) {
+    SearchContext searchContext =
+        new SearchContextImpl(
+            start, target, this.pathfinderConfiguration, this.navigationPointProvider);
+
     try {
+      if (this.nodeValidators != null) {
+        for (Processor processor : this.nodeValidators) {
+          processor.initializeSearch(searchContext);
+        }
+      }
+      if (this.nodeCostCalculators != null) {
+        for (Processor processor : this.nodeCostCalculators) {
+          processor.initializeSearch(searchContext);
+        }
+      }
+
       Node startNode = createStartNode(start, target);
-      FibonacciHeap<Double, Node> nodeQueue = new FibonacciHeap<>();
-      nodeQueue.insert(startNode.getFCost(), startNode);
+      FibonacciHeap<Double, Node> openSet = new FibonacciHeap<>();
+      openSet.insert(startNode.getFCost(), startNode);
 
-      Depth depth = Depth.of(1);
-      Node fallbackNode = startNode;
+      int currentDepth = 0;
+      Node bestFallbackNode = startNode;
 
-      while (!nodeQueue.isEmpty()
-          && depth.getValue() <= pathfinderConfiguration.getMaxIterations()) {
+      while (!openSet.isEmpty() && currentDepth < pathfinderConfiguration.getMaxIterations()) {
+        currentDepth++;
 
-        pathfinderHooks.forEach(hook -> hook.onPathfindingStep(new PathfindingContext(depth)));
+        final int finalCurrentDepth = currentDepth;
+        pathfinderHooks.forEach(
+            hook -> hook.onPathfindingStep(new PathfindingContext(Depth.of(finalCurrentDepth))));
 
-        if (isAborted()) return abortedPathing(fallbackNode);
+        if (this.abortRequested) {
+          return createAbortedResult(bestFallbackNode);
+        }
 
-        Node currentNode = nodeQueue.deleteMin().getValue();
-        fallbackNode = currentNode;
+        Node currentNode = openSet.deleteMin().getValue();
+        markNodeAsExpanded(currentNode);
 
-        if (hasReachedLengthLimit(currentNode)) {
-          return new PathfinderResultImpl(PathState.LENGTH_LIMITED, fetchRetracedPath(currentNode));
+        if (currentNode.getHeuristic().get() < bestFallbackNode.getHeuristic().get()) {
+          bestFallbackNode = currentNode;
+        }
+
+        if (hasReachedPathLengthLimit(currentNode)) {
+          return new PathfinderResultImpl(PathState.LENGTH_LIMITED, reconstructPath(currentNode));
         }
 
         if (currentNode.isTarget()) {
-          return new PathfinderResultImpl(PathState.FOUND, fetchRetracedPath(currentNode));
+          return new PathfinderResultImpl(PathState.FOUND, reconstructPath(currentNode));
         }
 
-        tick(start, target, currentNode, depth, nodeQueue);
+        processSuccessors(start, target, currentNode, currentDepth, openSet, searchContext);
       }
 
-      aborted = false; // just in case
-
-      return backupPathfindingOrFailure(depth, start, target, fallbackNode);
+      return determinePostLoopResult(currentDepth, start, target, bestFallbackNode);
     } catch (Exception e) {
-      throw ErrorLogger.logFatalErrorWithStacktrace("Failed to find path", e);
+      ErrorLogger.logFatalErrorWithStacktrace("Pathfinding algorithm failed", e);
+      return new PathfinderResultImpl(
+          PathState.FAILED, new PathImpl(start, target, EMPTY_PATH_POSITIONS));
+    } finally {
+      List<Throwable> finalizeErrors = new ArrayList<>();
+      if (this.nodeValidators != null) {
+        for (Processor processor : this.nodeValidators) {
+          try {
+            processor.finalizeSearch(searchContext);
+          } catch (Exception e) {
+            finalizeErrors.add(e);
+          }
+        }
+      }
+      if (this.nodeCostCalculators != null) {
+        for (Processor processor : this.nodeCostCalculators) {
+          try {
+            processor.finalizeSearch(searchContext);
+          } catch (Exception e) {
+            finalizeErrors.add(e);
+          }
+        }
+      }
+      if (!finalizeErrors.isEmpty()) {
+        ErrorLogger.logFatalError("Errors during processor finalization: " + finalizeErrors, null);
+      }
+      performAlgorithmCleanup();
     }
   }
 
-  private PathfinderResult abortedPathing(Node fallbackNode) {
-    aborted = false;
-    return new PathfinderResultImpl(PathState.ABORTED, fetchRetracedPath(fallbackNode));
+  private PathfinderResult createAbortedResult(Node fallbackNode) {
+    this.abortRequested = false;
+    return new PathfinderResultImpl(PathState.ABORTED, reconstructPath(fallbackNode));
   }
 
-  private boolean isAborted() {
-    return aborted;
-  }
-
-  private CompletionStage<PathfinderResult> initiateSyncPathing(
-      PathPosition start, PathPosition target) {
-    try {
-      return CompletableFuture.completedFuture(executePathingAndCleanupFilters(start, target));
-    } catch (Exception e) {
-      throw ErrorLogger.logFatalError("Failed to find path sync", e);
-    }
-  }
-
-  private PathfinderResult executePathingAndCleanupFilters(
-      PathPosition start, PathPosition target) {
-    PathfinderResult pathfinderResult = executePathing(start, target);
-    cleanup();
-    return pathfinderResult;
-  }
-
-  private PathfinderResult handleException(
-      PathPosition start, PathPosition target, Throwable throwable) {
-    ErrorLogger.logFatalError("Failed to find path async", throwable);
+  private PathfinderResult handlePathingException(
+      PathPosition originalStart, PathPosition originalTarget, Throwable throwable) {
+    ErrorLogger.logFatalError("Pathfinding execution failed (async or wrapped sync)", throwable);
     return new PathfinderResultImpl(
-        PathState.FAILED, new PathImpl(start, target, EMPTY_LINKED_HASHSET));
+        PathState.FAILED, new PathImpl(originalStart, originalTarget, EMPTY_PATH_POSITIONS));
   }
 
-  private Node createStartNode(PathPosition start, PathPosition target) {
+  /**
+   * Creates the initial {@link Node} for the start position.
+   *
+   * @param startPos The effective start position.
+   * @param targetPos The effective target position.
+   * @return The created start node.
+   */
+  protected Node createStartNode(PathPosition startPos, PathPosition targetPos) {
     return new Node(
-        start.floor(),
-        start.floor(),
-        target.floor(),
+        startPos,
+        startPos,
+        targetPos,
         pathfinderConfiguration.getHeuristicWeights(),
-        0);
+        0); // Depth of start node is 0
   }
 
-  private boolean hasReachedLengthLimit(Node currentNode) {
-    return pathfinderConfiguration.getMaxLength() != 0
-        && currentNode.getDepth() > pathfinderConfiguration.getMaxLength();
+  /**
+   * Checks if the current node's depth exceeds the configured maximum path length.
+   *
+   * @param currentNode The node to check.
+   * @return {@code true} if the length limit is reached.
+   */
+  private boolean hasReachedPathLengthLimit(Node currentNode) {
+    int maxLength = pathfinderConfiguration.getMaxLength();
+    return maxLength > 0 && currentNode.getDepth() >= maxLength;
   }
 
-  /** If the pathfinder has failed to find a path, it will try to still give a result. */
-  private PathfinderResult backupPathfindingOrFailure(
-      Depth depth, PathPosition start, PathPosition target, Node fallbackNode) {
+  /**
+   * Determines the pathfinding result when the main loop finishes without finding the target. This
+   * could be due to reaching max iterations or the open set becoming empty.
+   *
+   * @param depthReached The maximum depth or iterations reached.
+   * @param start The effective start position.
+   * @param target The effective target position.
+   * @param fallbackNode The best node found to use for a fallback path.
+   * @return The determined {@link PathfinderResult}.
+   */
+  private PathfinderResult determinePostLoopResult(
+      int depthReached, PathPosition start, PathPosition target, Node fallbackNode) {
 
-    Optional<PathfinderResult> maxIterationsResult = maxIterationsReached(depth, fallbackNode);
-    if (maxIterationsResult.isPresent()) {
-      return maxIterationsResult.get();
+    if (depthReached >= pathfinderConfiguration.getMaxIterations()) {
+      return new PathfinderResultImpl(
+          PathState.MAX_ITERATIONS_REACHED, reconstructPath(fallbackNode));
     }
 
-    Optional<PathfinderResult> fallbackResult = fallback(fallbackNode);
-    return fallbackResult.orElseGet(
-        () ->
-            new PathfinderResultImpl(
-                PathState.FAILED, new PathImpl(start, target, EMPTY_LINKED_HASHSET)));
+    if (pathfinderConfiguration.isFallback()) {
+      return new PathfinderResultImpl(PathState.FALLBACK, reconstructPath(fallbackNode));
+    }
+
+    return new PathfinderResultImpl(
+        PathState.FAILED, new PathImpl(start, target, EMPTY_PATH_POSITIONS));
   }
 
-  private Optional<PathfinderResult> maxIterationsReached(Depth depth, Node fallbackNode) {
-    if (depth.getValue() > pathfinderConfiguration.getMaxIterations())
-      return Optional.of(
-          new PathfinderResultImpl(
-              PathState.MAX_ITERATIONS_REACHED, fetchRetracedPath(fallbackNode)));
-    return Optional.empty();
-  }
-
-  private Optional<PathfinderResult> fallback(Node fallbackNode) {
-    if (pathfinderConfiguration.isFallback())
-      return Optional.of(
-          new PathfinderResultImpl(PathState.FALLBACK, fetchRetracedPath(fallbackNode)));
-    return Optional.empty();
-  }
-
-  private Path fetchRetracedPath(Node node) {
-    if (node.getParent() == null)
+  /**
+   * Reconstructs the path by tracing back from the given end node to the start node.
+   *
+   * @param endNode The node from which to trace back.
+   * @return The reconstructed {@link Path}.
+   */
+  protected Path reconstructPath(Node endNode) {
+    if (endNode.getParent() == null && endNode.getDepth() == 0) {
       return new PathImpl(
-          node.getStart(), node.getTarget(), Collections.singletonList(node.getPosition()));
-
-    List<PathPosition> path = tracePathFromNode(node);
-    return new PathImpl(node.getStart(), node.getTarget(), path);
+          endNode.getStart(),
+          endNode.getTarget(),
+          Collections.singletonList(endNode.getPosition()));
+    }
+    List<PathPosition> pathPositions = tracePathPositionsFromNode(endNode);
+    return new PathImpl(endNode.getStart(), endNode.getTarget(), pathPositions);
   }
 
-  private List<PathPosition> tracePathFromNode(Node endNode) {
+  private List<PathPosition> tracePathPositionsFromNode(Node leafNode) {
     List<PathPosition> path = new ArrayList<>();
-    Node currentNode = endNode;
-
+    Node currentNode = leafNode;
     while (currentNode != null) {
       path.add(currentNode.getPosition());
       currentNode = currentNode.getParent();
     }
-
-    Collections.reverse(path); // Reverse the path to get the correct order
+    Collections.reverse(path);
     return path;
   }
 
   /**
-   * @deprecated Will be realized in a better way in the future
+   * Marks the given node as expanded (i.e., added to the "closed set").
+   * Subclasses should implement this to update their specific closed set mechanism.
+   * @param node The node that has been taken from the open set and is being expanded.
    */
-  @Deprecated
-  protected abstract void cleanup();
+  protected abstract void markNodeAsExpanded(Node node);
 
-  /** The tick method is called to tick the pathfinding algorithm. */
-  protected abstract void tick(
-      PathPosition start,
-      PathPosition target,
+  /**
+   * Abstract method for algorithm-specific cleanup, called after pathfinding execution. To be
+   * implemented by subclasses like {@link AStarPathfinder}. The previous @Deprecated status is
+   * removed as this is a valid hook for subclasses.
+   */
+  protected abstract void performAlgorithmCleanup();
+
+  /**
+   * Abstract method representing the core logic of processing successor nodes for a given {@code
+   * currentNode}. Implementations (like A*) should:
+   *
+   * <ol>
+   *   <li>Generate potential successor positions.
+   *   <li>Create {@link Node} objects for these successors.
+   *   <li>Validate these nodes (e.g., traversability, bounds, visited status). This is where
+   *       processors will hook in.
+   *   <li>Calculate their G and H costs. G-costs will be influenced by cost processors.
+   *   <li>Add valid successor nodes with their F-costs to the {@code openSet}.
+   * </ol>
+   *
+   * @param requestStart The original start {@link PathPosition} of the pathfinding request.
+   * @param requestTarget The original target {@link PathPosition} of the pathfinding request.
+   * @param currentNode The current {@link Node} being expanded.
+   * @param currentSearchDepth The current depth of the search.
+   * @param openSet The priority queue (open set) to add new successor nodes to.
+   */
+  protected abstract void processSuccessors(
+      PathPosition requestStart,
+      PathPosition requestTarget,
       Node currentNode,
-      Depth depth,
-      FibonacciHeap<Double, Node> nodeQueue);
+      int currentSearchDepth,
+      FibonacciHeap<Double, Node> openSet,
+      SearchContext searchContext);
 }

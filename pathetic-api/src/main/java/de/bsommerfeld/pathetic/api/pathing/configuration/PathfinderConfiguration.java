@@ -1,6 +1,10 @@
 package de.bsommerfeld.pathetic.api.pathing.configuration;
 
+import de.bsommerfeld.pathetic.api.pathing.processing.NodeCostCalculator;
+import de.bsommerfeld.pathetic.api.pathing.processing.NodeValidator;
 import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
+
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -39,6 +43,27 @@ public class PathfinderConfiguration {
   private final boolean fallback;
 
   /**
+   * Determines whether negative costs are permitted during pathfinding calculations.
+   *
+   * <p>When set to {@code true}, cost contributions from processors or base transition costs that
+   * result in a negative effective cost for a path segment are allowed. This can be useful for
+   * scenarios modeling rewards or preferences that reduce the overall path cost. However, allowing
+   * negative costs can affect the behavior and guarantees of certain pathfinding algorithms (e.g.,
+   * A* might not find the optimal path if negative cycles are introduced or if the heuristic is no
+   * longer consistent).
+   *
+   * <p>When set to {@code false} (or if a mechanism enforces it), the pathfinding engine or
+   * pipeline might clamp negative effective transition costs to zero or throw an error, ensuring
+   * that path segments do not have a negative cost. This is generally safer for standard A*
+   * implementations to guarantee optimality with admissible heuristics.
+   *
+   * <p>The default behavior if this configuration is not explicitly handled might vary (e.g., a
+   * warning for negative costs, as seen in the {@code Cost.of()} method, or clamping within the
+   * pipeline). This flag provides a more explicit control point for such behavior.
+   */
+  private final boolean negativeCostsAllowed;
+
+  /**
    * The provider responsible for supplying navigation points to the pathfinding algorithm. This
    * provider determines how the pathfinder interacts with the environment and accesses information
    * about positions.
@@ -55,19 +80,37 @@ public class PathfinderConfiguration {
    */
   private final HeuristicWeights heuristicWeights;
 
+  /**
+   * A list of {@link NodeValidator}s to be used in the pathfinding pipeline. May be null or empty
+   * if no validators are configured.
+   */
+  private final List<NodeValidator> nodeValidators;
+
+  /**
+   * A list of {@link NodeCostCalculator}s to be used in the pathfinding pipeline. May be null or
+   * empty if no calculators are configured.
+   */
+  private final List<NodeCostCalculator> nodeCostCalculators;
+
   private PathfinderConfiguration(
       int maxIterations,
       int maxLength,
       boolean async,
       boolean fallback,
+      boolean negativeCostsAllowed,
       NavigationPointProvider provider,
-      HeuristicWeights heuristicWeights) {
+      HeuristicWeights heuristicWeights,
+      List<NodeValidator> nodeValidators,
+      List<NodeCostCalculator> nodeCostCalculators) {
     this.maxIterations = maxIterations;
     this.maxLength = maxLength;
     this.async = async;
     this.fallback = fallback;
+    this.negativeCostsAllowed = negativeCostsAllowed;
     this.provider = provider;
     this.heuristicWeights = heuristicWeights;
+    this.nodeValidators = nodeValidators;
+    this.nodeCostCalculators = nodeCostCalculators;
   }
 
   /**
@@ -88,6 +131,8 @@ public class PathfinderConfiguration {
         .fallback(pathfinderConfiguration.fallback)
         .provider(pathfinderConfiguration.provider)
         .heuristicWeights(pathfinderConfiguration.heuristicWeights)
+        .nodeValidators(pathfinderConfiguration.nodeValidators)
+        .nodeCostCalculators(pathfinderConfiguration.nodeCostCalculators)
         .build();
   }
 
@@ -111,6 +156,10 @@ public class PathfinderConfiguration {
     return this.fallback;
   }
 
+  public boolean areNegativeCostsAllowed() {
+    return this.negativeCostsAllowed;
+  }
+
   public NavigationPointProvider getProvider() {
     return provider;
   }
@@ -119,20 +168,36 @@ public class PathfinderConfiguration {
     return this.heuristicWeights;
   }
 
+  public List<NodeCostCalculator> getNodeCostCalculators() {
+    return nodeCostCalculators;
+  }
+
+  public List<NodeValidator> getNodeValidators() {
+    return nodeValidators;
+  }
+
+  @Override
   public String toString() {
-    return "PathfinderConfiguration(maxIterations="
-        + this.getMaxIterations()
+    return "PathfinderConfiguration{"
+        + "maxIterations="
+        + maxIterations
         + ", maxLength="
-        + this.getMaxLength()
+        + maxLength
         + ", async="
-        + this.isAsync()
-        + ", allowingFallback="
-        + this.isFallback()
+        + async
+        + ", fallback="
+        + fallback
+        + ", negativeCostsAllowed="
+        + negativeCostsAllowed
         + ", provider="
-        + this.getProvider()
+        + provider
         + ", heuristicWeights="
-        + this.getHeuristicWeights()
-        + ")";
+        + heuristicWeights
+        + ", nodeValidators="
+        + nodeValidators
+        + ", nodeCostCalculators="
+        + nodeCostCalculators
+        + '}';
   }
 
   public boolean equals(final Object o) {
@@ -174,8 +239,11 @@ public class PathfinderConfiguration {
     private int maxLength;
     private boolean async;
     private boolean fallback = true;
+    private boolean negativeCostsAllowed = false;
     private NavigationPointProvider provider;
     private HeuristicWeights heuristicWeights = HeuristicWeights.NATURAL_PATH_WEIGHTS;
+    private List<NodeValidator> nodeValidators;
+    private List<NodeCostCalculator> nodeCostCalculators;
 
     PathfinderConfigurationBuilder() {}
 
@@ -200,6 +268,12 @@ public class PathfinderConfiguration {
       return this;
     }
 
+    public PathfinderConfiguration.PathfinderConfigurationBuilder negativeCostsAllowed(
+        boolean negativeCosts) {
+      this.negativeCostsAllowed = negativeCosts;
+      return this;
+    }
+
     public PathfinderConfiguration.PathfinderConfigurationBuilder provider(
         NavigationPointProvider provider) {
       this.provider = provider;
@@ -212,17 +286,38 @@ public class PathfinderConfiguration {
       return this;
     }
 
+    public PathfinderConfiguration.PathfinderConfigurationBuilder nodeValidators(
+        List<NodeValidator> nodeValidators) {
+      this.nodeValidators = nodeValidators;
+      return this;
+    }
+
+    public PathfinderConfiguration.PathfinderConfigurationBuilder nodeCostCalculators(
+        List<NodeCostCalculator> nodeCostCalculators) {
+      this.nodeCostCalculators = nodeCostCalculators;
+      return this;
+    }
+
     public PathfinderConfiguration build() {
       if (provider == null) {
         throw new IllegalStateException("NavigationPointProvider cannot be null.");
+      }
+      if (nodeValidators == null) {
+        nodeValidators = List.of();
+      }
+      if (nodeCostCalculators == null) {
+        nodeCostCalculators = List.of();
       }
       return new PathfinderConfiguration(
           this.maxIterations,
           this.maxLength,
           this.async,
           this.fallback,
+          this.negativeCostsAllowed,
           this.provider,
-          this.heuristicWeights);
+          this.heuristicWeights,
+          this.nodeValidators,
+          this.nodeCostCalculators);
     }
 
     public String toString() {
@@ -234,11 +329,17 @@ public class PathfinderConfiguration {
           + this.async
           + ", fallback="
           + this.fallback
+          + ", negativeCosts="
+          + this.negativeCostsAllowed
           + ", provider="
           + this.provider
           + ", heuristicWeights="
           + this.heuristicWeights
-          + ")";
+          + ")"
+          + ", nodeValidators="
+          + this.nodeValidators
+          + ", nodeCostCalculators="
+          + this.nodeCostCalculators;
     }
   }
 }

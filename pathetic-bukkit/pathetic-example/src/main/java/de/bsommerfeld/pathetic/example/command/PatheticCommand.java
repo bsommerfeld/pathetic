@@ -4,7 +4,6 @@ import de.bsommerfeld.pathetic.api.pathing.Pathfinder;
 import de.bsommerfeld.pathetic.api.pathing.result.PathfinderResult;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.bukkit.mapper.BukkitMapper;
-import de.bsommerfeld.pathetic.example.filter.WalkableFilter;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -83,7 +82,7 @@ public class PatheticCommand implements TabExecutor {
          * invalid paths.
          */
         CompletionStage<PathfinderResult> pathfindingResult =
-            pathfinder.findPath(start, target, List.of(new WalkableFilter()));
+            pathfinder.findPath(start, target);
 
         // Handle the pathfinding result
         pathfindingResult.thenAccept(
