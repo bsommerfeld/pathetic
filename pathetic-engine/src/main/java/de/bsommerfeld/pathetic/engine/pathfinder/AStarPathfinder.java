@@ -1,190 +1,154 @@
 package de.bsommerfeld.pathetic.engine.pathfinder;
 
 import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration;
-import de.bsommerfeld.pathetic.api.pathing.filter.PathFilter;
-import de.bsommerfeld.pathetic.api.pathing.filter.PathFilterStage;
-import de.bsommerfeld.pathetic.api.pathing.filter.PathValidationContext;
+import de.bsommerfeld.pathetic.api.pathing.processing.Cost;
+import de.bsommerfeld.pathetic.api.pathing.processing.NodeCostCalculator;
+import de.bsommerfeld.pathetic.api.pathing.processing.NodeValidator;
+import de.bsommerfeld.pathetic.api.pathing.processing.context.NodeEvaluationContext;
+import de.bsommerfeld.pathetic.api.pathing.processing.context.SearchContext;
 import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
-import de.bsommerfeld.pathetic.api.wrapper.Depth;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.api.wrapper.PathVector;
 import de.bsommerfeld.pathetic.engine.Node;
 import de.bsommerfeld.pathetic.engine.Offset;
+import de.bsommerfeld.pathetic.engine.pathfinder.processing.NodeEvaluationContextImpl;
 import de.bsommerfeld.pathetic.engine.util.ExpiringHashMap;
 import de.bsommerfeld.pathetic.engine.util.GridRegionData;
 import de.bsommerfeld.pathetic.engine.util.Tuple3;
-import java.util.*;
+
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import org.jheaps.tree.FibonacciHeap;
 
+/**
+ * An A* (A-star) pathfinding algorithm implementation. It uses a heuristic to guide the search
+ * towards the target and considers the actual cost from the start (G-cost) and the estimated cost
+ * to the target (H-cost).
+ *
+ * <p>This implementation uses a grid-based approach to optimize checking for already visited nodes
+ * within regions using Bloom filters and sets.
+ */
 public class AStarPathfinder extends AbstractPathfinder {
 
-  private static final int DEFAULT_GRID_CELL_SIZE = 12;
+  private static final int DEFAULT_GRID_CELL_SIZE = 12; // Should be configurable if possible
 
   /**
-   * The grid map used to store the regional examined positions and Bloom filters for each grid
-   * region.
+   * Stores regional data, including sets of examined positions and Bloom filters, to optimize
+   * visited node checks. The map keys are grid cell coordinates. Uses an {@link ExpiringHashMap} to
+   * manage memory for long-running applications if regions become stale.
    */
-  private final Map<Tuple3<Integer>, ExpiringHashMap.Entry<GridRegionData>> gridMap =
+  private final Map<Tuple3<Integer>, ExpiringHashMap.Entry<GridRegionData>> visitedRegionGrid =
       new ExpiringHashMap<>();
 
-  private final NavigationPointProvider navigationPointProvider;
-
-  public AStarPathfinder(
-      NavigationPointProvider navigationPointProvider,
-      PathfinderConfiguration pathfinderConfiguration) {
+  public AStarPathfinder(PathfinderConfiguration pathfinderConfiguration) {
     super(pathfinderConfiguration);
-    this.navigationPointProvider = navigationPointProvider;
   }
 
   @Override
-  protected void tick(
-      PathPosition start,
-      PathPosition target,
+  protected void processSuccessors(
+      PathPosition requestStart,
+      PathPosition requestTarget,
       Node currentNode,
-      Depth depth,
-      FibonacciHeap<Double, Node> nodeQueue,
-      List<PathFilter> filters,
-      List<PathFilterStage> filterStages) {
+      int currentSearchDepth,
+      FibonacciHeap<Double, Node> openSet,
+      SearchContext searchContext) {
 
-    evaluateNewNodes(nodeQueue, currentNode, filters, filterStages);
-    depth.increment();
-  }
+    for (PathVector offset : Offset.VERTICAL_AND_HORIZONTAL.getVectors()) {
+      PathPosition neighborPosition = currentNode.getPosition().add(offset);
 
-  @Override
-  protected void cleanup() {
-    gridMap.clear();
-  }
+      GridRegionData regionData = getOrCreateRegionData(neighborPosition);
+      boolean alreadyExpanded = regionData.getBloomFilter().mightContain(neighborPosition) &&
+        regionData.getRegionalExaminedPositions().contains(neighborPosition);
 
-  private void evaluateNewNodes(
-      FibonacciHeap<Double, Node> nodeQueue,
-      Node currentNode,
-      List<PathFilter> filters,
-      List<PathFilterStage> filterStages) {
-
-    Collection<Node> newNodes = fetchValidNeighbours(currentNode, filters, filterStages);
-
-    for (Node newNode : newNodes) {
-      // TODO 05.03.2025 b.sommerfeld: why not fCost?
-      // TODO 15.05.2025 b.sommerfeld: this piece of code makes this algorithm to a greedy best-first search. fcost is needed
-      double nodeCost = newNode.getHeuristic().get();
-      nodeQueue.insert(nodeCost, newNode);
-    }
-  }
-
-  private boolean isNodeValid(
-      Node currentNode,
-      Node newNode,
-      List<PathFilter> filters,
-      List<PathFilterStage> filterStages) {
-    return !isNodeInvalid(newNode, filters, filterStages);
-  }
-
-  private Collection<Node> fetchValidNeighbours(
-      Node currentNode, List<PathFilter> filters, List<PathFilterStage> filterStages) {
-    Set<Node> newNodes = new HashSet<>(Offset.VERTICAL_AND_HORIZONTAL.getVectors().length);
-
-    for (PathVector vector : Offset.VERTICAL_AND_HORIZONTAL.getVectors()) {
-      Node newNode = createNeighbourNode(currentNode, vector);
-
-      if (isNodeValid(currentNode, newNode, filters, filterStages)) {
-        newNodes.add(newNode);
+      if (alreadyExpanded) {
+        // TODO: G-cost comparison for re-opening if this path is cheaper instead of just invalidating.
+        continue;
       }
-    }
 
-    return newNodes;
-  }
-
-  private Node createNeighbourNode(Node currentNode, PathVector offset) {
-    Node newNode =
+      Node neighborNode =
         new Node(
-            currentNode.getPosition().add(offset),
-            currentNode.getStart(),
-            currentNode.getTarget(),
-            pathfinderConfiguration.getHeuristicWeights(),
-            currentNode.getDepth() + 1);
-    newNode.setParent(currentNode);
-    return newNode;
+          neighborPosition,
+          requestStart,
+          requestTarget,
+          pathfinderConfiguration.getHeuristicWeights(),
+          currentNode.getDepth() + 1);
+      neighborNode.setParent(currentNode);
+
+      NodeEvaluationContext nodeEvalContext =
+        new NodeEvaluationContextImpl(searchContext, neighborNode, currentNode);
+
+      boolean isValidByCustomProcessors = true;
+      if (this.nodeValidators != null && !this.nodeValidators.isEmpty()) {
+        for (NodeValidator validator : this.nodeValidators) {
+          if (!validator.isValid(nodeEvalContext)) {
+            isValidByCustomProcessors = false;
+            break;
+          }
+        }
+      }
+
+      if (!isValidByCustomProcessors) {
+        continue;
+      }
+
+      double baseTransitionCost = nodeEvalContext.getBaseTransitionCost();
+      double accumulatedContributions = 0.0;
+
+      if (this.nodeCostCalculators != null && !this.nodeCostCalculators.isEmpty()) {
+        for (NodeCostCalculator costCalculator : this.nodeCostCalculators) {
+          Cost contribution = costCalculator.calculateCostContribution(nodeEvalContext);
+          accumulatedContributions += contribution.getValue();
+        }
+      }
+
+      double finalTransitionCost = baseTransitionCost + accumulatedContributions;
+      if (finalTransitionCost < 0 && !pathfinderConfiguration.areNegativeCostsAllowed()) {
+        finalTransitionCost = 0;
+      }
+
+      double gCostForNeighbor =
+          nodeEvalContext.getPathCostToPreviousPosition() + finalTransitionCost;
+
+      neighborNode.setGCost(gCostForNeighbor);
+      openSet.insert(neighborNode.getFCost(), neighborNode);
+    }
   }
 
   /**
-   * Checks if the node is invalid. A node is invalid if it is outside the world bounds or is not
-   * valid according to the filters.
+   * Retrieves or creates {@link GridRegionData} for the grid cell corresponding to the given
+   * position.
+   *
+   * @param position The {@link PathPosition}.
+   * @return The {@link GridRegionData} for that region.
    */
-  private boolean isNodeInvalid(
-      Node node, List<PathFilter> filters, List<PathFilterStage> filterStages) {
+  private GridRegionData getOrCreateRegionData(PathPosition position) {
+    int gridX = position.getFlooredX() / DEFAULT_GRID_CELL_SIZE;
+    int gridY = position.getFlooredY() / DEFAULT_GRID_CELL_SIZE;
+    int gridZ = position.getFlooredZ() / DEFAULT_GRID_CELL_SIZE;
 
-    int gridX = node.getPosition().getFlooredX() / DEFAULT_GRID_CELL_SIZE;
-    int gridY = node.getPosition().getFlooredY() / DEFAULT_GRID_CELL_SIZE;
-    int gridZ = node.getPosition().getFlooredZ() / DEFAULT_GRID_CELL_SIZE;
-
-    GridRegionData regionData =
-        gridMap
-            .computeIfAbsent(
-                new Tuple3<>(gridX, gridY, gridZ),
-                k -> new ExpiringHashMap.Entry<>(new GridRegionData()))
-            .getValue();
-
-    regionData.getRegionalExaminedPositions().add(node.getPosition());
-
-    if (regionData.getBloomFilter().mightContain(node.getPosition())) {
-      if (regionData.getRegionalExaminedPositions().contains(node.getPosition())) {
-        return true; // Node is invalid if already examined
-      }
-    } else {
-      regionData.getBloomFilter().put(node.getPosition());
-      regionData.getRegionalExaminedPositions().add(node.getPosition());
-    }
-
-    if (!isWithinWorldBounds(node.getPosition())) {
-      return true; // Node is invalid if out of bounds
-    }
-
-    boolean filtersPass = doAllFiltersPass(filters, node);
-    boolean stagesPass = doAnyFilterStagePass(filterStages, node);
-
-    if (!filtersPass) {
-      return true; // Node is invalid if filters fail
-    }
-
-    return !stagesPass;
+    ExpiringHashMap.Entry<GridRegionData> entry =
+        visitedRegionGrid.computeIfAbsent(
+            new Tuple3<>(gridX, gridY, gridZ),
+            k -> new ExpiringHashMap.Entry<>(new GridRegionData()));
+    return entry.getValue();
   }
 
-  private boolean doAllFiltersPass(List<PathFilter> filters, Node node) {
-    for (PathFilter filter : filters) {
-      PathValidationContext context =
-          new PathValidationContext(
-              node.getPosition(),
-              node.getParent() != null ? node.getParent().getPosition() : null,
-              node.getStart(),
-              node.getTarget(),
-              navigationPointProvider);
+  @Override
+  protected void markNodeAsExpanded(Node node) {
+    PathPosition position = node.getPosition();
+    GridRegionData regionData = getOrCreateRegionData(position);
 
-      if (!filter.filter(context)) {
-        return false;
-      }
+    if (!regionData.getBloomFilter().mightContain(position)) {
+      regionData.getBloomFilter().put(position);
     }
-    return true;
+    regionData.getRegionalExaminedPositions().add(position);
   }
 
-  private boolean doAnyFilterStagePass(List<PathFilterStage> filterStages, Node node) {
-    if (filterStages.isEmpty()) return true;
-
-    for (PathFilterStage filterStage : filterStages) {
-      if (filterStage.filter(
-          new PathValidationContext(
-              node.getPosition(),
-              node.getParent() != null ? node.getParent().getPosition() : null,
-              node.getStart(),
-              node.getTarget(),
-              navigationPointProvider))) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private boolean isWithinWorldBounds(PathPosition position) {
-    return position.getPathEnvironment().getMinHeight() < position.getFlooredY()
-        && position.getFlooredY() < position.getPathEnvironment().getMaxHeight();
+  @Override
+  protected void performAlgorithmCleanup() {
+    visitedRegionGrid.clear();
   }
 }

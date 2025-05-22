@@ -19,6 +19,6 @@ public class AStarPathfinderFactory implements PathfinderFactory {
    */
   @Override
   public Pathfinder createPathfinder(PathfinderConfiguration configuration) {
-    return new AStarPathfinder(configuration.getProvider(), configuration);
+    return new AStarPathfinder(configuration);
   }
 }

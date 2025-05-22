@@ -16,6 +16,7 @@ public class Node implements Comparable<Node> {
 
   private final ComputingCache<Double> heuristic = new ComputingCache<>(this::heuristic);
 
+  private double gCost;
   private Node parent;
 
   public Node(
@@ -55,6 +56,16 @@ public class Node implements Comparable<Node> {
     return depth;
   }
 
+  /**
+   * Sets the calculated G-cost for this node. This is typically called by the pathfinding algorithm
+   * after evaluating costs, including contributions from cost processors.
+   *
+   * @param gCost The G-cost (accumulated cost from the start node).
+   */
+  public void setGCost(double gCost) {
+    this.gCost = gCost;
+  }
+
   public void setParent(Node parent) {
     this.parent = parent;
   }
@@ -66,33 +77,24 @@ public class Node implements Comparable<Node> {
   }
 
   /**
-   * Calculates the estimated total cost of the path from the start node to the goal node, passing
-   * through this node.
+   * Calculates the estimated total cost (F-cost) of the path from the start node to the target
+   * node, passing through this node. F-cost = G-cost + H-cost.
    *
-   * @return the estimated total cost (represented by the F-Score)
+   * @return The estimated total cost.
    */
   public double getFCost() {
-    return calculateFCost();
+    return getGCost() + getHeuristic().get();
   }
 
   /**
-   * The accumulated cost (also known as G-Score) from the starting node to the current node. This
-   * value represents the actual (known) cost of traversing the path to the current node. It is
-   * typically calculated by summing the movement costs from the start node to the current node.
+   * Gets the calculated G-cost (accumulated known cost from the start node) for this node. This
+   * value is set by the pathfinding algorithm.
+   *
+   * @return The G-cost.
    */
   public double getGCost() {
-    return calculateGCost();
-  }
-
-  private double calculateFCost() {
-    return getGCost() + heuristic.get();
-  }
-
-  private double calculateGCost() {
-    if (parent == null) {
-      return 0;
-    }
-    return parent.getGCost() + position.distance(parent.position);
+    if (this.parent == null) return 0.0; // G-Cost for start node is 0.
+    return this.gCost;
   }
 
   private double heuristic() {
