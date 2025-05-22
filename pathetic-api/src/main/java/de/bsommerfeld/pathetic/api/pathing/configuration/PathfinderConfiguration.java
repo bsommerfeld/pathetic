@@ -4,6 +4,7 @@ import de.bsommerfeld.pathetic.api.pathing.processing.NodeCostCalculator;
 import de.bsommerfeld.pathetic.api.pathing.processing.NodeValidator;
 import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -131,8 +132,8 @@ public class PathfinderConfiguration {
         .fallback(pathfinderConfiguration.fallback)
         .provider(pathfinderConfiguration.provider)
         .heuristicWeights(pathfinderConfiguration.heuristicWeights)
-        .nodeValidators(pathfinderConfiguration.nodeValidators)
-        .nodeCostCalculators(pathfinderConfiguration.nodeCostCalculators)
+        .nodeValidators(new ArrayList<>(pathfinderConfiguration.nodeValidators))
+        .nodeCostCalculators(new ArrayList<>(pathfinderConfiguration.nodeCostCalculators))
         .build();
   }
 
