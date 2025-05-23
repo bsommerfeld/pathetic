@@ -3,8 +3,7 @@ package de.bsommerfeld.pathetic.api.pathing.configuration;
 import de.bsommerfeld.pathetic.api.pathing.processing.NodeCostCalculator;
 import de.bsommerfeld.pathetic.api.pathing.processing.NodeValidator;
 import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
-
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -110,8 +109,8 @@ public class PathfinderConfiguration {
     this.negativeCostsAllowed = negativeCostsAllowed;
     this.provider = provider;
     this.heuristicWeights = heuristicWeights;
-    this.nodeValidators = nodeValidators;
-    this.nodeCostCalculators = nodeCostCalculators;
+    this.nodeValidators = Collections.unmodifiableList(nodeValidators);
+    this.nodeCostCalculators = Collections.unmodifiableList(nodeCostCalculators);
   }
 
   /**
@@ -132,8 +131,8 @@ public class PathfinderConfiguration {
         .fallback(pathfinderConfiguration.fallback)
         .provider(pathfinderConfiguration.provider)
         .heuristicWeights(pathfinderConfiguration.heuristicWeights)
-        .nodeValidators(new ArrayList<>(pathfinderConfiguration.nodeValidators))
-        .nodeCostCalculators(new ArrayList<>(pathfinderConfiguration.nodeCostCalculators))
+        .nodeValidators(pathfinderConfiguration.nodeValidators)
+        .nodeCostCalculators(pathfinderConfiguration.nodeCostCalculators)
         .build();
   }
 
@@ -304,10 +303,10 @@ public class PathfinderConfiguration {
         throw new IllegalStateException("NavigationPointProvider cannot be null.");
       }
       if (nodeValidators == null) {
-        nodeValidators = List.of();
+        nodeValidators = Collections.emptyList();
       }
       if (nodeCostCalculators == null) {
-        nodeCostCalculators = List.of();
+        nodeCostCalculators = Collections.emptyList();
       }
       return new PathfinderConfiguration(
           this.maxIterations,
