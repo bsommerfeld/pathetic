@@ -1,10 +1,7 @@
 package de.bsommerfeld.pathetic.api.pathing.processing.context;
 
 import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration;
-import de.bsommerfeld.pathetic.api.pathing.processing.NodeCostCalculator;
-import de.bsommerfeld.pathetic.api.pathing.processing.NodeValidator;
 import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
-import de.bsommerfeld.pathetic.api.wrapper.Depth;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 
 import java.util.Map;
@@ -62,7 +59,7 @@ public interface NodeEvaluationContext {
    * Returns the base traversal cost for the transition from the {@link #getPreviousPathPosition()
    * previous PathPosition} to the {@link #getCurrentPathPosition() current PathPosition}. This is
    * typically derived from {@code currentPathPosition.distance(previousPathPosition)} and
-   * represents the raw geometric/movement cost *before* any {@code NodeCostCalculator} processors
+   * represents the raw geometric/movement cost *before* any {@code NodeCostProcessor} processors
    * add their contributions for this specific transition. Returns 0 if previousPathPosition is
    * null.
    *

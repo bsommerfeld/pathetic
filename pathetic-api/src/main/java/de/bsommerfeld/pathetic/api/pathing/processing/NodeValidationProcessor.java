@@ -8,7 +8,7 @@ import de.bsommerfeld.pathetic.api.pathing.processing.context.NodeEvaluationCont
  * If any validator returns {@code false} for a node, that node (or path segment)
  * will typically be excluded from the search.
  */
-public interface NodeValidator extends Processor {
+public interface NodeValidationProcessor extends Processor {
   /**
    * Checks if the current node (PathPosition) (or the transition to it from the previous node)
    * is valid according to the logic of this validator.

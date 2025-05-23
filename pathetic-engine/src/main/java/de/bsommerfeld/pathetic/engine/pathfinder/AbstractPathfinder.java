@@ -4,8 +4,8 @@ import de.bsommerfeld.pathetic.api.pathing.Pathfinder;
 import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration;
 import de.bsommerfeld.pathetic.api.pathing.hook.PathfinderHook;
 import de.bsommerfeld.pathetic.api.pathing.hook.PathfindingContext;
-import de.bsommerfeld.pathetic.api.pathing.processing.NodeCostCalculator;
-import de.bsommerfeld.pathetic.api.pathing.processing.NodeValidator;
+import de.bsommerfeld.pathetic.api.pathing.processing.NodeCostProcessor;
+import de.bsommerfeld.pathetic.api.pathing.processing.NodeValidationProcessor;
 import de.bsommerfeld.pathetic.api.pathing.processing.Processor;
 import de.bsommerfeld.pathetic.api.pathing.processing.context.SearchContext;
 import de.bsommerfeld.pathetic.api.pathing.result.Path;
@@ -26,7 +26,6 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -73,8 +72,8 @@ public abstract class AbstractPathfinder implements Pathfinder {
 
   protected final PathfinderConfiguration pathfinderConfiguration;
   protected final NavigationPointProvider navigationPointProvider;
-  protected final List<NodeValidator> nodeValidators;
-  protected final List<NodeCostCalculator> nodeCostCalculators;
+  protected final List<NodeValidationProcessor> nodeValidationProcessors;
+  protected final List<NodeCostProcessor> nodeCostProcessors;
 
   private volatile boolean abortRequested = false;
 
@@ -86,8 +85,8 @@ public abstract class AbstractPathfinder implements Pathfinder {
         Objects.requireNonNull(
             pathfinderConfiguration.getProvider(),
             "NavigationPointProvider from configuration must not be null");
-    this.nodeValidators = pathfinderConfiguration.getNodeValidators();
-    this.nodeCostCalculators = pathfinderConfiguration.getNodeCostCalculators();
+    this.nodeValidationProcessors = pathfinderConfiguration.getNodeValidationProcessors();
+    this.nodeCostProcessors = pathfinderConfiguration.getNodeCostProcessors();
   }
 
   @Override
@@ -172,13 +171,13 @@ public abstract class AbstractPathfinder implements Pathfinder {
             start, target, this.pathfinderConfiguration, this.navigationPointProvider);
 
     try {
-      if (this.nodeValidators != null) {
-        for (Processor processor : this.nodeValidators) {
+      if (this.nodeValidationProcessors != null) {
+        for (Processor processor : this.nodeValidationProcessors) {
           processor.initializeSearch(searchContext);
         }
       }
-      if (this.nodeCostCalculators != null) {
-        for (Processor processor : this.nodeCostCalculators) {
+      if (this.nodeCostProcessors != null) {
+        for (Processor processor : this.nodeCostProcessors) {
           processor.initializeSearch(searchContext);
         }
       }
@@ -226,8 +225,8 @@ public abstract class AbstractPathfinder implements Pathfinder {
           PathState.FAILED, new PathImpl(start, target, EMPTY_PATH_POSITIONS));
     } finally {
       List<Throwable> finalizeErrors = new ArrayList<>();
-      if (this.nodeValidators != null) {
-        for (Processor processor : this.nodeValidators) {
+      if (this.nodeValidationProcessors != null) {
+        for (Processor processor : this.nodeValidationProcessors) {
           try {
             processor.finalizeSearch(searchContext);
           } catch (Exception e) {
@@ -235,8 +234,8 @@ public abstract class AbstractPathfinder implements Pathfinder {
           }
         }
       }
-      if (this.nodeCostCalculators != null) {
-        for (Processor processor : this.nodeCostCalculators) {
+      if (this.nodeCostProcessors != null) {
+        for (Processor processor : this.nodeCostProcessors) {
           try {
             processor.finalizeSearch(searchContext);
           } catch (Exception e) {

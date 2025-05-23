@@ -2,8 +2,8 @@ package de.bsommerfeld.pathetic.engine.pathfinder;
 
 import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration;
 import de.bsommerfeld.pathetic.api.pathing.processing.Cost;
-import de.bsommerfeld.pathetic.api.pathing.processing.NodeCostCalculator;
-import de.bsommerfeld.pathetic.api.pathing.processing.NodeValidator;
+import de.bsommerfeld.pathetic.api.pathing.processing.NodeCostProcessor;
+import de.bsommerfeld.pathetic.api.pathing.processing.NodeValidationProcessor;
 import de.bsommerfeld.pathetic.api.pathing.processing.context.NodeEvaluationContext;
 import de.bsommerfeld.pathetic.api.pathing.processing.context.SearchContext;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
@@ -77,8 +77,8 @@ public class AStarPathfinder extends AbstractPathfinder {
           new NodeEvaluationContextImpl(searchContext, neighborNode, currentNode);
 
       boolean isValidByCustomProcessors = true;
-      if (this.nodeValidators != null && !this.nodeValidators.isEmpty()) {
-        for (NodeValidator validator : this.nodeValidators) {
+      if (this.nodeValidationProcessors != null && !this.nodeValidationProcessors.isEmpty()) {
+        for (NodeValidationProcessor validator : this.nodeValidationProcessors) {
           if (!validator.isValid(nodeEvalContext)) {
             isValidByCustomProcessors = false;
             break;
@@ -93,8 +93,8 @@ public class AStarPathfinder extends AbstractPathfinder {
       double baseTransitionCost = nodeEvalContext.getBaseTransitionCost();
       double accumulatedContributions = 0.0;
 
-      if (this.nodeCostCalculators != null && !this.nodeCostCalculators.isEmpty()) {
-        for (NodeCostCalculator costCalculator : this.nodeCostCalculators) {
+      if (this.nodeCostProcessors != null && !this.nodeCostProcessors.isEmpty()) {
+        for (NodeCostProcessor costCalculator : this.nodeCostProcessors) {
           Cost contribution = costCalculator.calculateCostContribution(nodeEvalContext);
           if (contribution == null) contribution = Cost.ZERO;
           accumulatedContributions += contribution.getValue();

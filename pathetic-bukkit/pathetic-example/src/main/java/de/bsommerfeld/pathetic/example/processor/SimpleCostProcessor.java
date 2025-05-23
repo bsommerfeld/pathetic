@@ -1,13 +1,13 @@
 package de.bsommerfeld.pathetic.example.processor;
 
 import de.bsommerfeld.pathetic.api.pathing.processing.Cost;
-import de.bsommerfeld.pathetic.api.pathing.processing.NodeCostCalculator;
+import de.bsommerfeld.pathetic.api.pathing.processing.NodeCostProcessor;
 import de.bsommerfeld.pathetic.api.pathing.processing.context.NodeEvaluationContext;
 import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
 import de.bsommerfeld.pathetic.bukkit.provider.BukkitNavigationPoint;
 import org.bukkit.Material;
 
-public class SimpleCostProcessor implements NodeCostCalculator {
+public class SimpleCostProcessor implements NodeCostProcessor {
 
   @Override
   public Cost calculateCostContribution(NodeEvaluationContext context) {

@@ -40,8 +40,8 @@ public final class PatheticPlugin extends JavaPlugin {
             .heuristicWeights(
                 HeuristicWeights.create(
                     1.0, 1.0, 1.0, 1.0, 0.0)) // custom weights for default paths
-            .nodeValidators(List.of(new SimpleValidationProcessor()))
-            .nodeCostCalculators(List.of(new SimpleCostProcessor()))
+            .nodeValidationProcessors(List.of(new SimpleValidationProcessor()))
+            .nodeCostProcessors(List.of(new SimpleCostProcessor()))
             .build();
 
     Pathfinder reusablePathfinder = factory.createPathfinder(configuration, initializer);
