@@ -19,7 +19,6 @@ import de.bsommerfeld.pathetic.engine.pathfinder.processing.SearchContextImpl;
 import de.bsommerfeld.pathetic.engine.result.PathImpl;
 import de.bsommerfeld.pathetic.engine.result.PathfinderResultImpl;
 import de.bsommerfeld.pathetic.engine.util.ErrorLogger;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -170,16 +169,11 @@ public abstract class AbstractPathfinder implements Pathfinder {
         new SearchContextImpl(
             start, target, this.pathfinderConfiguration, this.navigationPointProvider);
 
+    List<Processor> processors = getProcessors();
+
     try {
-      if (this.nodeValidationProcessors != null) {
-        for (Processor processor : this.nodeValidationProcessors) {
-          processor.initializeSearch(searchContext);
-        }
-      }
-      if (this.nodeCostProcessors != null) {
-        for (Processor processor : this.nodeCostProcessors) {
-          processor.initializeSearch(searchContext);
-        }
+      for (Processor processor : processors) {
+        processor.initializeSearch(searchContext);
       }
 
       Node startNode = createStartNode(start, target);
@@ -225,22 +219,11 @@ public abstract class AbstractPathfinder implements Pathfinder {
           PathState.FAILED, new PathImpl(start, target, EMPTY_PATH_POSITIONS));
     } finally {
       List<Throwable> finalizeErrors = new ArrayList<>();
-      if (this.nodeValidationProcessors != null) {
-        for (Processor processor : this.nodeValidationProcessors) {
-          try {
-            processor.finalizeSearch(searchContext);
-          } catch (Exception e) {
-            finalizeErrors.add(e);
-          }
-        }
-      }
-      if (this.nodeCostProcessors != null) {
-        for (Processor processor : this.nodeCostProcessors) {
-          try {
-            processor.finalizeSearch(searchContext);
-          } catch (Exception e) {
-            finalizeErrors.add(e);
-          }
+      for (Processor processor : processors) {
+        try {
+          processor.finalizeSearch(searchContext);
+        } catch (Exception e) {
+          finalizeErrors.add(e);
         }
       }
       if (!finalizeErrors.isEmpty()) {
@@ -248,6 +231,22 @@ public abstract class AbstractPathfinder implements Pathfinder {
       }
       performAlgorithmCleanup();
     }
+  }
+
+  /**
+   * Retrieves a combined list of all applicable processors for pathfinding. Combines processors
+   * from both node validation and node cost categories, if available.
+   *
+   * @return A list of {@link Processor} instances that will participate in the pathfinding
+   *     operation. The list can be empty if no processors are configured.
+   */
+  private List<Processor> getProcessors() {
+    List<Processor> processors = new ArrayList<>();
+    if (nodeValidationProcessors != null && !nodeValidationProcessors.isEmpty())
+      processors.addAll(nodeValidationProcessors);
+    if (nodeCostProcessors != null && !nodeCostProcessors.isEmpty())
+      processors.addAll(nodeCostProcessors);
+    return processors;
   }
 
   private PathfinderResult createAbortedResult(Node fallbackNode) {
@@ -344,8 +343,9 @@ public abstract class AbstractPathfinder implements Pathfinder {
   }
 
   /**
-   * Marks the given node as expanded (i.e., added to the "closed set").
-   * Subclasses should implement this to update their specific closed set mechanism.
+   * Marks the given node as expanded (i.e., added to the "closed set"). Subclasses should implement
+   * this to update their specific closed set mechanism.
+   *
    * @param node The node that has been taken from the open set and is being expanded.
    */
   protected abstract void markNodeAsExpanded(Node node);
