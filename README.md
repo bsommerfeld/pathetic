@@ -22,3 +22,6 @@ Special thanks to [@Ollie](https://github.com/olijeffers0n), the co-founder of p
 </a>
 </p>
 
+## Powered by
+[![JetBrains logo.](https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg)](https://jb.gg/OpenSource)
+
