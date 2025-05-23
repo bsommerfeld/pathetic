@@ -10,10 +10,10 @@ import de.bsommerfeld.pathetic.bukkit.initializer.BukkitPathfinderInitializer;
 import de.bsommerfeld.pathetic.bukkit.provider.LoadingNavigationPointProvider;
 import de.bsommerfeld.pathetic.engine.factory.AStarPathfinderFactory;
 import de.bsommerfeld.pathetic.example.command.PatheticCommand;
-import de.bsommerfeld.pathetic.example.processor.SimpleTraversableProcessor;
-import org.bukkit.plugin.java.JavaPlugin;
-
+import de.bsommerfeld.pathetic.example.processor.SimpleCostProcessor;
+import de.bsommerfeld.pathetic.example.processor.SimpleValidationProcessor;
 import java.util.List;
+import org.bukkit.plugin.java.JavaPlugin;
 
 public final class PatheticPlugin extends JavaPlugin {
 
@@ -40,7 +40,8 @@ public final class PatheticPlugin extends JavaPlugin {
             .heuristicWeights(
                 HeuristicWeights.create(
                     1.0, 1.0, 1.0, 1.0, 0.0)) // custom weights for default paths
-            .nodeValidators(List.of(new SimpleTraversableProcessor()))
+            .nodeValidators(List.of(new SimpleValidationProcessor()))
+            .nodeCostCalculators(List.of(new SimpleCostProcessor()))
             .build();
 
     Pathfinder reusablePathfinder = factory.createPathfinder(configuration, initializer);
