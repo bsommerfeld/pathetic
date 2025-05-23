@@ -6,7 +6,6 @@ import de.bsommerfeld.pathetic.api.pathing.processing.NodeCostCalculator;
 import de.bsommerfeld.pathetic.api.pathing.processing.NodeValidator;
 import de.bsommerfeld.pathetic.api.pathing.processing.context.NodeEvaluationContext;
 import de.bsommerfeld.pathetic.api.pathing.processing.context.SearchContext;
-import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.api.wrapper.PathVector;
 import de.bsommerfeld.pathetic.engine.Node;
@@ -15,12 +14,7 @@ import de.bsommerfeld.pathetic.engine.pathfinder.processing.NodeEvaluationContex
 import de.bsommerfeld.pathetic.engine.util.ExpiringHashMap;
 import de.bsommerfeld.pathetic.engine.util.GridRegionData;
 import de.bsommerfeld.pathetic.engine.util.Tuple3;
-
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
 import org.jheaps.tree.FibonacciHeap;
 
 /**
@@ -60,25 +54,27 @@ public class AStarPathfinder extends AbstractPathfinder {
       PathPosition neighborPosition = currentNode.getPosition().add(offset);
 
       GridRegionData regionData = getOrCreateRegionData(neighborPosition);
-      boolean alreadyExpanded = regionData.getBloomFilter().mightContain(neighborPosition) &&
-        regionData.getRegionalExaminedPositions().contains(neighborPosition);
+      boolean alreadyExpanded =
+          regionData.getBloomFilter().mightContain(neighborPosition)
+              && regionData.getRegionalExaminedPositions().contains(neighborPosition);
 
       if (alreadyExpanded) {
-        // TODO: G-cost comparison for re-opening if this path is cheaper instead of just invalidating.
+        // TODO: G-cost comparison for re-opening if this path is cheaper instead of just
+        // invalidating.
         continue;
       }
 
       Node neighborNode =
-        new Node(
-          neighborPosition,
-          requestStart,
-          requestTarget,
-          pathfinderConfiguration.getHeuristicWeights(),
-          currentNode.getDepth() + 1);
+          new Node(
+              neighborPosition,
+              requestStart,
+              requestTarget,
+              pathfinderConfiguration.getHeuristicWeights(),
+              currentNode.getDepth() + 1);
       neighborNode.setParent(currentNode);
 
       NodeEvaluationContext nodeEvalContext =
-        new NodeEvaluationContextImpl(searchContext, neighborNode, currentNode);
+          new NodeEvaluationContextImpl(searchContext, neighborNode, currentNode);
 
       boolean isValidByCustomProcessors = true;
       if (this.nodeValidators != null && !this.nodeValidators.isEmpty()) {
@@ -100,6 +96,7 @@ public class AStarPathfinder extends AbstractPathfinder {
       if (this.nodeCostCalculators != null && !this.nodeCostCalculators.isEmpty()) {
         for (NodeCostCalculator costCalculator : this.nodeCostCalculators) {
           Cost contribution = costCalculator.calculateCostContribution(nodeEvalContext);
+          if (contribution == null) contribution = Cost.ZERO;
           accumulatedContributions += contribution.getValue();
         }
       }
