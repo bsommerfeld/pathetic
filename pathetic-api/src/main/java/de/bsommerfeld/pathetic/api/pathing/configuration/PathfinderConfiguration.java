@@ -1,5 +1,6 @@
 package de.bsommerfeld.pathetic.api.pathing.configuration;
 
+import de.bsommerfeld.pathetic.api.pathing.Offset;
 import de.bsommerfeld.pathetic.api.pathing.processing.NodeCostProcessor;
 import de.bsommerfeld.pathetic.api.pathing.processing.NodeValidationProcessor;
 import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
@@ -81,8 +82,8 @@ public class PathfinderConfiguration {
   private final HeuristicWeights heuristicWeights;
 
   /**
-   * A list of {@link NodeValidationProcessor}s to be used in the pathfinding pipeline. May be null or empty
-   * if no validators are configured.
+   * A list of {@link NodeValidationProcessor}s to be used in the pathfinding pipeline. May be null
+   * or empty if no validators are configured.
    */
   private final List<NodeValidationProcessor> nodeValidationProcessors;
 
@@ -91,6 +92,18 @@ public class PathfinderConfiguration {
    * empty if no calculators are configured.
    */
   private final List<NodeCostProcessor> nodeCostProcessors;
+
+  /**
+   * Defines the offset configuration to be used in pathfinding logic.
+   *
+   * <p>This field determines the set of directional offsets applicable for navigation calculations,
+   * based on the {@link Offset} enumeration. The offset can define movement in vertical,
+   * horizontal, diagonal directions, or a combination of multiple offset types.
+   *
+   * <p>It plays a critical role in determining the valid movement vectors that can be used when
+   * finding possible paths.
+   */
+  private final Offset offset;
 
   private PathfinderConfiguration(
       int maxIterations,
@@ -101,7 +114,8 @@ public class PathfinderConfiguration {
       NavigationPointProvider provider,
       HeuristicWeights heuristicWeights,
       List<NodeValidationProcessor> nodeValidationProcessors,
-      List<NodeCostProcessor> nodeCostProcessors) {
+      List<NodeCostProcessor> nodeCostProcessors,
+      Offset offset) {
     this.maxIterations = maxIterations;
     this.maxLength = maxLength;
     this.async = async;
@@ -111,6 +125,7 @@ public class PathfinderConfiguration {
     this.heuristicWeights = heuristicWeights;
     this.nodeValidationProcessors = Collections.unmodifiableList(nodeValidationProcessors);
     this.nodeCostProcessors = Collections.unmodifiableList(nodeCostProcessors);
+    this.offset = offset;
   }
 
   /**
@@ -133,6 +148,7 @@ public class PathfinderConfiguration {
         .heuristicWeights(pathfinderConfiguration.heuristicWeights)
         .nodeValidationProcessors(pathfinderConfiguration.nodeValidationProcessors)
         .nodeCostProcessors(pathfinderConfiguration.nodeCostProcessors)
+        .offset(pathfinderConfiguration.offset)
         .build();
   }
 
@@ -176,6 +192,10 @@ public class PathfinderConfiguration {
     return nodeValidationProcessors;
   }
 
+  public Offset getOffset() {
+    return offset;
+  }
+
   @Override
   public String toString() {
     return "PathfinderConfiguration{"
@@ -197,41 +217,40 @@ public class PathfinderConfiguration {
         + nodeValidationProcessors
         + ", nodeCostProcessors="
         + nodeCostProcessors
+        + ", offset="
+        + offset
         + '}';
   }
 
-  public boolean equals(final Object o) {
-    if (o == this) return true;
-    if (!(o instanceof PathfinderConfiguration)) return false;
-    final PathfinderConfiguration other = (PathfinderConfiguration) o;
-    if (!other.canEqual(this)) return false;
-    if (this.getMaxIterations() != other.getMaxIterations()) return false;
-    if (this.getMaxLength() != other.getMaxLength()) return false;
-    if (this.isAsync() != other.isAsync()) return false;
-    if (this.isFallback() != other.isFallback()) return false;
-    if (this.getProvider() == null
-        ? other.getProvider() != null
-        : !this.getProvider().equals(other.getProvider())) return false;
-    final Object this$heuristicWeights = this.getHeuristicWeights();
-    final Object other$heuristicWeights = other.getHeuristicWeights();
-    return Objects.equals(this$heuristicWeights, other$heuristicWeights);
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    PathfinderConfiguration that = (PathfinderConfiguration) o;
+    return maxIterations == that.maxIterations
+        && maxLength == that.maxLength
+        && async == that.async
+        && fallback == that.fallback
+        && negativeCostsAllowed == that.negativeCostsAllowed
+        && Objects.equals(provider, that.provider)
+        && Objects.equals(heuristicWeights, that.heuristicWeights)
+        && Objects.equals(nodeValidationProcessors, that.nodeValidationProcessors)
+        && Objects.equals(nodeCostProcessors, that.nodeCostProcessors)
+        && offset == that.offset;
   }
 
-  protected boolean canEqual(final Object other) {
-    return other instanceof PathfinderConfiguration;
-  }
-
+  @Override
   public int hashCode() {
-    final int PRIME = 59;
-    int result = 1;
-    result = result * PRIME + this.getMaxIterations();
-    result = result * PRIME + this.getMaxLength();
-    result = result * PRIME + (this.isAsync() ? 79 : 97);
-    result = result * PRIME + (this.isFallback() ? 79 : 97);
-    result = result * PRIME + (this.getProvider() == null ? 43 : this.getProvider().hashCode());
-    final Object $heuristicWeights = this.getHeuristicWeights();
-    result = result * PRIME + ($heuristicWeights == null ? 43 : $heuristicWeights.hashCode());
-    return result;
+    return Objects.hash(
+        maxIterations,
+        maxLength,
+        async,
+        fallback,
+        negativeCostsAllowed,
+        provider,
+        heuristicWeights,
+        nodeValidationProcessors,
+        nodeCostProcessors,
+        offset);
   }
 
   public static class PathfinderConfigurationBuilder {
@@ -244,6 +263,7 @@ public class PathfinderConfiguration {
     private HeuristicWeights heuristicWeights = HeuristicWeights.NATURAL_PATH_WEIGHTS;
     private List<NodeValidationProcessor> nodeValidationProcessors = Collections.emptyList();
     private List<NodeCostProcessor> nodeCostProcessors = Collections.emptyList();
+    private Offset offset = Offset.VERTICAL_AND_HORIZONTAL;
 
     PathfinderConfigurationBuilder() {}
 
@@ -298,6 +318,11 @@ public class PathfinderConfiguration {
       return this;
     }
 
+    public PathfinderConfiguration.PathfinderConfigurationBuilder offset(Offset offset) {
+      this.offset = Objects.requireNonNull(offset);
+      return this;
+    }
+
     public PathfinderConfiguration build() {
       return new PathfinderConfiguration(
           this.maxIterations,
@@ -308,7 +333,8 @@ public class PathfinderConfiguration {
           this.provider,
           this.heuristicWeights,
           this.nodeValidationProcessors,
-          this.nodeCostProcessors);
+          this.nodeCostProcessors,
+          this.offset);
     }
 
     public String toString() {
@@ -330,7 +356,40 @@ public class PathfinderConfiguration {
           + ", nodeValidationProcessors="
           + this.nodeValidationProcessors
           + ", nodeCostProcessors="
-          + this.nodeCostProcessors;
+          + this.nodeCostProcessors
+          + ", offset="
+          + this.offset;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (o == null || getClass() != o.getClass()) return false;
+      PathfinderConfigurationBuilder that = (PathfinderConfigurationBuilder) o;
+      return maxIterations == that.maxIterations
+          && maxLength == that.maxLength
+          && async == that.async
+          && fallback == that.fallback
+          && negativeCostsAllowed == that.negativeCostsAllowed
+          && Objects.equals(provider, that.provider)
+          && Objects.equals(heuristicWeights, that.heuristicWeights)
+          && Objects.equals(nodeValidationProcessors, that.nodeValidationProcessors)
+          && Objects.equals(nodeCostProcessors, that.nodeCostProcessors)
+          && offset == that.offset;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(
+          maxIterations,
+          maxLength,
+          async,
+          fallback,
+          negativeCostsAllowed,
+          provider,
+          heuristicWeights,
+          nodeValidationProcessors,
+          nodeCostProcessors,
+          offset);
     }
   }
 }

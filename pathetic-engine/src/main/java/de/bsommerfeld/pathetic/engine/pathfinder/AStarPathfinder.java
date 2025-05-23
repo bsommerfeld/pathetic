@@ -9,7 +9,7 @@ import de.bsommerfeld.pathetic.api.pathing.processing.context.SearchContext;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.api.wrapper.PathVector;
 import de.bsommerfeld.pathetic.engine.Node;
-import de.bsommerfeld.pathetic.engine.Offset;
+import de.bsommerfeld.pathetic.api.pathing.Offset;
 import de.bsommerfeld.pathetic.engine.pathfinder.processing.NodeEvaluationContextImpl;
 import de.bsommerfeld.pathetic.engine.util.ExpiringHashMap;
 import de.bsommerfeld.pathetic.engine.util.GridRegionData;
@@ -50,7 +50,7 @@ public class AStarPathfinder extends AbstractPathfinder {
       FibonacciHeap<Double, Node> openSet,
       SearchContext searchContext) {
 
-    for (PathVector offset : Offset.VERTICAL_AND_HORIZONTAL.getVectors()) {
+    for (PathVector offset : pathfinderConfiguration.getOffset().getVectors()) {
       PathPosition neighborPosition = currentNode.getPosition().add(offset);
 
       GridRegionData regionData = getOrCreateRegionData(neighborPosition);

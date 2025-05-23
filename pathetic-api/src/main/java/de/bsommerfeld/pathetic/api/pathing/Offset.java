@@ -1,4 +1,4 @@
-package de.bsommerfeld.pathetic.engine;
+package de.bsommerfeld.pathetic.api.pathing;
 
 import de.bsommerfeld.pathetic.api.wrapper.PathVector;
 import java.util.stream.Stream;
