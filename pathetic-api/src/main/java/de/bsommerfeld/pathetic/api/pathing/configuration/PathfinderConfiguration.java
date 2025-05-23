@@ -242,8 +242,8 @@ public class PathfinderConfiguration {
     private boolean negativeCostsAllowed = false;
     private NavigationPointProvider provider;
     private HeuristicWeights heuristicWeights = HeuristicWeights.NATURAL_PATH_WEIGHTS;
-    private List<NodeValidationProcessor> nodeValidationProcessors;
-    private List<NodeCostProcessor> nodeCostProcessors;
+    private List<NodeValidationProcessor> nodeValidationProcessors = Collections.emptyList();
+    private List<NodeCostProcessor> nodeCostProcessors = Collections.emptyList();
 
     PathfinderConfigurationBuilder() {}
 
@@ -276,38 +276,29 @@ public class PathfinderConfiguration {
 
     public PathfinderConfiguration.PathfinderConfigurationBuilder provider(
         NavigationPointProvider provider) {
-      this.provider = provider;
+      this.provider = Objects.requireNonNull(provider);
       return this;
     }
 
     public PathfinderConfiguration.PathfinderConfigurationBuilder heuristicWeights(
         HeuristicWeights heuristicWeights) {
-      this.heuristicWeights = heuristicWeights;
+      this.heuristicWeights = Objects.requireNonNull(heuristicWeights);
       return this;
     }
 
     public PathfinderConfiguration.PathfinderConfigurationBuilder nodeValidationProcessors(
         List<NodeValidationProcessor> nodeValidationProcessors) {
-      this.nodeValidationProcessors = nodeValidationProcessors;
+      this.nodeValidationProcessors = Objects.requireNonNull(nodeValidationProcessors);
       return this;
     }
 
     public PathfinderConfiguration.PathfinderConfigurationBuilder nodeCostProcessors(
         List<NodeCostProcessor> nodeCostProcessors) {
-      this.nodeCostProcessors = nodeCostProcessors;
+      this.nodeCostProcessors = Objects.requireNonNull(nodeCostProcessors);
       return this;
     }
 
     public PathfinderConfiguration build() {
-      if (provider == null) {
-        throw new IllegalStateException("NavigationPointProvider cannot be null.");
-      }
-      if (nodeValidationProcessors == null) {
-        nodeValidationProcessors = Collections.emptyList();
-      }
-      if (nodeCostProcessors == null) {
-        nodeCostProcessors = Collections.emptyList();
-      }
       return new PathfinderConfiguration(
           this.maxIterations,
           this.maxLength,

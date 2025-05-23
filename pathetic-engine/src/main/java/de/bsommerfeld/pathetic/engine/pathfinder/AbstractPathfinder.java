@@ -83,7 +83,8 @@ public abstract class AbstractPathfinder implements Pathfinder {
     this.navigationPointProvider =
         Objects.requireNonNull(
             pathfinderConfiguration.getProvider(),
-            "NavigationPointProvider from configuration must not be null");
+            "NavigationPointProvider from configuration has to be set.");
+
     this.nodeValidationProcessors = pathfinderConfiguration.getNodeValidationProcessors();
     this.nodeCostProcessors = pathfinderConfiguration.getNodeCostProcessors();
   }
