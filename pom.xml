@@ -18,30 +18,7 @@
 
     <modules>
         <module>pathetic-api</module>
-        <module>pathetic-bukkit</module>
         <module>pathetic-engine</module>
-        <module>pathetic-bukkit/pathetic-example</module>
-        <module>pathetic-bukkit/pathetic-provider</module>
-        <module>pathetic-bukkit/pathetic-provider/paper</module>
-        <module>pathetic-bukkit/pathetic-provider/spigot</module>
-        <module>pathetic-bukkit/pathetic-provider/spigot/v1_8</module>
-        <module>pathetic-bukkit/pathetic-provider/spigot/v1_12</module>
-        <module>pathetic-bukkit/pathetic-provider/spigot/v1_15</module>
-        <module>pathetic-bukkit/pathetic-provider/spigot/v1_16</module>
-        <module>pathetic-bukkit/pathetic-provider/spigot/v1_17</module>
-        <module>pathetic-bukkit/pathetic-provider/spigot/v1_18</module>
-        <module>pathetic-bukkit/pathetic-provider/spigot/v1_18_R2</module>
-        <module>pathetic-bukkit/pathetic-provider/spigot/v1_19_R2</module>
-        <module>pathetic-bukkit/pathetic-provider/spigot/v1_19_R3</module>
-        <module>pathetic-bukkit/pathetic-provider/spigot/v1_20_R1</module>
-        <module>pathetic-bukkit/pathetic-provider/spigot/v1_20_R2</module>
-        <module>pathetic-bukkit/pathetic-provider/spigot/v1_20_R3</module>
-        <module>pathetic-bukkit/pathetic-provider/spigot/v1_20_R4</module>
-        <module>pathetic-bukkit/pathetic-provider/spigot/v1_21_R1</module>
-        <module>pathetic-bukkit/pathetic-provider/spigot/v1_21_R2</module>
-        <module>pathetic-bukkit/pathetic-provider/spigot/v1_21_R3</module>
-        <module>pathetic-bukkit/pathetic-provider/resolver</module>
-        <module>pathetic-bukkit/pathetic-provider/spigot/v1_21_R4</module>
     </modules>
 
     <reporting>
