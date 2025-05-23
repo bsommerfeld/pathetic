@@ -4,6 +4,7 @@ import com.google.common.collect.Iterables;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -94,9 +95,12 @@ public class PathImpl implements Path {
     try {
       validateEpsilon(epsilon);
 
-      Set<PathPosition> simplifiedPositions = Stream.of(start, end).collect(Collectors.toSet());
+      Set<PathPosition> simplifiedPositions = new LinkedHashSet<>();
+      simplifiedPositions.add(start);
+      simplifiedPositions.add(end);
 
       simplifiedPositions.addAll(filterPositionsByEpsilon(epsilon));
+
       return new PathImpl(start, end, simplifiedPositions);
     } catch (IllegalArgumentException e) {
       throw ErrorLogger.logFatalError("Invalid epsilon value for path simplification", e);
@@ -104,7 +108,7 @@ public class PathImpl implements Path {
   }
 
   private Set<PathPosition> filterPositionsByEpsilon(double epsilon) {
-    Set<PathPosition> filteredPositions = new HashSet<>();
+    Set<PathPosition> filteredPositions = new LinkedHashSet<>();
 
     int index = 0;
     for (PathPosition pathPosition : positions) {
