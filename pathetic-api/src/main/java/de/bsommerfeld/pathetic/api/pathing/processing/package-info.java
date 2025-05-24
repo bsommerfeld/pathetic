@@ -27,6 +27,6 @@
  * de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration}. The engine will
  * execute these processors in the provided order.
  *
- * @since 4.1.0 (or your new version)
+ * @since 5.0.0
  */
 package de.bsommerfeld.pathetic.api.pathing.processing;
