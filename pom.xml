@@ -9,11 +9,44 @@
     <packaging>pom</packaging>
     <version>${revision}</version>
 
+    <name>pathetic</name>
+    <description>
+        A highly configurable A* pathfinding library for Java, designed for extensibility through custom node validation
+        and cost processing. Ideal for 3D environments and game development.
+    </description>
+    <url>https://github.com/bsommerfeld/pathetic</url>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>bsommerfeld</id>
+            <name>Benjamin Sommerfeld</name>
+            <url>https://github.com/bsommerfeld</url>
+            <roles>
+                <role>Developer</role>
+            </roles>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:https://github.com/bsommerfeld/pathetic.git</connection>
+        <developerConnection>scm:git:https://github.com/bsommerfeld/pathetic.git</developerConnection>
+        <url>https://github.com/bsommerfeld/pathetic</url>
+    </scm>
+
     <properties>
         <revision>5.0.0</revision>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
 
     <modules>
