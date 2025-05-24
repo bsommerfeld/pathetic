@@ -42,6 +42,10 @@ public class AStarPathfinder extends AbstractPathfinder {
   }
 
   @Override
+  protected void initializeSearch() {
+  }
+
+  @Override
   protected void processSuccessors(
       PathPosition requestStart,
       PathPosition requestTarget,

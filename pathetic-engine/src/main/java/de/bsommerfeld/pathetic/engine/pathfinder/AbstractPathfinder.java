@@ -166,6 +166,8 @@ public abstract class AbstractPathfinder implements Pathfinder {
    * @return The result of the pathfinding operation.
    */
   private PathfinderResult executePathingAlgorithm(PathPosition start, PathPosition target) {
+    initializeSearch();
+
     SearchContext searchContext =
         new SearchContextImpl(
             start, target, this.pathfinderConfiguration, this.navigationPointProvider);
@@ -342,6 +344,14 @@ public abstract class AbstractPathfinder implements Pathfinder {
     Collections.reverse(path);
     return path;
   }
+
+  /**
+   * Prepares the algorithm-specific initial setup required before executing the pathfinding logic.
+   * This method is designed to be overridden by subclasses to implement their respective
+   * initialization logic, such as setting up data structures, precomputing values, or resetting
+   * internal state. It is called at the beginning of a pathfinding request.
+   */
+  protected abstract void initializeSearch();
 
   /**
    * Marks the given node as expanded (i.e., added to the "closed set"). Subclasses should implement
