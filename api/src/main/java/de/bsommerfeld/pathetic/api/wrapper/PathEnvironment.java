@@ -6,7 +6,10 @@ import java.util.UUID;
  * Represents the environment in which pathfinding operations take place. This class encapsulates
  * properties of the environment that can influence pathfinding, such as the environment's unique
  * identifier, name, and height constraints.
+ *
+ * @deprecated marked for removal
  */
+@Deprecated
 public final class PathEnvironment {
 
   private final UUID uuid;

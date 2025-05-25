@@ -3,7 +3,10 @@ package de.bsommerfeld.pathetic.api.wrapper;
 /**
  * Represents the height range of an environment with defined minimum and maximum bounds.
  * This class provides methods to access the minimum and maximum height values.
+ *
+ * @deprecated marked for removal
  */
+@Deprecated
 public class EnvironmentHeight {
 
   private final int minHeight;

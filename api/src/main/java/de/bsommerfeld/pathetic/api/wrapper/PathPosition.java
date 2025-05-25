@@ -4,9 +4,10 @@ import de.bsommerfeld.pathetic.api.util.NumberUtils;
 import java.util.Objects;
 
 /**
- * Represents a position within a {@link PathEnvironment}. This class encapsulates the coordinates
+ * Represents a position. This class encapsulates the coordinates
  * (x, y, z) of a point in the pathfinding environment and provides methods for manipulating and
  * comparing positions.
+ *
  */
 public class PathPosition implements Cloneable {
 
@@ -23,9 +24,24 @@ public class PathPosition implements Cloneable {
    * @param x The x-coordinate of the position.
    * @param y The y-coordinate of the position.
    * @param z The z-coordinate of the position.
+   * @deprecated marked for removal
    */
+  @Deprecated
   public PathPosition(PathEnvironment pathEnvironment, double x, double y, double z) {
     this.pathEnvironment = pathEnvironment;
+    this.x = x;
+    this.y = y;
+    this.z = z;
+  }
+
+  /**
+   * Constructs a {@code PathPosition} with the specified coordinates.
+   *
+   * @param x The x-coordinate of the position.
+   * @param y The y-coordinate of the position.
+   * @param z The z-coordinate of the position.
+   */
+  public PathPosition(double x, double y, double z) {
     this.x = x;
     this.y = y;
     this.z = z;
@@ -43,7 +59,7 @@ public class PathPosition implements Cloneable {
     double x = NumberUtils.interpolate(this.x, other.x, progress);
     double y = NumberUtils.interpolate(this.y, other.y, progress);
     double z = NumberUtils.interpolate(this.z, other.z, progress);
-    return new PathPosition(pathEnvironment, x, y, z);
+    return new PathPosition(x, y, z);
   }
 
   /**
@@ -120,36 +136,36 @@ public class PathPosition implements Cloneable {
   }
 
   /**
-   * Creates a new {@code PathPosition} with the same environment and coordinates as this one, but
-   * with the x-coordinate set to the given value.
+   * Creates a new {@code PathPosition} with the same coordinates as this one, but with the
+   * x-coordinate set to the given value.
    *
    * @param x The new x-coordinate.
    * @return A new {@code PathPosition} with the updated x-coordinate.
    */
   public PathPosition setX(double x) {
-    return new PathPosition(this.pathEnvironment, x, this.y, this.z);
+    return new PathPosition(x, this.y, this.z);
   }
 
   /**
-   * Creates a new {@code PathPosition} with the same environment and coordinates as this one, but
-   * with the y-coordinate set to the given value.
+   * Creates a new {@code PathPosition} with the same coordinates as this one, but with the
+   * y-coordinate set to the given value.
    *
    * @param y The new y-coordinate.
    * @return A new {@code PathPosition} with the updated y-coordinate.
    */
   public PathPosition setY(double y) {
-    return new PathPosition(this.pathEnvironment, this.x, y, this.z);
+    return new PathPosition(this.x, y, this.z);
   }
 
   /**
-   * Creates a new {@code PathPosition} with the same environment and coordinates as this one, but
-   * with the z-coordinate set to the given value.
+   * Creates a new {@code PathPosition} with the same coordinates as this one, but with the
+   * z-coordinate set to the given value.
    *
    * @param z The new z-coordinate.
    * @return A new {@code PathPosition} with the updated z-coordinate.
    */
   public PathPosition setZ(double z) {
-    return new PathPosition(this.pathEnvironment, this.x, this.y, z);
+    return new PathPosition(this.x, this.y, z);
   }
 
   /**
@@ -192,7 +208,7 @@ public class PathPosition implements Cloneable {
    * @return A new {@code PathPosition} with the added values.
    */
   public PathPosition add(final double x, final double y, final double z) {
-    return new PathPosition(this.pathEnvironment, this.x + x, this.y + y, this.z + z);
+    return new PathPosition(this.x + x, this.y + y, this.z + z);
   }
 
   /**
@@ -216,7 +232,7 @@ public class PathPosition implements Cloneable {
    * @return A new {@code PathPosition} with the subtracted values.
    */
   public PathPosition subtract(final double x, final double y, final double z) {
-    return new PathPosition(this.pathEnvironment, this.x - x, this.y - y, this.z - z);
+    return new PathPosition(this.x - x, this.y - y, this.z - z);
   }
 
   /**
@@ -240,28 +256,23 @@ public class PathPosition implements Cloneable {
   }
 
   /**
-   * Creates a new {@code PathPosition} with the same environment, but with the coordinates floored
-   * to the nearest integer values.
+   * Creates a new {@code PathPosition} with the coordinates floored to the nearest integer values.
    *
    * @return A new {@code PathPosition} with floored coordinates.
    */
   public PathPosition floor() {
-    return new PathPosition(
-        this.pathEnvironment, this.getFlooredX(), this.getFlooredY(), this.getFlooredZ());
+    return new PathPosition(this.getFlooredX(), this.getFlooredY(), this.getFlooredZ());
   }
 
   /**
-   * Creates a new {@code PathPosition} with the same environment, but with the coordinates set to
-   * the center of the block they are in.
+   * Creates a new {@code PathPosition} with the coordinates set to the center of the block they are
+   * in.
    *
    * @return A new {@code PathPosition} at the center of the block.
    */
   public PathPosition mid() {
     return new PathPosition(
-        this.pathEnvironment,
-        this.getFlooredX() + 0.5,
-        this.getFlooredY() + 0.5,
-        this.getFlooredZ() + 0.5);
+        this.getFlooredX() + 0.5, this.getFlooredY() + 0.5, this.getFlooredZ() + 0.5);
   }
 
   /**
@@ -271,8 +282,7 @@ public class PathPosition implements Cloneable {
    * @return A new {@code PathPosition} representing the midpoint.
    */
   public PathPosition midPoint(PathPosition end) {
-    return new PathPosition(
-        this.pathEnvironment, (this.x + end.x) / 2, (this.y + end.y) / 2, (this.z + end.z) / 2);
+    return new PathPosition((this.x + end.x) / 2, (this.y + end.y) / 2, (this.z + end.z) / 2);
   }
 
   @Override
@@ -299,8 +309,7 @@ public class PathPosition implements Cloneable {
     PathPosition that = (PathPosition) o;
     return x == that.x
         && y == that.y
-        && z == that.z
-        && Objects.equals(pathEnvironment, that.pathEnvironment);
+        && z == that.z;
   }
 
   @Override
@@ -313,6 +322,7 @@ public class PathPosition implements Cloneable {
    *
    * @return The {@link PathEnvironment} of this position.
    */
+  @Deprecated
   public PathEnvironment getPathEnvironment() {
     return this.pathEnvironment;
   }
