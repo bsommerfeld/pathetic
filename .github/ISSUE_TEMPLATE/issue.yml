@@ -1,5 +1,5 @@
-name: Server crash or Stacktrace
-description: Report server crashes or scary stacktraces
+name: Unexpected Behaviour
+description: Report unexpected behaviour
 body:
   - type: textarea
     attributes:
@@ -11,7 +11,7 @@ body:
         ```
         paste your stack trace or a paste.gg link here!
         ```
-      placeholder: Please don't remove the backticks; it makes your issue a lot harder to read!
+      placeholder: Please also provide any additional information, like the PathConfiguration used.
     validations:
       required: true
 
