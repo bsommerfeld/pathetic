@@ -136,7 +136,7 @@ resultFuture.thenAccept(result -> {
 
 ## Example Implementation
 
-For a practical implementation of Pathetic in a Minecraft environment, check out [pathetic-bukkit](https://github.com/bsommerfeld/pathetic-bukkit), which was the origin of this library.
+For a practical implementation of Pathetic, check out [pathetic-bukkit](https://github.com/bsommerfeld/pathetic-bukkit).
 
 ## Contributing
 
