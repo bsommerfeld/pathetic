@@ -16,7 +16,7 @@
     <img src="https://img.shields.io/badge/javadocs-online-blue" alt="Javadocs" />
   </a>
   <a href="https://discord.gg/zGx9BSzKfJ">
-    <img src="https://img.shields.io/discord/1234567890?color=7289DA&label=discord&logo=discord&logoColor=white" alt="Discord" />
+    <img src="https://img.shields.io/discord/999275610385948692?color=7289DA&label=discord&logo=discord&logoColor=white" alt="Discord" />
   </a>
 </p>
 
