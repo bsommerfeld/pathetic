@@ -17,7 +17,7 @@ jobs:
           distribution: 'adopt'
       - name: Generate Javadoc
         run: |
-          mvn javadoc:aggregate -pl :pathetic-api
+          mvn javadoc:aggregate -pl :api
         shell: bash
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4.3.4
@@ -25,5 +25,5 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           branch: javadoc
           clean: true
-          folder: pathetic-api/target/reports/apidocs
+          folder: api/target/reports/apidocs
           target-folder: docs

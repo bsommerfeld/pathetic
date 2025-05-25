@@ -10,6 +10,6 @@
         <version>${revision}</version>
     </parent>
 
-    <artifactId>pathetic-api</artifactId>
+    <artifactId>api</artifactId>
     <version>${revision}</version>
 </project>

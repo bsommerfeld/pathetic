@@ -26,13 +26,13 @@ To use the engine to bend it for your own purposes, you can use the following de
 
 <dependency>
 <groupId>de.bsommerfeld</groupId>
-<artifactId>pathetic-engine</artifactId>
+<artifactId>engine</artifactId>
 <version>VERSION</version>
 </dependency>
 
 <dependency>
 <groupId>de.bsommerfeld</groupId>
-<artifactId>pathetic-api</artifactId>
+<artifactId>api</artifactId>
 <version>VERSION</version>
 </dependency>
 ```
@@ -47,8 +47,8 @@ allprojects {
 }
 
 dependencies {
-    implementation 'de.bsommerfeld:pathetic-engine:VERSION'
-    implementation 'de.bsommerfeld:pathetic-api:VERSION'
+    implementation 'de.bsommerfeld:engine:VERSION'
+    implementation 'de.bsommerfeld:api:VERSION'
 }
 ```
 

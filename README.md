@@ -129,8 +129,8 @@ resultFuture.thenAccept(result -> {
 ## Documentation
 
 - [Javadocs](https://javadocs.pathetic.ollieee.xyz/)
-- [API Wiki](pathetic-api/pathetic-api-wiki.md)
-- [Engine Wiki](pathetic-engine/pathetic-engine-wiki.md)
+- [API Wiki](api/pathetic-api-wiki.md)
+- [Engine Wiki](engine/pathetic-engine-wiki.md)
 
 > **Coming Soon**: A comprehensive wiki will be built in the repository's GitHub Wiki section to provide more detailed documentation, tutorials, and examples.
 

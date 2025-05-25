@@ -50,8 +50,8 @@
     </properties>
 
     <modules>
-        <module>pathetic-api</module>
-        <module>pathetic-engine</module>
+        <module>api</module>
+        <module>engine</module>
     </modules>
 
     <reporting>
@@ -72,7 +72,7 @@
         <dependencies>
             <dependency>
                 <groupId>de.bsommerfeld</groupId>
-                <artifactId>pathetic-api</artifactId>
+                <artifactId>api</artifactId>
                 <version>${revision}</version>
                 <scope>provided</scope>
             </dependency>

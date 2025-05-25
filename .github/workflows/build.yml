@@ -59,10 +59,3 @@ jobs:
           git config --global user.email "no-reply@github.com"
           git config --global user.name "Github Actions"
           mvn clean package
-
-      - name: Upload Example Jar
-        if: fromJSON(steps.determine.outputs.result).action == 'jar'
-        uses: actions/upload-artifact@v4
-        with:
-          name: pathetic-${{ fromJSON(steps.determine.outputs.result).pr }}
-          path: pathetic-bukkit/pathetic-example/target/pathetic-example.jar

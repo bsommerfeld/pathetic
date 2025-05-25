@@ -9,7 +9,7 @@
         <version>${revision}</version>
     </parent>
 
-    <artifactId>pathetic-engine</artifactId>
+    <artifactId>engine</artifactId>
     <version>${revision}</version>
 
     <build>
@@ -148,7 +148,7 @@
         </dependency>
         <dependency>
             <groupId>de.bsommerfeld</groupId>
-            <artifactId>pathetic-api</artifactId>
+            <artifactId>api</artifactId>
             <version>${revision}</version>
             <scope>compile</scope>
         </dependency>
