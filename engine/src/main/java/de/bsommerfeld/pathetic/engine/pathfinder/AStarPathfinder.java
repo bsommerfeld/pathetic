@@ -14,7 +14,6 @@ import de.bsommerfeld.pathetic.engine.util.ExpiringHashMap;
 import de.bsommerfeld.pathetic.engine.util.GridRegionData;
 import de.bsommerfeld.pathetic.engine.util.Tuple3;
 import java.util.HashMap;
-import java.util.List; // For type hint on field if needed, but not directly used in this snippet
 import java.util.Map;
 import org.jheaps.AddressableHeap;
 import org.jheaps.tree.FibonacciHeap;
