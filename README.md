@@ -1,7 +1,6 @@
 # Pathetic
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/e99713a7-dd87-4b67-a86e-6b21e6ba1f91" width="100" alt="Pathetic Logo" />
   <h3>A high-performance pathfinding library for 3D environments</h3>
 </div>
 
