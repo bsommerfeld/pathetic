@@ -31,6 +31,10 @@ import org.jheaps.tree.FibonacciHeap;
  * <li>A closed set optimization using a grid-based approach with Bloom filters
  * (via {@link GridRegionData}) to quickly identify previously expanded nodes.</li>
  * </ul>
+ * <p>
+ * Thread-Safety: This implementation creates a new {@link PathfindingSession} for each
+ * pathfinding operation, ensuring thread-safety even when multiple pathfinding requests
+ * are executed concurrently.
  */
 public class AStarPathfinder extends AbstractPathfinder {
 
@@ -41,19 +45,10 @@ public class AStarPathfinder extends AbstractPathfinder {
   private static final int DEFAULT_GRID_CELL_SIZE = 12;
 
   /**
-   * Stores regional data for the closed set optimization.
-   * Keys are grid cell coordinates, values contain Bloom filters and sets of examined positions.
-   * Uses an {@link ExpiringHashMap} to manage memory for long-running applications.
+   * Thread-local storage for the current pathfinding session.
+   * This ensures that each pathfinding operation has its own isolated state.
    */
-  private final Map<Tuple3<Integer>, ExpiringHashMap.Entry<GridRegionData>> visitedRegionGrid =
-          new ExpiringHashMap<>();
-
-  /**
-   * Tracks heap handles for nodes currently in the open set, keyed by their {@link PathPosition}.
-   * This allows for efficient lookup and updates (e.g., {@code decreaseKey}) if a cheaper path
-   * to an already-open node is found.
-   */
-  private Map<PathPosition, AddressableHeap.Handle<Double, Node>> openSetEntries;
+  private final ThreadLocal<PathfindingSession> currentSession = new ThreadLocal<>();
 
   /**
    * Constructs an AStarPathfinder with the given configuration.
@@ -65,13 +60,12 @@ public class AStarPathfinder extends AbstractPathfinder {
   }
 
   /**
-   * Initializes data structures for a new search, primarily clearing and preparing
-   * the {@code openSetEntries} map.
+   * Initializes data structures for a new search by creating a new PathfindingSession.
+   * Each search gets its own isolated state to prevent race conditions.
    */
   @Override
   protected void initializeSearch() {
-    openSetEntries = new HashMap<>();
-    // visitedRegionGrid is managed by ExpiringHashMap or cleared in performAlgorithmCleanup
+    currentSession.set(new PathfindingSession());
   }
 
   /**
@@ -95,11 +89,16 @@ public class AStarPathfinder extends AbstractPathfinder {
           FibonacciHeap<Double, Node> openSet,
           SearchContext searchContext) {
 
+    PathfindingSession session = currentSession.get();
+    if (session == null) {
+      throw new IllegalStateException("PathfindingSession not initialized. Call initializeSearch() first.");
+    }
+
     for (PathVector offset : pathfinderConfiguration.getOffset().getVectors()) {
       PathPosition neighborPosition = currentNode.getPosition().add(offset);
 
       // 1. Check if the neighbor is already in the open set
-      AddressableHeap.Handle<Double, Node> existingHandle = openSetEntries.get(neighborPosition);
+      AddressableHeap.Handle<Double, Node> existingHandle = session.openSetEntries.get(neighborPosition);
       if (existingHandle != null) {
         Node existingNodeInHeap = existingHandle.getValue();
         NodeEvaluationContext nodeEvalContext =
@@ -116,7 +115,7 @@ public class AStarPathfinder extends AbstractPathfinder {
       }
 
       // 2. Check if the neighbor has already been expanded (in the closed set)
-      GridRegionData regionData = getOrCreateRegionData(neighborPosition);
+      GridRegionData regionData = session.getOrCreateRegionData(neighborPosition);
       boolean alreadyExpanded =
               regionData.getBloomFilter().mightContain(neighborPosition)
                       && regionData.getRegionalExaminedPositions().contains(neighborPosition);
@@ -161,7 +160,7 @@ public class AStarPathfinder extends AbstractPathfinder {
 
       AddressableHeap.Handle<Double, Node> newHandle =
               openSet.insert(neighborNode.getFCost(), neighborNode);
-      openSetEntries.put(neighborPosition, newHandle);
+      session.openSetEntries.put(neighborPosition, newHandle);
     }
   }
 
@@ -196,29 +195,6 @@ public class AStarPathfinder extends AbstractPathfinder {
     return nodeEvalContext.getPathCostToPreviousPosition() + finalTransitionCost;
   }
 
-
-  /**
-   * Retrieves or creates {@link GridRegionData} for the grid cell corresponding to the given position.
-   * This is part of the closed set optimization.
-   *
-   * @param position The {@link PathPosition}.
-   * @return The {@link GridRegionData} for that region.
-   */
-  private GridRegionData getOrCreateRegionData(PathPosition position) {
-    int gridX = position.getFlooredX() / DEFAULT_GRID_CELL_SIZE;
-    int gridY = position.getFlooredY() / DEFAULT_GRID_CELL_SIZE;
-    int gridZ = position.getFlooredZ() / DEFAULT_GRID_CELL_SIZE;
-
-    // Using Tuple3 as a key for the grid cell coordinates
-    Tuple3<Integer> gridKey = new Tuple3<>(gridX, gridY, gridZ);
-
-    ExpiringHashMap.Entry<GridRegionData> entry =
-            visitedRegionGrid.computeIfAbsent(
-                    gridKey,
-                    k -> new ExpiringHashMap.Entry<>(new GridRegionData()));
-    return entry.getValue();
-  }
-
   /**
    * Marks the given node as expanded (i.e., moved to the "closed set").
    * This involves removing it from the {@code openSetEntries} tracker and adding its
@@ -228,13 +204,18 @@ public class AStarPathfinder extends AbstractPathfinder {
    */
   @Override
   protected void markNodeAsExpanded(Node node) {
+    PathfindingSession session = currentSession.get();
+    if (session == null) {
+      throw new IllegalStateException("PathfindingSession not initialized. Call initializeSearch() first.");
+    }
+
     PathPosition position = node.getPosition();
 
     // Remove from open set tracking
-    openSetEntries.remove(position);
+    session.openSetEntries.remove(position);
 
     // Add to closed set (visitedRegionGrid)
-    GridRegionData regionData = getOrCreateRegionData(position);
+    GridRegionData regionData = session.getOrCreateRegionData(position);
     if (!regionData.getBloomFilter().mightContain(position)) {
       regionData.getBloomFilter().put(position);
     }
@@ -243,13 +224,48 @@ public class AStarPathfinder extends AbstractPathfinder {
 
   /**
    * Performs cleanup after a pathfinding search is complete.
-   * This primarily involves clearing the {@code visitedRegionGrid} and {@code openSetEntries} map.
+   * This clears the thread-local session to prevent memory leaks.
    */
   @Override
   protected void performAlgorithmCleanup() {
-    visitedRegionGrid.clear(); // Clear the closed set regions
-    if (openSetEntries != null) { // Guard against null if initializeSearch wasn't called
-      openSetEntries.clear();
+    currentSession.remove(); // Clear the thread-local session
+  }
+
+  /**
+   * Encapsulates all state required for a single pathfinding operation.
+   * This ensures thread-safety by giving each pathfinding operation its own isolated state.
+   */
+  private static class PathfindingSession {
+
+    /**
+     * Stores regional data for the closed set optimization.
+     * Keys are grid cell coordinates, values contain Bloom filters and sets of examined positions.
+     */
+    private final Map<Tuple3<Integer>, GridRegionData> visitedRegionGrid = new HashMap<>();
+
+    /**
+     * Tracks heap handles for nodes currently in the open set, keyed by their {@link PathPosition}.
+     * This allows for efficient lookup and updates (e.g., {@code decreaseKey}) if a cheaper path
+     * to an already-open node is found.
+     */
+    private final Map<PathPosition, AddressableHeap.Handle<Double, Node>> openSetEntries = new HashMap<>();
+
+    /**
+     * Retrieves or creates {@link GridRegionData} for the grid cell corresponding to the given position.
+     * This is part of the closed set optimization.
+     *
+     * @param position The {@link PathPosition}.
+     * @return The {@link GridRegionData} for that region.
+     */
+    private GridRegionData getOrCreateRegionData(PathPosition position) {
+      int gridX = position.getFlooredX() / DEFAULT_GRID_CELL_SIZE;
+      int gridY = position.getFlooredY() / DEFAULT_GRID_CELL_SIZE;
+      int gridZ = position.getFlooredZ() / DEFAULT_GRID_CELL_SIZE;
+
+      // Using Tuple3 as a key for the grid cell coordinates
+      Tuple3<Integer> gridKey = new Tuple3<>(gridX, gridY, gridZ);
+
+      return visitedRegionGrid.computeIfAbsent(gridKey, k -> new GridRegionData());
     }
   }
 }

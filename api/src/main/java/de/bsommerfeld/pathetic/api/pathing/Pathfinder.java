@@ -21,10 +21,18 @@ public interface Pathfinder {
   CompletionStage<PathfinderResult> findPath(PathPosition start, PathPosition target);
 
   /**
-   * Aborts the running pathfinding process.
+   * Requests all currently running pathfinding operations of this pathfinder instance to abort.
+   * The abortion is cooperative and might not be immediate.
    *
-   * <p>In this context aborts means that the pathfinding process will be stopped and the result
-   * will be {@link PathState#ABORTED}.
+   * <p><strong>Scope of Abortion:</strong> This method affects all pathfinding operations that are
+   * currently being executed by this specific pathfinder instance. If you need to abort individual
+   * operations independently, consider using separate pathfinder instances for each operation.
+   *
+   * <p><strong>Cooperative Abortion:</strong> The actual termination depends on the pathfinding
+   * algorithm's main loop checking the abort flag. The operation will complete with
+   * {@link de.bsommerfeld.pathetic.api.pathing.result.PathState#ABORTED} as soon as possible.
+   *
+   * @see de.bsommerfeld.pathetic.api.pathing.result.PathState#ABORTED
    */
   void abort();
 

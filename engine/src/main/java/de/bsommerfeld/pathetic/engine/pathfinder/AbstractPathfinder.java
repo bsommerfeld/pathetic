@@ -67,7 +67,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
                 }));
   }
 
-  private final Set<PathfinderHook> pathfinderHooks = new HashSet<>();
+  private final Set<PathfinderHook> pathfinderHooks = Collections.synchronizedSet(new HashSet<>());
 
   protected final PathfinderConfiguration pathfinderConfiguration;
   protected final NavigationPointProvider navigationPointProvider;
