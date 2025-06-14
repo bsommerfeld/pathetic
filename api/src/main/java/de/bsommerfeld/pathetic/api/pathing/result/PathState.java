@@ -1,15 +1,13 @@
 package de.bsommerfeld.pathetic.api.pathing.result;
 
 /**
- * The state of a finished pathfinding process.
- * Finished does not mean successful, it just means that the pathfinding process has ended.
+ * The state of a finished pathfinding process. Finished does not mean successful, it just means
+ * that the pathfinding process has ended.
  */
 public enum PathState {
 
   /** The pathfinding process was aborted */
   ABORTED,
-  /** Pathing failed to start, typically due to an invalid start or end position. */
-  INITIALLY_FAILED,
   /** The Path was successfully found */
   FOUND,
   /**

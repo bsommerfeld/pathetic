@@ -93,12 +93,6 @@ public abstract class AbstractPathfinder implements Pathfinder {
       PathPosition start, PathPosition target, EnvironmentContext environmentContext) {
     Objects.requireNonNull(start, "start PathPosition must not be null");
     Objects.requireNonNull(target, "target PathPosition must not be null");
-
-    if (shouldSkipPathing(start, target)) {
-      return CompletableFuture.completedFuture(
-          new PathfinderResultImpl(
-              PathState.INITIALLY_FAILED, new PathImpl(start, target, EMPTY_PATH_POSITIONS)));
-    }
     this.abortRequested = false; // Reset abort flag for new search
     return initiatePathing(start, target, environmentContext);
   }
@@ -117,26 +111,6 @@ public abstract class AbstractPathfinder implements Pathfinder {
     if (hook != null) {
       this.pathfinderHooks.add(hook);
     }
-  }
-
-  /**
-   * Determines if the pathfinding process should be skipped based on initial start and target
-   * conditions.
-   *
-   * @param start The start position.
-   * @param target The target position.
-   * @return {@code true} if pathfinding should be skipped.
-   */
-  @Deprecated
-  private boolean shouldSkipPathing(PathPosition start, PathPosition target) {
-    // Pathing doesn't make sense if start or target environments are different,
-    // or if start and target are effectively in the same block/position.
-    return !isSameEnvironment(start, target) || start.isInSameBlock(target);
-  }
-
-  @Deprecated
-  private boolean isSameEnvironment(PathPosition start, PathPosition target) {
-    return start.getPathEnvironment().equals(target.getPathEnvironment());
   }
 
   private CompletionStage<PathfinderResult> initiatePathing(
