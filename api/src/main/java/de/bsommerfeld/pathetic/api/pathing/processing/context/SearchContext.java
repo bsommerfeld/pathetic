@@ -60,7 +60,5 @@ public interface SearchContext {
    * @return The EnvironmentContext instance associated with this search, or {@code null} if no
    *     context is available.
    */
-  default EnvironmentContext getEnvironmentContext() {
-    return null;
-  }
+  EnvironmentContext getEnvironmentContext();
 }
