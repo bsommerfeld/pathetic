@@ -2,6 +2,7 @@ de.bsommerfeld.pathetic.api.annotation
 de.bsommerfeld.pathetic.api.factory
 de.bsommerfeld.pathetic.api.pathing
 de.bsommerfeld.pathetic.api.pathing.configuration
+de.bsommerfeld.pathetic.api.pathing.context
 de.bsommerfeld.pathetic.api.pathing.hook
 de.bsommerfeld.pathetic.api.pathing.processing
 de.bsommerfeld.pathetic.api.pathing.processing.context
