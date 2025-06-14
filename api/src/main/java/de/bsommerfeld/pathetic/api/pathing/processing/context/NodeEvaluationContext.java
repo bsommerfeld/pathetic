@@ -1,9 +1,9 @@
 package de.bsommerfeld.pathetic.api.pathing.processing.context;
 
 import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration;
+import de.bsommerfeld.pathetic.api.pathing.context.EnvironmentContext;
 import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
-
 import java.util.Map;
 
 /**
@@ -112,5 +112,13 @@ public interface NodeEvaluationContext {
    */
   default PathPosition getTargetPathPosition() {
     return getSearchContext().getTargetPathPosition();
+  }
+
+  /**
+   * Convenience method to access the EnvironmentContext of the overall search. Delegates to {@link
+   * SearchContext#getEnvironmentContext()}.
+   */
+  default EnvironmentContext getEnvironmentContext() {
+    return getSearchContext().getEnvironmentContext();
   }
 }

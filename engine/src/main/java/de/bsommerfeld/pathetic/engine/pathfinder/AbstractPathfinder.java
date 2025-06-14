@@ -2,6 +2,7 @@ package de.bsommerfeld.pathetic.engine.pathfinder;
 
 import de.bsommerfeld.pathetic.api.pathing.Pathfinder;
 import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration;
+import de.bsommerfeld.pathetic.api.pathing.context.EnvironmentContext;
 import de.bsommerfeld.pathetic.api.pathing.hook.PathfinderHook;
 import de.bsommerfeld.pathetic.api.pathing.hook.PathfindingContext;
 import de.bsommerfeld.pathetic.api.pathing.processing.NodeCostProcessor;
@@ -67,13 +68,11 @@ public abstract class AbstractPathfinder implements Pathfinder {
                 }));
   }
 
-  private final Set<PathfinderHook> pathfinderHooks = Collections.synchronizedSet(new HashSet<>());
-
   protected final PathfinderConfiguration pathfinderConfiguration;
   protected final NavigationPointProvider navigationPointProvider;
   protected final List<NodeValidationProcessor> nodeValidationProcessors;
   protected final List<NodeCostProcessor> nodeCostProcessors;
-
+  private final Set<PathfinderHook> pathfinderHooks = Collections.synchronizedSet(new HashSet<>());
   private volatile boolean abortRequested = false;
 
   protected AbstractPathfinder(PathfinderConfiguration pathfinderConfiguration) {
@@ -90,7 +89,8 @@ public abstract class AbstractPathfinder implements Pathfinder {
   }
 
   @Override
-  public CompletionStage<PathfinderResult> findPath(PathPosition start, PathPosition target) {
+  public CompletionStage<PathfinderResult> findPath(
+      PathPosition start, PathPosition target, EnvironmentContext environmentContext) {
     Objects.requireNonNull(start, "start PathPosition must not be null");
     Objects.requireNonNull(target, "target PathPosition must not be null");
 
@@ -100,7 +100,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
               PathState.INITIALLY_FAILED, new PathImpl(start, target, EMPTY_PATH_POSITIONS)));
     }
     this.abortRequested = false; // Reset abort flag for new search
-    return initiatePathing(start, target);
+    return initiatePathing(start, target, environmentContext);
   }
 
   /**
@@ -127,30 +127,32 @@ public abstract class AbstractPathfinder implements Pathfinder {
    * @param target The target position.
    * @return {@code true} if pathfinding should be skipped.
    */
+  @Deprecated
   private boolean shouldSkipPathing(PathPosition start, PathPosition target) {
     // Pathing doesn't make sense if start or target environments are different,
     // or if start and target are effectively in the same block/position.
     return !isSameEnvironment(start, target) || start.isInSameBlock(target);
   }
 
+  @Deprecated
   private boolean isSameEnvironment(PathPosition start, PathPosition target) {
     return start.getPathEnvironment().equals(target.getPathEnvironment());
   }
 
   private CompletionStage<PathfinderResult> initiatePathing(
-      PathPosition start, PathPosition target) {
+      PathPosition start, PathPosition target, EnvironmentContext environmentContext) {
     final PathPosition effectiveStart = start.floor();
     final PathPosition effectiveTarget = target.floor();
 
     if (pathfinderConfiguration.isAsync()) {
       return CompletableFuture.supplyAsync(
-              () -> executePathingAlgorithm(effectiveStart, effectiveTarget),
+              () -> executePathingAlgorithm(effectiveStart, effectiveTarget, environmentContext),
               PATHING_EXECUTOR_SERVICE)
           .exceptionally(throwable -> handlePathingException(start, target, throwable));
     } else {
       try {
         return CompletableFuture.completedFuture(
-            executePathingAlgorithm(effectiveStart, effectiveTarget));
+            executePathingAlgorithm(effectiveStart, effectiveTarget, environmentContext));
       } catch (Exception e) {
         // Synchronous execution exceptions are wrapped to be consistent with async reporting
         return CompletableFuture.completedFuture(handlePathingException(start, target, e));
@@ -165,12 +167,17 @@ public abstract class AbstractPathfinder implements Pathfinder {
    * @param target The effective (e.g., floored) target position.
    * @return The result of the pathfinding operation.
    */
-  private PathfinderResult executePathingAlgorithm(PathPosition start, PathPosition target) {
+  private PathfinderResult executePathingAlgorithm(
+      PathPosition start, PathPosition target, EnvironmentContext environmentContext) {
     initializeSearch();
 
     SearchContext searchContext =
         new SearchContextImpl(
-            start, target, this.pathfinderConfiguration, this.navigationPointProvider);
+            start,
+            target,
+            this.pathfinderConfiguration,
+            this.navigationPointProvider,
+            environmentContext);
 
     List<Processor> processors = getProcessors();
 

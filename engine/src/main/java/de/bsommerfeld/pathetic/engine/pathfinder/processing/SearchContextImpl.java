@@ -1,10 +1,10 @@
 package de.bsommerfeld.pathetic.engine.pathfinder.processing;
 
 import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration;
+import de.bsommerfeld.pathetic.api.pathing.context.EnvironmentContext;
 import de.bsommerfeld.pathetic.api.pathing.processing.context.SearchContext;
 import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -16,18 +16,25 @@ public class SearchContextImpl implements SearchContext {
   private final PathfinderConfiguration pathfinderConfiguration;
   private final NavigationPointProvider navigationPointProvider;
   private final Map<String, Object> sharedData;
+  private final EnvironmentContext environmentContext;
 
   public SearchContextImpl(
-    PathPosition startPathPosition,
-    PathPosition targetPathPosition,
-    PathfinderConfiguration pathfinderConfiguration,
-    NavigationPointProvider navigationPointProvider) {
+      PathPosition startPathPosition,
+      PathPosition targetPathPosition,
+      PathfinderConfiguration pathfinderConfiguration,
+      NavigationPointProvider navigationPointProvider,
+      EnvironmentContext environmentContext) {
 
-    this.startPathPosition = Objects.requireNonNull(startPathPosition, "startPathPosition must not be null");
-    this.targetPathPosition = Objects.requireNonNull(targetPathPosition, "targetPathPosition must not be null");
-    this.pathfinderConfiguration = Objects.requireNonNull(pathfinderConfiguration, "pathfinderConfiguration must not be null");
-    this.navigationPointProvider = Objects.requireNonNull(navigationPointProvider, "navigationPointProvider must not be null");
+    this.startPathPosition =
+        Objects.requireNonNull(startPathPosition, "startPathPosition must not be null");
+    this.targetPathPosition =
+        Objects.requireNonNull(targetPathPosition, "targetPathPosition must not be null");
+    this.pathfinderConfiguration =
+        Objects.requireNonNull(pathfinderConfiguration, "pathfinderConfiguration must not be null");
+    this.navigationPointProvider =
+        Objects.requireNonNull(navigationPointProvider, "navigationPointProvider must not be null");
     this.sharedData = new HashMap<>();
+    this.environmentContext = environmentContext;
   }
 
   @Override
@@ -53,5 +60,10 @@ public class SearchContextImpl implements SearchContext {
   @Override
   public Map<String, Object> getSharedData() {
     return sharedData;
+  }
+
+  @Override
+  public EnvironmentContext getEnvironmentContext() {
+    return environmentContext;
   }
 }

@@ -1,10 +1,9 @@
 package de.bsommerfeld.pathetic.api.pathing;
 
+import de.bsommerfeld.pathetic.api.pathing.context.EnvironmentContext;
 import de.bsommerfeld.pathetic.api.pathing.hook.PathfinderHook;
-import de.bsommerfeld.pathetic.api.pathing.result.PathState;
 import de.bsommerfeld.pathetic.api.pathing.result.PathfinderResult;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
-import java.util.List;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -18,19 +17,35 @@ public interface Pathfinder {
    *
    * @return An {@link CompletionStage} that will contain a {@link PathfinderResult}.
    */
-  CompletionStage<PathfinderResult> findPath(PathPosition start, PathPosition target);
+  default CompletionStage<PathfinderResult> findPath(PathPosition start, PathPosition target) {
+    return findPath(start, target, null);
+  }
 
   /**
-   * Requests all currently running pathfinding operations of this pathfinder instance to abort.
-   * The abortion is cooperative and might not be immediate.
+   * Tries to find a path between the specified start and target positions within the provided
+   * environment context.
+   *
+   * @param start The starting position for pathfinding.
+   * @param target The target position for pathfinding.
+   * @param context The environment context that provides additional information for the pathfinding
+   *     operation. This parameter can be null if no specific context is required.
+   * @return A {@link CompletionStage} containing the {@link PathfinderResult} of the pathfinding
+   *     operation, indicating the outcome and the resulting path.
+   */
+  CompletionStage<PathfinderResult> findPath(
+      PathPosition start, PathPosition target, EnvironmentContext context);
+
+  /**
+   * Requests all currently running pathfinding operations of this pathfinder instance to abort. The
+   * abortion is cooperative and might not be immediate.
    *
    * <p><strong>Scope of Abortion:</strong> This method affects all pathfinding operations that are
    * currently being executed by this specific pathfinder instance. If you need to abort individual
    * operations independently, consider using separate pathfinder instances for each operation.
    *
    * <p><strong>Cooperative Abortion:</strong> The actual termination depends on the pathfinding
-   * algorithm's main loop checking the abort flag. The operation will complete with
-   * {@link de.bsommerfeld.pathetic.api.pathing.result.PathState#ABORTED} as soon as possible.
+   * algorithm's main loop checking the abort flag. The operation will complete with {@link
+   * de.bsommerfeld.pathetic.api.pathing.result.PathState#ABORTED} as soon as possible.
    *
    * @see de.bsommerfeld.pathetic.api.pathing.result.PathState#ABORTED
    */
