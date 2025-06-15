@@ -3,12 +3,10 @@ package de.bsommerfeld.pathetic.engine.result;
 import static org.junit.jupiter.api.Assertions.*;
 
 import de.bsommerfeld.pathetic.api.pathing.result.Path;
-import de.bsommerfeld.pathetic.api.wrapper.PathEnvironment;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 class PathImplTest {
 
@@ -100,7 +98,6 @@ class PathImplTest {
         path.mutatePositions(
             position ->
                 new PathPosition(
-                    Mockito.mock(PathEnvironment.class),
                     position.getX() + 1,
                     position.getY() + 1,
                     position.getZ() + 1));
@@ -123,7 +120,7 @@ class PathImplTest {
   private List<PathPosition> createPathPositions(int numPositions, int startIndex) {
     List<PathPosition> positions = new ArrayList<>();
     for (int i = startIndex; i < startIndex + numPositions; i++) {
-      positions.add(new PathPosition(Mockito.mock(PathEnvironment.class), i, i, i));
+      positions.add(new PathPosition(i, i, i));
     }
     return positions;
   }

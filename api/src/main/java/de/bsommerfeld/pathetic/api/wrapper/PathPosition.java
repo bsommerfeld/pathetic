@@ -4,35 +4,14 @@ import de.bsommerfeld.pathetic.api.util.NumberUtils;
 import java.util.Objects;
 
 /**
- * Represents a position. This class encapsulates the coordinates
- * (x, y, z) of a point in the pathfinding environment and provides methods for manipulating and
- * comparing positions.
- *
+ * Represents a position. This class encapsulates the coordinates (x, y, z) of a point in the
+ * pathfinding environment and provides methods for manipulating and comparing positions.
  */
 public class PathPosition implements Cloneable {
-
-  private PathEnvironment pathEnvironment;
 
   private double x;
   private double y;
   private double z;
-
-  /**
-   * Constructs a {@code PathPosition} with the specified environment and coordinates.
-   *
-   * @param pathEnvironment The environment this position belongs to.
-   * @param x The x-coordinate of the position.
-   * @param y The y-coordinate of the position.
-   * @param z The z-coordinate of the position.
-   * @deprecated marked for removal
-   */
-  @Deprecated
-  public PathPosition(PathEnvironment pathEnvironment, double x, double y, double z) {
-    this.pathEnvironment = pathEnvironment;
-    this.x = x;
-    this.y = y;
-    this.z = z;
-  }
 
   /**
    * Constructs a {@code PathPosition} with the specified coordinates.
@@ -295,7 +274,6 @@ public class PathPosition implements Cloneable {
       throw new IllegalStateException("Superclass messed up", ex);
     }
 
-    clone.pathEnvironment = this.pathEnvironment;
     clone.x = this.x;
     clone.y = this.y;
     clone.z = this.z;
@@ -307,24 +285,12 @@ public class PathPosition implements Cloneable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     PathPosition that = (PathPosition) o;
-    return x == that.x
-        && y == that.y
-        && z == that.z;
+    return x == that.x && y == that.y && z == that.z;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(pathEnvironment, x, y, z);
-  }
-
-  /**
-   * Returns the environment this position belongs to.
-   *
-   * @return The {@link PathEnvironment} of this position.
-   */
-  @Deprecated
-  public PathEnvironment getPathEnvironment() {
-    return this.pathEnvironment;
+    return Objects.hash(x, y, z);
   }
 
   /**
@@ -355,14 +321,6 @@ public class PathPosition implements Cloneable {
   }
 
   public String toString() {
-    return "PathPosition(pathEnvironment="
-        + this.getPathEnvironment()
-        + ", x="
-        + this.getX()
-        + ", y="
-        + this.getY()
-        + ", z="
-        + this.getZ()
-        + ")";
+    return ", x=" + this.getX() + ", y=" + this.getY() + ", z=" + this.getZ() + ")";
   }
 }
