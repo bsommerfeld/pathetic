@@ -15,7 +15,7 @@ public class Pathetic {
     throw new AssertionError("Pathetic is a utility class and should not be instantiated");
   }
 
-  public static void loadEngineVersion() {
+  private static void loadEngineVersion() {
     try (InputStream inputStream =
         Pathetic.class.getClassLoader().getResourceAsStream(PROPERTIES_FILE)) {
       Properties properties = new Properties();
@@ -27,7 +27,8 @@ public class Pathetic {
     }
   }
 
-  public static String getEngineVersion() {
+  public static String getOrLoadEngineVersion() {
+    if (engineVersion == null) loadEngineVersion();
     return engineVersion;
   }
 }
