@@ -1,5 +1,6 @@
 package de.bsommerfeld.pathetic.engine.pathfinder.processing;
 
+import de.bsommerfeld.pathetic.api.pathing.heuristic.HeuristicMode;
 import de.bsommerfeld.pathetic.api.pathing.processing.context.NodeEvaluationContext;
 import de.bsommerfeld.pathetic.api.pathing.processing.context.SearchContext;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
@@ -11,12 +12,17 @@ public class NodeEvaluationContextImpl implements NodeEvaluationContext {
   private final SearchContext searchContext;
   private final Node engineNode;
   private final Node parentEngineNode;
+  private final HeuristicMode heuristicMode;
 
   public NodeEvaluationContextImpl(
-      SearchContext searchContext, Node engineNode, Node parentEngineNode) {
+      SearchContext searchContext,
+      Node engineNode,
+      Node parentEngineNode,
+      HeuristicMode heuristicMode) {
     this.searchContext = Objects.requireNonNull(searchContext, "searchContext must not be null");
     this.engineNode = Objects.requireNonNull(engineNode, "engineNode must not be null");
     this.parentEngineNode = parentEngineNode; // parentEngineNode can be null for the start node
+    this.heuristicMode = heuristicMode;
   }
 
   @Override
@@ -52,7 +58,16 @@ public class NodeEvaluationContextImpl implements NodeEvaluationContext {
     if (this.parentEngineNode == null) {
       return 0.0;
     }
-    return this.engineNode.getPosition().distanceSquared(this.parentEngineNode.getPosition());
+
+    switch (heuristicMode) {
+      case PRECISION:
+        return this.engineNode.getPosition().distance(this.parentEngineNode.getPosition());
+      case PERFORMANCE:
+        return this.engineNode.getPosition().distanceSquared(this.parentEngineNode.getPosition());
+      default:
+        throw new IllegalStateException(
+            "Could not find transition cost calculation for HeuristicMode: " + heuristicMode);
+    }
   }
 
   @Override
