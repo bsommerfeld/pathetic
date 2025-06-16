@@ -2,10 +2,10 @@ package de.bsommerfeld.pathetic.engine.util;
 
 import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnel;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.Set;
-
+import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The GridRegionData class represents the data associated with a grid region. This data includes a
@@ -13,19 +13,6 @@ import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
  * have been examined by the pathfinder.
  */
 public class GridRegionData {
-
-  /**
-   * The default size of the Bloom filter. A larger size will reduce the false positive probability
-   * of the Bloom filter, but will also increase the memory usage.
-   */
-  private static final int DEFAULT_BLOOM_FILTER_SIZE = 1000;
-
-  /**
-   * The default false positive probability of the Bloom filter. A lower FPP means a smaller chance
-   * of incorrectly identifying a position as being in the region, but it also requires a larger
-   * Bloom filter.
-   */
-  private static final double DEFAULT_FPP = 0.01; // 1%
 
   /**
    * The Bloom filter used to store the positions of the region. This filter is used to quickly
@@ -41,15 +28,30 @@ public class GridRegionData {
    */
   private final Set<PathPosition> regionalExaminedPositions;
 
-  public GridRegionData() {
+  /**
+   * Creates a new GridRegionData with the specified Bloom filter settings.
+   * 
+   * @param bloomFilterSize The size of the Bloom filter
+   * @param bloomFilterFpp The false positive probability of the Bloom filter
+   */
+  public GridRegionData(int bloomFilterSize, double bloomFilterFpp) {
     Funnel<PathPosition> pathPositionFunnel =
         (pathPosition, into) ->
             into.putInt(pathPosition.getFlooredX())
                 .putInt(pathPosition.getFlooredY())
                 .putInt(pathPosition.getFlooredZ());
 
-    bloomFilter = BloomFilter.create(pathPositionFunnel, DEFAULT_BLOOM_FILTER_SIZE, DEFAULT_FPP);
+    bloomFilter = BloomFilter.create(pathPositionFunnel, bloomFilterSize, bloomFilterFpp);
     regionalExaminedPositions = ConcurrentHashMap.newKeySet();
+  }
+
+  /**
+   * Creates a new GridRegionData with Bloom filter settings from the provided configuration.
+   * 
+   * @param configuration The pathfinder configuration containing Bloom filter settings
+   */
+  public GridRegionData(PathfinderConfiguration configuration) {
+    this(configuration.getBloomFilterSize(), configuration.getBloomFilterFpp());
   }
 
   public BloomFilter<PathPosition> getBloomFilter() {

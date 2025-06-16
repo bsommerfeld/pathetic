@@ -113,6 +113,23 @@ public class PathfinderConfiguration {
    */
   private final int gridCellSize;
 
+  /**
+   * The size of the Bloom filter used in the GridRegionData. A larger size will reduce the false 
+   * positive probability of the Bloom filter, but will also increase the memory usage.
+   * 
+   * <p>Default: 1000
+   */
+  private final int bloomFilterSize;
+
+  /**
+   * The false positive probability of the Bloom filter used in the GridRegionData. A lower FPP means 
+   * a smaller chance of incorrectly identifying a position as being in the region, but it also 
+   * requires a larger Bloom filter.
+   * 
+   * <p>Default: 0.01 (1%)
+   */
+  private final double bloomFilterFpp;
+
   private PathfinderConfiguration(
       int maxIterations,
       int maxLength,
@@ -124,7 +141,9 @@ public class PathfinderConfiguration {
       List<NodeValidationProcessor> nodeValidationProcessors,
       List<NodeCostProcessor> nodeCostProcessors,
       Offset offset,
-      int gridCellSize) {
+      int gridCellSize,
+      int bloomFilterSize,
+      double bloomFilterFpp) {
     this.maxIterations = maxIterations;
     this.maxLength = maxLength;
     this.async = async;
@@ -136,6 +155,8 @@ public class PathfinderConfiguration {
     this.nodeCostProcessors = Collections.unmodifiableList(nodeCostProcessors);
     this.offset = offset;
     this.gridCellSize = gridCellSize;
+    this.bloomFilterSize = bloomFilterSize;
+    this.bloomFilterFpp = bloomFilterFpp;
   }
 
   /**
@@ -160,6 +181,8 @@ public class PathfinderConfiguration {
         .nodeCostProcessors(pathfinderConfiguration.nodeCostProcessors)
         .offset(pathfinderConfiguration.offset)
         .gridCellSize(pathfinderConfiguration.gridCellSize)
+        .bloomFilterSize(pathfinderConfiguration.bloomFilterSize)
+        .bloomFilterFpp(pathfinderConfiguration.bloomFilterFpp)
         .build();
   }
 
@@ -211,6 +234,14 @@ public class PathfinderConfiguration {
     return gridCellSize;
   }
 
+  public int getBloomFilterSize() {
+    return bloomFilterSize;
+  }
+
+  public double getBloomFilterFpp() {
+    return bloomFilterFpp;
+  }
+
   @Override
   public String toString() {
     return "PathfinderConfiguration{"
@@ -236,6 +267,10 @@ public class PathfinderConfiguration {
         + offset
         + ", gridCellSize="
         + gridCellSize
+        + ", bloomFilterSize="
+        + bloomFilterSize
+        + ", bloomFilterFpp="
+        + bloomFilterFpp
         + '}';
   }
 
@@ -249,6 +284,8 @@ public class PathfinderConfiguration {
         && fallback == that.fallback
         && negativeCostsAllowed == that.negativeCostsAllowed
         && gridCellSize == that.gridCellSize
+        && bloomFilterSize == that.bloomFilterSize
+        && Double.compare(that.bloomFilterFpp, bloomFilterFpp) == 0
         && Objects.equals(provider, that.provider)
         && Objects.equals(heuristicWeights, that.heuristicWeights)
         && Objects.equals(nodeValidationProcessors, that.nodeValidationProcessors)
@@ -265,6 +302,8 @@ public class PathfinderConfiguration {
         fallback,
         negativeCostsAllowed,
         gridCellSize,
+        bloomFilterSize,
+        bloomFilterFpp,
         provider,
         heuristicWeights,
         nodeValidationProcessors,
@@ -284,6 +323,8 @@ public class PathfinderConfiguration {
     private List<NodeCostProcessor> nodeCostProcessors = Collections.emptyList();
     private Offset offset = Offset.VERTICAL_AND_HORIZONTAL;
     private int gridCellSize = 12;
+    private int bloomFilterSize = 1000;
+    private double bloomFilterFpp = 0.01;
 
     PathfinderConfigurationBuilder() {}
 
@@ -348,6 +389,16 @@ public class PathfinderConfiguration {
       return this;
     }
 
+    public PathfinderConfiguration.PathfinderConfigurationBuilder bloomFilterSize(int bloomFilterSize) {
+      this.bloomFilterSize = bloomFilterSize;
+      return this;
+    }
+
+    public PathfinderConfiguration.PathfinderConfigurationBuilder bloomFilterFpp(double bloomFilterFpp) {
+      this.bloomFilterFpp = bloomFilterFpp;
+      return this;
+    }
+
     public PathfinderConfiguration build() {
       return new PathfinderConfiguration(
           this.maxIterations,
@@ -360,7 +411,9 @@ public class PathfinderConfiguration {
           this.nodeValidationProcessors,
           this.nodeCostProcessors,
           this.offset,
-          this.gridCellSize);
+          this.gridCellSize,
+          this.bloomFilterSize,
+          this.bloomFilterFpp);
     }
 
     public String toString() {
@@ -399,6 +452,8 @@ public class PathfinderConfiguration {
           && fallback == that.fallback
           && negativeCostsAllowed == that.negativeCostsAllowed
           && gridCellSize == that.gridCellSize
+          && bloomFilterSize == that.bloomFilterSize
+          && Double.compare(that.bloomFilterFpp, bloomFilterFpp) == 0
           && Objects.equals(provider, that.provider)
           && Objects.equals(heuristicWeights, that.heuristicWeights)
           && Objects.equals(nodeValidationProcessors, that.nodeValidationProcessors)
@@ -415,6 +470,8 @@ public class PathfinderConfiguration {
           fallback,
           negativeCostsAllowed,
           gridCellSize,
+          bloomFilterSize,
+          bloomFilterFpp,
           provider,
           heuristicWeights,
           nodeValidationProcessors,
