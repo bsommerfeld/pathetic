@@ -1,4 +1,4 @@
-package de.bsommerfeld.pathetic.api.pathing.configuration;
+package de.bsommerfeld.pathetic.api.pathing.heuristic;
 
 /**
  * Represents a set of weights used to calculate a heuristic for the A* pathfinding algorithm. These

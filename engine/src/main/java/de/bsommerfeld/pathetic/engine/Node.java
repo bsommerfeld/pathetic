@@ -1,6 +1,7 @@
 package de.bsommerfeld.pathetic.engine;
 
-import de.bsommerfeld.pathetic.api.pathing.configuration.HeuristicWeights;
+import de.bsommerfeld.pathetic.api.pathing.heuristic.HeuristicMode;
+import de.bsommerfeld.pathetic.api.pathing.heuristic.HeuristicWeights;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.api.wrapper.PathVector;
 import de.bsommerfeld.pathetic.engine.util.ComputingCache;
@@ -12,6 +13,7 @@ public class Node implements Comparable<Node> {
   private final PathPosition start;
   private final PathPosition target;
   private final HeuristicWeights heuristicWeights;
+  private final HeuristicMode heuristicMode;
   private final int depth;
 
   private final ComputingCache<Double> heuristic = new ComputingCache<>(this::heuristic);
@@ -24,11 +26,13 @@ public class Node implements Comparable<Node> {
       PathPosition start,
       PathPosition target,
       HeuristicWeights heuristicWeights,
+      HeuristicMode heuristicMode,
       int depth) {
     this.position = position;
     this.start = start;
     this.target = target;
     this.heuristicWeights = heuristicWeights;
+    this.heuristicMode = heuristicMode;
     this.depth = depth;
   }
 

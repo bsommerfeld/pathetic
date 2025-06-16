@@ -1,6 +1,8 @@
 package de.bsommerfeld.pathetic.api.pathing.configuration;
 
 import de.bsommerfeld.pathetic.api.pathing.Offset;
+import de.bsommerfeld.pathetic.api.pathing.heuristic.HeuristicMode;
+import de.bsommerfeld.pathetic.api.pathing.heuristic.HeuristicWeights;
 import de.bsommerfeld.pathetic.api.pathing.processing.NodeCostProcessor;
 import de.bsommerfeld.pathetic.api.pathing.processing.NodeValidationProcessor;
 import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
@@ -106,29 +108,37 @@ public class PathfinderConfiguration {
   private final Offset offset;
 
   /**
-   * The size of grid cells used in the closed set optimization for pathfinding algorithms.
-   * This parameter affects how positions are grouped into regions for efficient lookup.
-   * 
+   * The size of grid cells used in the closed set optimization for pathfinding algorithms. This
+   * parameter affects how positions are grouped into regions for efficient lookup.
+   *
    * <p>Default: 12
    */
   private final int gridCellSize;
 
   /**
-   * The size of the Bloom filter used in the GridRegionData. A larger size will reduce the false 
+   * The size of the Bloom filter used in the GridRegionData. A larger size will reduce the false
    * positive probability of the Bloom filter, but will also increase the memory usage.
-   * 
+   *
    * <p>Default: 1000
    */
   private final int bloomFilterSize;
 
   /**
-   * The false positive probability of the Bloom filter used in the GridRegionData. A lower FPP means 
-   * a smaller chance of incorrectly identifying a position as being in the region, but it also 
-   * requires a larger Bloom filter.
-   * 
+   * The false positive probability of the Bloom filter used in the GridRegionData. A lower FPP
+   * means a smaller chance of incorrectly identifying a position as being in the region, but it
+   * also requires a larger Bloom filter.
+   *
    * <p>Default: 0.01 (1%)
    */
   private final double bloomFilterFpp;
+
+  /**
+   * The heuristic mode to be used in pathfinding calculations. This determines the balance between
+   * performance and precision in the pathfinding algorithm.
+   *
+   * <p>Default: {@link HeuristicMode#PRECISION}
+   */
+  private final HeuristicMode heuristicMode;
 
   private PathfinderConfiguration(
       int maxIterations,
@@ -143,7 +153,8 @@ public class PathfinderConfiguration {
       Offset offset,
       int gridCellSize,
       int bloomFilterSize,
-      double bloomFilterFpp) {
+      double bloomFilterFpp,
+      HeuristicMode heuristicMode) {
     this.maxIterations = maxIterations;
     this.maxLength = maxLength;
     this.async = async;
@@ -157,6 +168,7 @@ public class PathfinderConfiguration {
     this.gridCellSize = gridCellSize;
     this.bloomFilterSize = bloomFilterSize;
     this.bloomFilterFpp = bloomFilterFpp;
+    this.heuristicMode = heuristicMode;
   }
 
   /**
@@ -183,6 +195,7 @@ public class PathfinderConfiguration {
         .gridCellSize(pathfinderConfiguration.gridCellSize)
         .bloomFilterSize(pathfinderConfiguration.bloomFilterSize)
         .bloomFilterFpp(pathfinderConfiguration.bloomFilterFpp)
+        .heuristicMode(pathfinderConfiguration.heuristicMode)
         .build();
   }
 
@@ -242,6 +255,10 @@ public class PathfinderConfiguration {
     return bloomFilterFpp;
   }
 
+  public HeuristicMode getHeuristicMode() {
+    return heuristicMode;
+  }
+
   @Override
   public String toString() {
     return "PathfinderConfiguration{"
@@ -271,6 +288,8 @@ public class PathfinderConfiguration {
         + bloomFilterSize
         + ", bloomFilterFpp="
         + bloomFilterFpp
+        + ", heuristicMode="
+        + heuristicMode
         + '}';
   }
 
@@ -290,7 +309,8 @@ public class PathfinderConfiguration {
         && Objects.equals(heuristicWeights, that.heuristicWeights)
         && Objects.equals(nodeValidationProcessors, that.nodeValidationProcessors)
         && Objects.equals(nodeCostProcessors, that.nodeCostProcessors)
-        && offset == that.offset;
+        && offset == that.offset
+        && heuristicMode == that.heuristicMode;
   }
 
   @Override
@@ -308,7 +328,8 @@ public class PathfinderConfiguration {
         heuristicWeights,
         nodeValidationProcessors,
         nodeCostProcessors,
-        offset);
+        offset,
+        heuristicMode);
   }
 
   public static class PathfinderConfigurationBuilder {
@@ -325,6 +346,7 @@ public class PathfinderConfiguration {
     private int gridCellSize = 12;
     private int bloomFilterSize = 1000;
     private double bloomFilterFpp = 0.01;
+    private HeuristicMode heuristicMode = HeuristicMode.PRECISION;
 
     PathfinderConfigurationBuilder() {}
 
@@ -389,13 +411,21 @@ public class PathfinderConfiguration {
       return this;
     }
 
-    public PathfinderConfiguration.PathfinderConfigurationBuilder bloomFilterSize(int bloomFilterSize) {
+    public PathfinderConfiguration.PathfinderConfigurationBuilder bloomFilterSize(
+        int bloomFilterSize) {
       this.bloomFilterSize = bloomFilterSize;
       return this;
     }
 
-    public PathfinderConfiguration.PathfinderConfigurationBuilder bloomFilterFpp(double bloomFilterFpp) {
+    public PathfinderConfiguration.PathfinderConfigurationBuilder bloomFilterFpp(
+        double bloomFilterFpp) {
       this.bloomFilterFpp = bloomFilterFpp;
+      return this;
+    }
+
+    public PathfinderConfiguration.PathfinderConfigurationBuilder heuristicMode(
+        HeuristicMode heuristicMode) {
+      this.heuristicMode = Objects.requireNonNull(heuristicMode);
       return this;
     }
 
@@ -413,7 +443,8 @@ public class PathfinderConfiguration {
           this.offset,
           this.gridCellSize,
           this.bloomFilterSize,
-          this.bloomFilterFpp);
+          this.bloomFilterFpp,
+          this.heuristicMode);
     }
 
     public String toString() {
@@ -431,6 +462,8 @@ public class PathfinderConfiguration {
           + this.provider
           + ", heuristicWeights="
           + this.heuristicWeights
+          + ", heuristicMode="
+          + this.heuristicMode
           + ")"
           + ", nodeValidationProcessors="
           + this.nodeValidationProcessors
@@ -458,7 +491,8 @@ public class PathfinderConfiguration {
           && Objects.equals(heuristicWeights, that.heuristicWeights)
           && Objects.equals(nodeValidationProcessors, that.nodeValidationProcessors)
           && Objects.equals(nodeCostProcessors, that.nodeCostProcessors)
-          && offset == that.offset;
+          && offset == that.offset
+          && heuristicMode == that.heuristicMode;
     }
 
     @Override
@@ -476,7 +510,8 @@ public class PathfinderConfiguration {
           heuristicWeights,
           nodeValidationProcessors,
           nodeCostProcessors,
-          offset);
+          offset,
+          heuristicMode);
     }
   }
 }
