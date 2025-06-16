@@ -105,6 +105,14 @@ public class PathfinderConfiguration {
    */
   private final Offset offset;
 
+  /**
+   * The size of grid cells used in the closed set optimization for pathfinding algorithms.
+   * This parameter affects how positions are grouped into regions for efficient lookup.
+   * 
+   * <p>Default: 12
+   */
+  private final int gridCellSize;
+
   private PathfinderConfiguration(
       int maxIterations,
       int maxLength,
@@ -115,7 +123,8 @@ public class PathfinderConfiguration {
       HeuristicWeights heuristicWeights,
       List<NodeValidationProcessor> nodeValidationProcessors,
       List<NodeCostProcessor> nodeCostProcessors,
-      Offset offset) {
+      Offset offset,
+      int gridCellSize) {
     this.maxIterations = maxIterations;
     this.maxLength = maxLength;
     this.async = async;
@@ -126,6 +135,7 @@ public class PathfinderConfiguration {
     this.nodeValidationProcessors = Collections.unmodifiableList(nodeValidationProcessors);
     this.nodeCostProcessors = Collections.unmodifiableList(nodeCostProcessors);
     this.offset = offset;
+    this.gridCellSize = gridCellSize;
   }
 
   /**
@@ -149,6 +159,7 @@ public class PathfinderConfiguration {
         .nodeValidationProcessors(pathfinderConfiguration.nodeValidationProcessors)
         .nodeCostProcessors(pathfinderConfiguration.nodeCostProcessors)
         .offset(pathfinderConfiguration.offset)
+        .gridCellSize(pathfinderConfiguration.gridCellSize)
         .build();
   }
 
@@ -196,6 +207,10 @@ public class PathfinderConfiguration {
     return offset;
   }
 
+  public int getGridCellSize() {
+    return gridCellSize;
+  }
+
   @Override
   public String toString() {
     return "PathfinderConfiguration{"
@@ -219,6 +234,8 @@ public class PathfinderConfiguration {
         + nodeCostProcessors
         + ", offset="
         + offset
+        + ", gridCellSize="
+        + gridCellSize
         + '}';
   }
 
@@ -231,6 +248,7 @@ public class PathfinderConfiguration {
         && async == that.async
         && fallback == that.fallback
         && negativeCostsAllowed == that.negativeCostsAllowed
+        && gridCellSize == that.gridCellSize
         && Objects.equals(provider, that.provider)
         && Objects.equals(heuristicWeights, that.heuristicWeights)
         && Objects.equals(nodeValidationProcessors, that.nodeValidationProcessors)
@@ -246,6 +264,7 @@ public class PathfinderConfiguration {
         async,
         fallback,
         negativeCostsAllowed,
+        gridCellSize,
         provider,
         heuristicWeights,
         nodeValidationProcessors,
@@ -264,6 +283,7 @@ public class PathfinderConfiguration {
     private List<NodeValidationProcessor> nodeValidationProcessors = Collections.emptyList();
     private List<NodeCostProcessor> nodeCostProcessors = Collections.emptyList();
     private Offset offset = Offset.VERTICAL_AND_HORIZONTAL;
+    private int gridCellSize = 12;
 
     PathfinderConfigurationBuilder() {}
 
@@ -323,6 +343,11 @@ public class PathfinderConfiguration {
       return this;
     }
 
+    public PathfinderConfiguration.PathfinderConfigurationBuilder gridCellSize(int gridCellSize) {
+      this.gridCellSize = gridCellSize;
+      return this;
+    }
+
     public PathfinderConfiguration build() {
       return new PathfinderConfiguration(
           this.maxIterations,
@@ -334,7 +359,8 @@ public class PathfinderConfiguration {
           this.heuristicWeights,
           this.nodeValidationProcessors,
           this.nodeCostProcessors,
-          this.offset);
+          this.offset,
+          this.gridCellSize);
     }
 
     public String toString() {
@@ -358,7 +384,9 @@ public class PathfinderConfiguration {
           + ", nodeCostProcessors="
           + this.nodeCostProcessors
           + ", offset="
-          + this.offset;
+          + this.offset
+          + ", gridCellSize="
+          + this.gridCellSize;
     }
 
     @Override
@@ -370,6 +398,7 @@ public class PathfinderConfiguration {
           && async == that.async
           && fallback == that.fallback
           && negativeCostsAllowed == that.negativeCostsAllowed
+          && gridCellSize == that.gridCellSize
           && Objects.equals(provider, that.provider)
           && Objects.equals(heuristicWeights, that.heuristicWeights)
           && Objects.equals(nodeValidationProcessors, that.nodeValidationProcessors)
@@ -385,6 +414,7 @@ public class PathfinderConfiguration {
           async,
           fallback,
           negativeCostsAllowed,
+          gridCellSize,
           provider,
           heuristicWeights,
           nodeValidationProcessors,
