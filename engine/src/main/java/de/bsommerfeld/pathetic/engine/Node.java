@@ -3,21 +3,21 @@ package de.bsommerfeld.pathetic.engine;
 import de.bsommerfeld.pathetic.api.pathing.heuristic.HeuristicMode;
 import de.bsommerfeld.pathetic.api.pathing.heuristic.HeuristicWeights;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
-import de.bsommerfeld.pathetic.api.wrapper.PathVector;
 import de.bsommerfeld.pathetic.engine.util.ComputingCache;
+import de.bsommerfeld.pathetic.engine.util.GeometryUtil;
 import java.util.Objects;
 
 /**
- * Represents a node in the pathfinding graph. Each node contains position information,
- * references to start and target positions, and methods to calculate heuristic values
- * for the A* algorithm.
- * 
+ * Represents a node in the pathfinding graph. Each node contains position information, references
+ * to start and target positions, and methods to calculate heuristic values for the A* algorithm.
+ *
  * <p>The Node class supports two heuristic calculation modes:
+ *
  * <ul>
  *   <li>{@code PERFORMANCE}: Uses squared distances to avoid expensive square root operations,
- *       resulting in faster computations at the cost of some precision.</li>
- *   <li>{@code PRECISION}: Uses true linear distances for more accurate path calculations,
- *       which may be slightly slower due to square root operations.</li>
+ *       resulting in faster computations at the cost of some precision.
+ *   <li>{@code PRECISION}: Uses true linear distances for more accurate path calculations, which
+ *       may be slightly slower due to square root operations.
  * </ul>
  */
 public class Node implements Comparable<Node> {
@@ -63,7 +63,8 @@ public class Node implements Comparable<Node> {
   }
 
   /**
-   * Creates a new Node with the specified parameters, using PERFORMANCE as the default heuristic mode.
+   * Creates a new Node with the specified parameters, using PERFORMANCE as the default heuristic
+   * mode.
    *
    * @param position The position of this node
    * @param start The start position of the path
@@ -211,10 +212,15 @@ public class Node implements Comparable<Node> {
 
     // Apply weights to each metric
     return applyWeightsToMetrics(
-        manhattanDistance,
-        octileDistance,
-        perpendicularDistance,
-        heightDifference);
+        manhattanDistance, octileDistance, perpendicularDistance, heightDifference);
+  }
+
+  private double calculateSquaredPerpendicularDistance() {
+    return GeometryUtil.squaredPerpendicularDistance(this.position, start, target);
+  }
+
+  private double calculateLinearPerpendicularDistance() {
+    return Math.sqrt(calculateSquaredPerpendicularDistance());
   }
 
   /**
@@ -241,70 +247,6 @@ public class Node implements Comparable<Node> {
         + (octileDistance * octileWeight)
         + (perpendicularDistance * perpendicularWeight)
         + (heightDifference * heightWeight);
-  }
-
-  /**
-   * Calculates the squared perpendicular distance from the current node's position to the straight
-   * line segment defined by the start and target nodes.
-   *
-   * <p>This metric is used as a component of the main heuristic to penalize nodes that stray far
-   * from the direct path. The calculation uses vector mathematics. Squaring the distance avoids
-   * costly {@code sqrt} operations and maintains consistency with the other squared metrics in the
-   * heuristic.
-   *
-   * @return The squared perpendicular distance of the current node from the start-target line. If
-   *     the start and target are nearly identical, it returns the squared distance to the start
-   *     node.
-   */
-  private double calculateSquaredPerpendicularDistance() {
-    return calculatePerpendicularDistance(false);
-  }
-
-  /**
-   * Calculates the true perpendicular distance from the current node to the straight line segment
-   * between the start and target nodes.
-   *
-   * <p>This method is a key component for the precision heuristic. It computes the shortest
-   * distance from the current position to the line defined by the start and target. The result is a
-   * true distance, obtained via a final {@code Math.sqrt} operation, which differs from the
-   * performance-focused approach that uses squared distances to avoid this cost.
-   *
-   * @return The linear (non-squared) perpendicular distance.
-   */
-  private double calculateLinearPerpendicularDistance() {
-    return calculatePerpendicularDistance(true);
-  }
-
-  /**
-   * Calculates the perpendicular distance from the current node to the straight line segment
-   * between the start and target nodes.
-   *
-   * @param linear If true, returns the linear (true) distance; if false, returns the squared distance
-   * @return The perpendicular distance (linear or squared based on the parameter)
-   */
-  private double calculatePerpendicularDistance(boolean linear) {
-    // Set up vectors for the geometric calculation
-    PathVector currentVec = this.position.toVector();
-    PathVector startVec = this.start.toVector();
-    PathVector targetVec = this.target.toVector();
-
-    PathVector lineVec = targetVec.subtract(startVec);
-    double lineVecLengthSq = lineVec.dot(lineVec);
-
-    // If start and target are the same (or very close), the line is a point
-    if (lineVecLengthSq < 1e-9) {
-      return linear 
-          ? this.position.distance(this.start) 
-          : this.position.distanceSquared(this.start);
-    }
-
-    // Calculate the perpendicular distance
-    PathVector startToCurrentVec = currentVec.subtract(startVec);
-    PathVector crossProduct = startToCurrentVec.getCrossProduct(lineVec);
-    double crossProductLengthSq = crossProduct.dot(crossProduct);
-
-    double result = crossProductLengthSq / lineVecLengthSq;
-    return linear ? Math.sqrt(result) : result;
   }
 
   @Override
