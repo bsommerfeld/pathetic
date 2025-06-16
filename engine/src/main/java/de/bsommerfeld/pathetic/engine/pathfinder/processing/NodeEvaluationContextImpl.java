@@ -14,6 +14,14 @@ public class NodeEvaluationContextImpl implements NodeEvaluationContext {
   private final Node parentEngineNode;
   private final HeuristicMode heuristicMode;
 
+  /**
+   * Creates a new NodeEvaluationContextImpl with the specified parameters.
+   *
+   * @param searchContext The search context
+   * @param engineNode The current node being evaluated
+   * @param parentEngineNode The parent node (can be null for the start node)
+   * @param heuristicMode The heuristic mode to use for calculations
+   */
   public NodeEvaluationContextImpl(
       SearchContext searchContext,
       Node engineNode,
@@ -23,6 +31,21 @@ public class NodeEvaluationContextImpl implements NodeEvaluationContext {
     this.engineNode = Objects.requireNonNull(engineNode, "engineNode must not be null");
     this.parentEngineNode = parentEngineNode; // parentEngineNode can be null for the start node
     this.heuristicMode = heuristicMode;
+  }
+
+  /**
+   * Creates a new NodeEvaluationContextImpl with the specified parameters,
+   * using PERFORMANCE as the default heuristic mode.
+   *
+   * @param searchContext The search context
+   * @param engineNode The current node being evaluated
+   * @param parentEngineNode The parent node (can be null for the start node)
+   */
+  public NodeEvaluationContextImpl(
+      SearchContext searchContext,
+      Node engineNode,
+      Node parentEngineNode) {
+    this(searchContext, engineNode, parentEngineNode, HeuristicMode.PERFORMANCE);
   }
 
   @Override

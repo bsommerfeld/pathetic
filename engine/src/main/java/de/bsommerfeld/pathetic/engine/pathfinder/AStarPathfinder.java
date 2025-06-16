@@ -98,7 +98,11 @@ public class AStarPathfinder extends AbstractPathfinder {
       if (existingHandle != null) {
         Node existingNodeInHeap = existingHandle.getValue();
         NodeEvaluationContext nodeEvalContext =
-            new NodeEvaluationContextImpl(searchContext, existingNodeInHeap, currentNode);
+            new NodeEvaluationContextImpl(
+                searchContext,
+                existingNodeInHeap,
+                currentNode,
+                pathfinderConfiguration.getHeuristicMode());
 
         double newGCostForExisting = calculateGCostForSuccessor(nodeEvalContext);
 
@@ -265,7 +269,8 @@ public class AStarPathfinder extends AbstractPathfinder {
       // Using Tuple3 as a key for the grid cell coordinates
       Tuple3<Integer> gridKey = new Tuple3<>(gridX, gridY, gridZ);
 
-      return visitedRegionGrid.computeIfAbsent(gridKey, k -> new GridRegionData(pathfinderConfiguration));
+      return visitedRegionGrid.computeIfAbsent(
+          gridKey, k -> new GridRegionData(pathfinderConfiguration));
     }
   }
 }

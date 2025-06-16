@@ -7,6 +7,19 @@ import de.bsommerfeld.pathetic.api.wrapper.PathVector;
 import de.bsommerfeld.pathetic.engine.util.ComputingCache;
 import java.util.Objects;
 
+/**
+ * Represents a node in the pathfinding graph. Each node contains position information,
+ * references to start and target positions, and methods to calculate heuristic values
+ * for the A* algorithm.
+ * 
+ * <p>The Node class supports two heuristic calculation modes:
+ * <ul>
+ *   <li>{@code PERFORMANCE}: Uses squared distances to avoid expensive square root operations,
+ *       resulting in faster computations at the cost of some precision.</li>
+ *   <li>{@code PRECISION}: Uses true linear distances for more accurate path calculations,
+ *       which may be slightly slower due to square root operations.</li>
+ * </ul>
+ */
 public class Node implements Comparable<Node> {
 
   private final PathPosition position;
@@ -17,13 +30,23 @@ public class Node implements Comparable<Node> {
   private final int depth;
 
   private final ComputingCache<Double> squaredHeuristic =
-      new ComputingCache<>(this::squaredHeuristic);
+      new ComputingCache<>(this::calculateSquaredHeuristic);
   private final ComputingCache<Double> linearHeuristic =
-      new ComputingCache<>(this::linearHeuristic);
+      new ComputingCache<>(this::calculateLinearHeuristic);
 
   private double gCost;
   private Node parent;
 
+  /**
+   * Creates a new Node with the specified parameters.
+   *
+   * @param position The position of this node
+   * @param start The start position of the path
+   * @param target The target position of the path
+   * @param heuristicWeights The weights to apply to different heuristic components
+   * @param heuristicMode The mode of heuristic calculation (PERFORMANCE or PRECISION)
+   * @param depth The depth of this node in the search tree
+   */
   public Node(
       PathPosition position,
       PathPosition start,
@@ -37,6 +60,24 @@ public class Node implements Comparable<Node> {
     this.heuristicWeights = heuristicWeights;
     this.heuristicMode = heuristicMode;
     this.depth = depth;
+  }
+
+  /**
+   * Creates a new Node with the specified parameters, using PERFORMANCE as the default heuristic mode.
+   *
+   * @param position The position of this node
+   * @param start The start position of the path
+   * @param target The target position of the path
+   * @param heuristicWeights The weights to apply to different heuristic components
+   * @param depth The depth of this node in the search tree
+   */
+  public Node(
+      PathPosition position,
+      PathPosition start,
+      PathPosition target,
+      HeuristicWeights heuristicWeights,
+      int depth) {
+    this(position, start, target, heuristicWeights, HeuristicMode.PERFORMANCE, depth);
   }
 
   public PathPosition getPosition() {
@@ -112,7 +153,7 @@ public class Node implements Comparable<Node> {
   }
 
   /**
-   * Calculates the heuristic (H-cost) for the A* search algorithm.
+   * Calculates the heuristic (H-cost) for the A* search algorithm in PERFORMANCE mode.
    *
    * <p>This heuristic combines multiple metrics to estimate the cost from the current node to the
    * target. All distance calculations are squared to avoid expensive square root operations, which
@@ -121,67 +162,25 @@ public class Node implements Comparable<Node> {
    *
    * @return The composite heuristic value, representing a weighted sum of squared distances.
    */
-  private double squaredHeuristic() {
-    double manhattan = this.position.manhattanDistance(target);
-    double manhattanDistanceSquared = manhattan * manhattan;
+  private double calculateSquaredHeuristic() {
+    // Calculate squared distances for each metric
+    double manhattanDistance = this.position.manhattanDistance(target);
+    double manhattanDistanceSquared = manhattanDistance * manhattanDistance;
 
-    double octile = this.position.octileDistance(target);
-    double octileDistanceSquared = octile * octile;
+    double octileDistance = this.position.octileDistance(target);
+    double octileDistanceSquared = octileDistance * octileDistance;
 
     double perpendicularDistanceSquared = calculateSquaredPerpendicularDistance();
 
-    double heightDiff = this.position.getFlooredY() - target.getFlooredY();
-    double heightDifferenceSquared = heightDiff * heightDiff;
+    double heightDifference = this.position.getFlooredY() - target.getFlooredY();
+    double heightDifferenceSquared = heightDifference * heightDifference;
 
-    double manhattanWeight = heuristicWeights.getManhattanWeight();
-    double octileWeight = heuristicWeights.getOctileWeight();
-    double perpendicularWeight = heuristicWeights.getPerpendicularWeight();
-    double heightWeight = heuristicWeights.getHeightWeight();
-
-    return (manhattanDistanceSquared * manhattanWeight)
-        + (octileDistanceSquared * octileWeight)
-        + (perpendicularDistanceSquared * perpendicularWeight)
-        + (heightDifferenceSquared * heightWeight);
-  }
-
-  /**
-   * Calculates the squared perpendicular distance from the current node's position to the straight
-   * line segment defined by the start and target nodes.
-   *
-   * <p>This metric is used as a component of the main heuristic to penalize nodes that stray far
-   * from the direct path. The calculation uses vector mathematics. Squaring the distance avoids
-   * costly {@code sqrt} operations and maintains consistency with the other squared metrics in the
-   * heuristic.
-   *
-   * @return The squared perpendicular distance of the current node from the start-target line. If
-   *     the start and target are nearly identical, it returns the squared distance to the start
-   *     node.
-   */
-  private double calculateSquaredPerpendicularDistance() {
-    PathVector currentVec = this.position.toVector();
-    PathVector startVec = this.start.toVector();
-    PathVector targetVec = this.target.toVector();
-
-    PathVector lineVec = targetVec.subtract(startVec);
-
-    // The squared length of the line vector is calculated using the dot product of the vector with
-    // itself, which is equivalent to v.length² and more efficient.
-    double lineVecLengthSq = lineVec.dot(lineVec);
-    if (lineVecLengthSq < 1e-9) {
-      // Avoid division by zero if start and target are almost identical.
-      // The "line" is a point, so the perpendicular distance is simply the distance to that point.
-      return this.position.distanceSquared(this.start);
-    }
-
-    PathVector startToCurrentVec = currentVec.subtract(startVec);
-
-    // The squared length of the cross product of two vectors is equal to the squared area of the
-    // parallelogram they form. By dividing this by the squared length of the base vector (lineVec),
-    // we get the squared perpendicular height (the distance we're looking for).
-    PathVector crossProduct = startToCurrentVec.getCrossProduct(lineVec);
-    double crossProductLengthSq = crossProduct.dot(crossProduct);
-
-    return crossProductLengthSq / lineVecLengthSq;
+    // Apply weights to each metric
+    return applyWeightsToMetrics(
+        manhattanDistanceSquared,
+        octileDistanceSquared,
+        perpendicularDistanceSquared,
+        heightDifferenceSquared);
   }
 
   /**
@@ -203,24 +202,62 @@ public class Node implements Comparable<Node> {
    *
    * @return The composite, linear heuristic value.
    */
-  private double linearHeuristic() {
-    // Retrieve heuristic weights to control the influence of each metric.
-    final double manhattanWeight = heuristicWeights.getManhattanWeight();
-    final double octileWeight = heuristicWeights.getOctileWeight();
-    final double perpendicularWeight = heuristicWeights.getPerpendicularWeight();
-    final double heightWeight = heuristicWeights.getHeightWeight();
+  private double calculateLinearHeuristic() {
+    // Calculate linear distances for each metric
+    double manhattanDistance = this.position.manhattanDistance(target);
+    double octileDistance = this.position.octileDistance(target);
+    double perpendicularDistance = calculateLinearPerpendicularDistance();
+    double heightDifference = Math.abs(this.position.getFlooredY() - target.getFlooredY());
 
-    // Calculate distance metrics using true, linear values for higher accuracy.
-    final double manhattanDistance = this.position.manhattanDistance(target);
-    final double octileDistance = this.position.octileDistance(target);
-    final double perpendicularDistance = calculateLinearPerpendicularDistance();
-    final double heightDifference = Math.abs(this.position.getFlooredY() - target.getFlooredY());
+    // Apply weights to each metric
+    return applyWeightsToMetrics(
+        manhattanDistance,
+        octileDistance,
+        perpendicularDistance,
+        heightDifference);
+  }
 
-    // The final heuristic is the weighted sum of all metrics.
+  /**
+   * Applies the configured weights to the distance metrics and returns the weighted sum.
+   *
+   * @param manhattanDistance The Manhattan distance metric
+   * @param octileDistance The Octile distance metric
+   * @param perpendicularDistance The perpendicular distance metric
+   * @param heightDifference The height difference metric
+   * @return The weighted sum of all metrics
+   */
+  private double applyWeightsToMetrics(
+      double manhattanDistance,
+      double octileDistance,
+      double perpendicularDistance,
+      double heightDifference) {
+
+    double manhattanWeight = heuristicWeights.getManhattanWeight();
+    double octileWeight = heuristicWeights.getOctileWeight();
+    double perpendicularWeight = heuristicWeights.getPerpendicularWeight();
+    double heightWeight = heuristicWeights.getHeightWeight();
+
     return (manhattanDistance * manhattanWeight)
         + (octileDistance * octileWeight)
         + (perpendicularDistance * perpendicularWeight)
         + (heightDifference * heightWeight);
+  }
+
+  /**
+   * Calculates the squared perpendicular distance from the current node's position to the straight
+   * line segment defined by the start and target nodes.
+   *
+   * <p>This metric is used as a component of the main heuristic to penalize nodes that stray far
+   * from the direct path. The calculation uses vector mathematics. Squaring the distance avoids
+   * costly {@code sqrt} operations and maintains consistency with the other squared metrics in the
+   * heuristic.
+   *
+   * @return The squared perpendicular distance of the current node from the start-target line. If
+   *     the start and target are nearly identical, it returns the squared distance to the start
+   *     node.
+   */
+  private double calculateSquaredPerpendicularDistance() {
+    return calculatePerpendicularDistance(false);
   }
 
   /**
@@ -235,29 +272,39 @@ public class Node implements Comparable<Node> {
    * @return The linear (non-squared) perpendicular distance.
    */
   private double calculateLinearPerpendicularDistance() {
-    // Set up vectors for the geometric calculation.
-    final PathVector currentVec = this.position.toVector();
-    final PathVector startVec = this.start.toVector();
-    final PathVector targetVec = this.target.toVector();
+    return calculatePerpendicularDistance(true);
+  }
 
-    final PathVector lineVec = targetVec.subtract(startVec);
-    final double lineVecLengthSq = lineVec.dot(lineVec);
+  /**
+   * Calculates the perpendicular distance from the current node to the straight line segment
+   * between the start and target nodes.
+   *
+   * @param linear If true, returns the linear (true) distance; if false, returns the squared distance
+   * @return The perpendicular distance (linear or squared based on the parameter)
+   */
+  private double calculatePerpendicularDistance(boolean linear) {
+    // Set up vectors for the geometric calculation
+    PathVector currentVec = this.position.toVector();
+    PathVector startVec = this.start.toVector();
+    PathVector targetVec = this.target.toVector();
 
-    // If start and target are the same (or very close), the line is a point.
-    // The distance is then simply the distance from the current position to the start.
-    // A small epsilon (1e-9) is used to avoid floating-point inaccuracies.
+    PathVector lineVec = targetVec.subtract(startVec);
+    double lineVecLengthSq = lineVec.dot(lineVec);
+
+    // If start and target are the same (or very close), the line is a point
     if (lineVecLengthSq < 1e-9) {
-      return this.position.distance(this.start);
+      return linear 
+          ? this.position.distance(this.start) 
+          : this.position.distanceSquared(this.start);
     }
 
-    // The formula for perpendicular distance 'd' is |(P-A) x (B-A)| / |B-A|,
-    // where A is start, B is target, and P is the current position.
-    // Calculating with squared lengths and taking the root at the end is more stable.
-    final PathVector startToCurrentVec = currentVec.subtract(startVec);
-    final PathVector crossProduct = startToCurrentVec.getCrossProduct(lineVec);
-    final double crossProductLengthSq = crossProduct.dot(crossProduct);
+    // Calculate the perpendicular distance
+    PathVector startToCurrentVec = currentVec.subtract(startVec);
+    PathVector crossProduct = startToCurrentVec.getCrossProduct(lineVec);
+    double crossProductLengthSq = crossProduct.dot(crossProduct);
 
-    return Math.sqrt(crossProductLengthSq / lineVecLengthSq);
+    double result = crossProductLengthSq / lineVecLengthSq;
+    return linear ? Math.sqrt(result) : result;
   }
 
   @Override
@@ -274,14 +321,19 @@ public class Node implements Comparable<Node> {
 
   @Override
   public int compareTo(Node o) {
+    // First compare by F-cost (G-cost + H-cost)
     int fCostComparison = Double.compare(this.getFCost(), o.getFCost());
     if (fCostComparison != 0) {
       return fCostComparison;
     }
-    int heuristicComparison = Double.compare(this.squaredHeuristic.get(), o.squaredHeuristic.get());
+
+    // If F-costs are equal, compare by heuristic value
+    int heuristicComparison = Double.compare(this.getHeuristic().get(), o.getHeuristic().get());
     if (heuristicComparison != 0) {
       return heuristicComparison;
     }
+
+    // If heuristics are equal, compare by depth
     return Integer.compare(this.depth, o.depth);
   }
 }
