@@ -97,11 +97,30 @@ public class Node implements Comparable<Node> {
     return this.gCost;
   }
 
+  /**
+   * Calculates the heuristic (H-cost) for the A* search algorithm.
+   *
+   * <p>This heuristic combines multiple metrics to estimate the cost from the current node to the
+   * target. All distance calculations are squared to avoid expensive square root operations, which
+   * is acceptable for A* as long as the heuristic remains consistent. The final value is a weighted
+   * sum of these squared metrics, allowing for fine-tuning of the pathfinder's behavior.
+   *
+   * @return The composite heuristic value, representing a weighted sum of squared distances.
+   */
   private double heuristic() {
-    double manhattanDistance = this.position.manhattanDistance(target);
-    double octileDistance = this.position.octileDistance(target);
-    double perpendicularDistance = calculatePerpendicularDistance();
-    double heightDifference = Math.abs(this.position.getFlooredY() - target.getFlooredY());
+    double manhattan = this.position.manhattanDistance(target);
+    double manhattanDistanceSquared = manhattan * manhattan;
+
+    double octile = this.position.octileDistance(target);
+    double octileDistanceSquared = octile * octile;
+
+    double perpendicularDistanceSquared = calculatePerpendicularDistance();
+
+    double heightDiff = this.position.getFlooredY() - target.getFlooredY();
+    double heightDifferenceSquared = heightDiff * heightDiff;
+
+    double dirPenaltyValue = this.position.getFlooredY() - start.getFlooredY();
+    double directionalPenaltySquared = dirPenaltyValue * dirPenaltyValue;
 
     double manhattanWeight = heuristicWeights.getManhattanWeight();
     double octileWeight = heuristicWeights.getOctileWeight();
@@ -109,20 +128,51 @@ public class Node implements Comparable<Node> {
     double heightWeight = heuristicWeights.getHeightWeight();
     double directionalPenaltyWeight = heuristicWeights.getDirectionalPenaltyWeight();
 
-    double directionalPenalty = Math.abs(this.position.getFlooredY() - start.getFlooredY());
-
-    return (manhattanDistance * manhattanWeight)
-        + (octileDistance * octileWeight)
-        + (perpendicularDistance * perpendicularWeight)
-        + (heightDifference * heightWeight)
-        + (directionalPenalty * directionalPenaltyWeight);
+    return (manhattanDistanceSquared * manhattanWeight)
+        + (octileDistanceSquared * octileWeight)
+        + (perpendicularDistanceSquared * perpendicularWeight)
+        + (heightDifferenceSquared * heightWeight)
+        + (directionalPenaltySquared * directionalPenaltyWeight);
   }
 
+  /**
+   * Calculates the squared perpendicular distance from the current node's position to the straight
+   * line segment defined by the start and target nodes.
+   *
+   * <p>This metric is used as a component of the main heuristic to penalize nodes that stray far
+   * from the direct path. The calculation uses vector mathematics. Squaring the distance avoids
+   * costly {@code sqrt} operations and maintains consistency with the other squared metrics in the
+   * heuristic.
+   *
+   * @return The squared perpendicular distance of the current node from the start-target line. If
+   *     the start and target are nearly identical, it returns the squared distance to the start
+   *     node.
+   */
   private double calculatePerpendicularDistance() {
-    PathVector a = this.position.toVector();
-    PathVector b = this.start.toVector();
-    PathVector c = this.target.toVector();
-    return a.subtract(b).getCrossProduct(c.subtract(b)).length() / c.subtract(b).length();
+    PathVector currentVec = this.position.toVector();
+    PathVector startVec = this.start.toVector();
+    PathVector targetVec = this.target.toVector();
+
+    PathVector lineVec = targetVec.subtract(startVec);
+
+    // The squared length of the line vector is calculated using the dot product of the vector with
+    // itself, which is equivalent to v.length² and more efficient.
+    double lineVecLengthSq = lineVec.dot(lineVec);
+    if (lineVecLengthSq < 1e-9) {
+      // Avoid division by zero if start and target are almost identical.
+      // The "line" is a point, so the perpendicular distance is simply the distance to that point.
+      return this.position.distanceSquared(this.start);
+    }
+
+    PathVector startToCurrentVec = currentVec.subtract(startVec);
+
+    // The squared length of the cross product of two vectors is equal to the squared area of the
+    // parallelogram they form. By dividing this by the squared length of the base vector (lineVec),
+    // we get the squared perpendicular height (the distance we're looking for).
+    PathVector crossProduct = startToCurrentVec.getCrossProduct(lineVec);
+    double crossProductLengthSq = crossProduct.dot(crossProduct);
+
+    return crossProductLengthSq / lineVecLengthSq;
   }
 
   @Override

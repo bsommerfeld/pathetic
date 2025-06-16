@@ -4,7 +4,6 @@ import de.bsommerfeld.pathetic.api.pathing.processing.context.NodeEvaluationCont
 import de.bsommerfeld.pathetic.api.pathing.processing.context.SearchContext;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.engine.Node;
-
 import java.util.Objects;
 
 public class NodeEvaluationContextImpl implements NodeEvaluationContext {
@@ -53,7 +52,7 @@ public class NodeEvaluationContextImpl implements NodeEvaluationContext {
     if (this.parentEngineNode == null) {
       return 0.0;
     }
-    return this.engineNode.getPosition().distance(this.parentEngineNode.getPosition());
+    return this.engineNode.getPosition().distanceSquared(this.parentEngineNode.getPosition());
   }
 
   @Override
