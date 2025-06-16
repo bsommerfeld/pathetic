@@ -20,12 +20,12 @@ public final class HeuristicWeights {
    * Provides a set of default heuristic weights that may be suitable for natural pathfinding. These
    * values can be adjusted for specific scenarios.
    */
-  public static final HeuristicWeights NATURAL_PATH_WEIGHTS = create(0.3, 0.15, 0.6, 0.3, 0.5);
+  public static final HeuristicWeights NATURAL_PATH_WEIGHTS = create(0.3, 0.15, 0.6, 0.3);
 
   /**
    * Provides a set of weights strongly prioritizing the shortest direct path, even if diagonally.
    */
-  public static final HeuristicWeights DIRECT_PATH_WEIGHTS = create(0.6, 0.3, 0.0, 0.1, 0.0);
+  public static final HeuristicWeights DIRECT_PATH_WEIGHTS = create(0.6, 0.3, 0.0, 0.1);
 
   private final double manhattanWeight;
 
@@ -35,19 +35,15 @@ public final class HeuristicWeights {
 
   private final double heightWeight;
 
-  private final double directionalPenaltyWeight;
-
   private HeuristicWeights(
       double manhattanWeight,
       double octileWeight,
       double perpendicularWeight,
-      double heightWeight,
-      double directionalPenaltyWeight) {
+      double heightWeight) {
     this.manhattanWeight = manhattanWeight;
     this.octileWeight = octileWeight;
     this.perpendicularWeight = perpendicularWeight;
     this.heightWeight = heightWeight;
-    this.directionalPenaltyWeight = directionalPenaltyWeight;
   }
 
   /**
@@ -63,17 +59,14 @@ public final class HeuristicWeights {
    * @param heightWeight The weight applied to the height difference (elevation change) component. A
    *     higher weight gives more consideration to vertical distance, important for terrains with
    *     varying verticality.
-   * @param directionalPenaltyWeight This weighting penalizes heights that are too high and deviate
-   *     from the starting point.
    * @return A new {@code HeuristicWeights} instance with the given weights.
    */
   public static HeuristicWeights create(
       double manhattanWeight,
       double octileWeight,
       double perpendicularWeight,
-      double heightWeight,
-      double directionalPenaltyWeight) {
-    return new HeuristicWeights(manhattanWeight, octileWeight, perpendicularWeight, heightWeight, directionalPenaltyWeight);
+      double heightWeight) {
+    return new HeuristicWeights(manhattanWeight, octileWeight, perpendicularWeight, heightWeight);
   }
 
   /**
@@ -111,16 +104,6 @@ public final class HeuristicWeights {
    */
   public double getHeightWeight() {
     return this.heightWeight;
-  }
-
-  /**
-   * Returns the weight applied to the directional penalty component of the heuristic.
-   * This weight penalizes paths that deviate significantly in direction or height from the starting point.
-   *
-   * @return The directional penalty weight.
-   */
-  public double getDirectionalPenaltyWeight() {
-    return directionalPenaltyWeight;
   }
 
   public boolean equals(final Object o) {

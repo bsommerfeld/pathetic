@@ -119,20 +119,15 @@ public class Node implements Comparable<Node> {
     double heightDiff = this.position.getFlooredY() - target.getFlooredY();
     double heightDifferenceSquared = heightDiff * heightDiff;
 
-    double dirPenaltyValue = this.position.getFlooredY() - start.getFlooredY();
-    double directionalPenaltySquared = dirPenaltyValue * dirPenaltyValue;
-
     double manhattanWeight = heuristicWeights.getManhattanWeight();
     double octileWeight = heuristicWeights.getOctileWeight();
     double perpendicularWeight = heuristicWeights.getPerpendicularWeight();
     double heightWeight = heuristicWeights.getHeightWeight();
-    double directionalPenaltyWeight = heuristicWeights.getDirectionalPenaltyWeight();
 
     return (manhattanDistanceSquared * manhattanWeight)
         + (octileDistanceSquared * octileWeight)
         + (perpendicularDistanceSquared * perpendicularWeight)
-        + (heightDifferenceSquared * heightWeight)
-        + (directionalPenaltySquared * directionalPenaltyWeight);
+        + (heightDifferenceSquared * heightWeight);
   }
 
   /**
