@@ -1,7 +1,6 @@
 package de.bsommerfeld.pathetic.api.wrapper;
 
 import de.bsommerfeld.pathetic.api.util.NumberUtils;
-import java.util.Objects;
 
 /**
  * Represents a position. This class encapsulates the coordinates (x, y, z) of a point in the
@@ -290,7 +289,13 @@ public class PathPosition implements Cloneable {
 
   @Override
   public int hashCode() {
-    return Objects.hash(x, y, z);
+    int x = getFlooredX();
+    int y = getFlooredY();
+    int z = getFlooredZ();
+    int result = x;
+    result = 31 * result + y;
+    result = 31 * result + z;
+    return result;
   }
 
   /**
