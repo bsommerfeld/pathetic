@@ -284,7 +284,9 @@ public class PathPosition implements Cloneable {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     PathPosition that = (PathPosition) o;
-    return x == that.x && y == that.y && z == that.z;
+    return getFlooredX() == that.getFlooredX()
+        && getFlooredY() == that.getFlooredY()
+        && getFlooredZ() == that.getFlooredZ();
   }
 
   @Override
