@@ -16,5 +16,5 @@ package de.bsommerfeld.pathetic.api.pathing.heuristic;
  */
 public enum HeuristicMode {
   PERFORMANCE,
-  PRECISION
+  PRECISION;
 }
