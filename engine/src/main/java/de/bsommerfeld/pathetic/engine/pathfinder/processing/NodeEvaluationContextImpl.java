@@ -33,19 +33,6 @@ public class NodeEvaluationContextImpl implements NodeEvaluationContext {
     this.heuristicMode = heuristicMode;
   }
 
-  /**
-   * Creates a new NodeEvaluationContextImpl with the specified parameters, using PERFORMANCE as the
-   * default heuristic mode.
-   *
-   * @param searchContext The search context
-   * @param engineNode The current node being evaluated
-   * @param parentEngineNode The parent node (can be null for the start node)
-   */
-  public NodeEvaluationContextImpl(
-      SearchContext searchContext, Node engineNode, Node parentEngineNode) {
-    this(searchContext, engineNode, parentEngineNode, HeuristicMode.PERFORMANCE);
-  }
-
   @Override
   public PathPosition getCurrentPathPosition() {
     return this.engineNode.getPosition();

@@ -138,7 +138,8 @@ public class AStarPathfinder extends AbstractPathfinder {
       neighborNode.setParent(currentNode); // Set parent early for context
 
       NodeEvaluationContext nodeEvalContext =
-          new NodeEvaluationContextImpl(searchContext, neighborNode, currentNode);
+          new NodeEvaluationContextImpl(
+              searchContext, neighborNode, currentNode, pathfinderConfiguration.getHeuristicMode());
 
       // Validate the new neighbor node
       boolean isValidByCustomProcessors = true;
