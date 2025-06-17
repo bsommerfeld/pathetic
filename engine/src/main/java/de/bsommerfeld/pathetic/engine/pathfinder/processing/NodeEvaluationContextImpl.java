@@ -84,6 +84,7 @@ public class NodeEvaluationContextImpl implements NodeEvaluationContext {
       case PRECISION:
         return this.engineNode.getPosition().distance(this.parentEngineNode.getPosition());
       case PERFORMANCE:
+        return this.engineNode.getPosition().distanceSquared(this.parentEngineNode.getPosition());
       default:
         throw new IllegalStateException(
             "Could not find transition cost calculation for HeuristicMode: " + heuristicMode);
