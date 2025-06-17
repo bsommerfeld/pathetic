@@ -31,7 +31,6 @@ public class Node implements Comparable<Node> {
   private final HeuristicMode heuristicMode;
   private final int depth;
 
-  private final IHeuristic heuristicCalculator;
   private final ComputingCache<Double> heuristicCache;
 
   private double gCost;
@@ -61,7 +60,7 @@ public class Node implements Comparable<Node> {
     this.heuristicMode = heuristicMode;
     this.depth = depth;
 
-    this.heuristicCalculator = createHeuristic();
+    IHeuristic heuristicCalculator = createHeuristic();
     this.heuristicCache = new ComputingCache<>(heuristicCalculator::calculate);
   }
 
