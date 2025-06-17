@@ -258,6 +258,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
         startPos,
         targetPos,
         pathfinderConfiguration.getHeuristicWeights(),
+        pathfinderConfiguration.getHeuristicMode(),
         0); // Depth of start node is 0
   }
 

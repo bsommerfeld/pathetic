@@ -64,25 +64,6 @@ public class Node implements Comparable<Node> {
     this.heuristicCache = new ComputingCache<>(heuristicCalculator::calculate);
   }
 
-  /**
-   * Creates a new Node with the specified parameters, using PERFORMANCE as the default heuristic
-   * mode.
-   *
-   * @param position The position of this node
-   * @param start The start position of the path
-   * @param target The target position of the path
-   * @param heuristicWeights The weights to apply to different heuristic components
-   * @param depth The depth of this node in the search tree
-   */
-  public Node(
-      PathPosition position,
-      PathPosition start,
-      PathPosition target,
-      HeuristicWeights heuristicWeights,
-      int depth) {
-    this(position, start, target, heuristicWeights, HeuristicMode.PERFORMANCE, depth);
-  }
-
   private IHeuristic createHeuristic() {
     switch (heuristicMode) {
       case PERFORMANCE:
