@@ -108,14 +108,7 @@ public class Node implements Comparable<Node> {
   }
 
   public ComputingCache<Double> getHeuristic() {
-    switch (heuristicMode) {
-      case PERFORMANCE:
-        return heuristicCache;
-      //      case PRECISION:
-      //        return linearHeuristic;
-      default:
-        throw new IllegalStateException("Could not find HeuristicMode for " + heuristicMode);
-    }
+    return heuristicCache;
   }
 
   public Node getParent() {
