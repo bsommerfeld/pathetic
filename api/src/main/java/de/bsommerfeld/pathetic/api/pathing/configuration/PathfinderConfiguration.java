@@ -339,7 +339,7 @@ public class PathfinderConfiguration {
     private boolean fallback = true;
     private boolean negativeCostsAllowed = false;
     private NavigationPointProvider provider;
-    private HeuristicWeights heuristicWeights = HeuristicWeights.NATURAL_PATH_WEIGHTS;
+    private HeuristicWeights heuristicWeights = HeuristicWeights.DEFAULT_WEIGHTS;
     private List<NodeValidationProcessor> nodeValidationProcessors = Collections.emptyList();
     private List<NodeCostProcessor> nodeCostProcessors = Collections.emptyList();
     private Offset offset = Offset.VERTICAL_AND_HORIZONTAL;
