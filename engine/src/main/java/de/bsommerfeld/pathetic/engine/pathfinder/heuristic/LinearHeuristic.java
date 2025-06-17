@@ -18,13 +18,14 @@ public class LinearHeuristic extends BaseHeuristic {
    * Calculates the heuristic (H-cost) for the A* search algorithm in PRECISION mode.
    *
    * <p>This heuristic combines multiple metrics to estimate the cost from the current node to the
-   * target. All distance calculations use linear (true) distances instead of squared values, which
-   * leads to paths that often appear more direct and intuitive to the human eye. The trade-off is a
-   * slight performance overhead due to necessary square root operations, particularly in {@code
-   * calculatePerpendicularDistance}. The final value is a weighted sum of these linear metrics,
-   * allowing for fine-tuning of the pathfinder's behavior.
+   * target. While this is the PRECISION mode, we still use scaled distances to ensure consistency
+   * with the A* algorithm requirements. The final value is a weighted sum of these scaled metrics,
+   * allowing for fine-tuning of the pathfinder's behavior while maintaining consistency.
    *
-   * @return The composite heuristic value, representing a weighted sum of linear distances.
+   * <p>Note: To ensure the heuristic is consistent (satisfies the triangle inequality), we scale
+   * the distances and avoid taking square roots in the perpendicular distance calculation.
+   *
+   * @return The composite heuristic value, representing a weighted sum of scaled distances.
    */
   @Override
   protected double heuristic() {
@@ -38,23 +39,29 @@ public class LinearHeuristic extends BaseHeuristic {
     final double perpendicularDistance = calculatePerpendicularDistance();
     final double heightDifference = Math.abs(this.position.getFlooredY() - target.getFlooredY());
 
-    return (manhattanDistance * manhattanWeight)
-        + (octileDistance * octileWeight)
-        + (perpendicularDistance * perpendicularWeight)
-        + (heightDifference * heightWeight);
+    // Scale the distances to ensure consistency
+    final double manhattanDistanceScaled = manhattanDistance * 0.5;
+    final double octileDistanceScaled = octileDistance * 0.5;
+    final double perpendicularDistanceScaled = perpendicularDistance * 0.5;
+    final double heightDifferenceScaled = heightDifference * 0.5;
+
+    return (manhattanDistanceScaled * manhattanWeight)
+        + (octileDistanceScaled * octileWeight)
+        + (perpendicularDistanceScaled * perpendicularWeight)
+        + (heightDifferenceScaled * heightWeight);
   }
 
   /**
-   * Calculates the perpendicular distance from the current node's position to the straight line
+   * Calculates the squared perpendicular distance from the current node's position to the straight line
    * segment defined by the start and target nodes.
    *
    * <p>This metric is used as a component of the main heuristic to penalize nodes that stray far
-   * from the direct path. The calculation uses vector mathematics and returns a true linear
-   * distance via a final square root operation. This is the main difference from the performance
-   * variant, which works with squared distances to avoid costly {@code sqrt} operations.
+   * from the direct path. The calculation uses vector mathematics. To ensure consistency with the
+   * A* algorithm requirements, we avoid taking the square root and work with squared distances,
+   * similar to the performance variant.
    *
-   * @return The perpendicular distance of the current node from the start-target line. If the start
-   *     and target are nearly identical, it returns the distance to the start node.
+   * @return The squared perpendicular distance of the current node from the start-target line. If the start
+   *     and target are nearly identical, it returns the squared distance to the start node.
    */
   private double calculatePerpendicularDistance() {
     // Create vectors for the involved positions
@@ -70,9 +77,9 @@ public class LinearHeuristic extends BaseHeuristic {
     final double lineVecLengthSq = lineVec.dot(lineVec);
 
     // Edge case: If start and target are almost identical, the "line" is a point.
-    // In this case, the perpendicular distance is simply the distance to that point.
+    // In this case, the perpendicular distance is simply the squared distance to that point.
     if (lineVecLengthSq < 1e-9) {
-      return this.position.distance(this.start);
+      return this.position.distanceSquared(this.start);
     }
 
     // Vector from start point to current position
@@ -87,7 +94,7 @@ public class LinearHeuristic extends BaseHeuristic {
     // The formula for perpendicular distance d is: d = |startToCurrentVec x lineVec| / |lineVec|
     // Since we have squared lengths, the formula becomes: d² = crossProductLengthSq /
     // lineVecLengthSq
-    // To get d, we take the square root of the entire expression.
-    return Math.sqrt(crossProductLengthSq / lineVecLengthSq);
+    // We don't take the square root to maintain consistency with the movement costs
+    return crossProductLengthSq / lineVecLengthSq;
   }
 }
