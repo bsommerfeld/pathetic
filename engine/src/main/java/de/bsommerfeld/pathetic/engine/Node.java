@@ -137,18 +137,7 @@ public class Node implements Comparable<Node> {
    */
   public double getGCost() {
     if (this.parent == null) return 0.0;
-
-    return this.gCost > 0
-        ? this.gCost
-        : (parent.getGCost() + calculateMovementCost(parent.getPosition(), this.position));
-  }
-
-  private double calculateMovementCost(PathPosition from, PathPosition to) {
-    if (from.getFlooredX() != to.getFlooredX() && from.getFlooredZ() != to.getFlooredZ()) {
-      return Math.sqrt(2); // Diagonal
-    } else {
-      return 1.0; // Horizontal/Vertical
-    }
+    return this.gCost;
   }
 
   @Override
