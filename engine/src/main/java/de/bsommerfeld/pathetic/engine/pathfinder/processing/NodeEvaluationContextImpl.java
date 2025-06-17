@@ -83,10 +83,13 @@ public class NodeEvaluationContextImpl implements NodeEvaluationContext {
     PathPosition from = this.parentEngineNode.getPosition();
     PathPosition to = this.engineNode.getPosition();
 
-    if (from.getFlooredX() != to.getFlooredX() && from.getFlooredZ() != to.getFlooredZ()) {
-      return heuristicMode == HeuristicMode.PRECISION ? Math.sqrt(2) : 2.0; // Diagonal
-    } else {
-      return 1.0; // Horizontal/Vertical
+    switch (heuristicMode) {
+      case PRECISION:
+        return to.distance(from);
+      case PERFORMANCE:
+        return to.distanceSquared(from);
+      default:
+        return 1.0;
     }
   }
 
