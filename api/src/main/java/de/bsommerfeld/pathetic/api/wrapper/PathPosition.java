@@ -60,7 +60,7 @@ public class PathPosition implements Cloneable {
    * @param otherPosition The other position to calculate the distance to.
    * @return The Manhattan distance between the two positions.
    */
-  public int manhattanDistance(PathPosition otherPosition) {
+  public double manhattanDistance(PathPosition otherPosition) {
     return Math.abs(this.getFlooredX() - otherPosition.getFlooredX())
         + Math.abs(this.getFlooredY() - otherPosition.getFlooredY())
         + Math.abs(this.getFlooredZ() - otherPosition.getFlooredZ());
