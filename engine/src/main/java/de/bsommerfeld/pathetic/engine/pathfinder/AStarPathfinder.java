@@ -133,6 +133,7 @@ public class AStarPathfinder extends AbstractPathfinder {
               requestStart,
               requestTarget,
               pathfinderConfiguration.getHeuristicWeights(),
+              pathfinderConfiguration.getHeuristicMode(),
               currentNode.getDepth() + 1);
       neighborNode.setParent(currentNode); // Set parent early for context
 
