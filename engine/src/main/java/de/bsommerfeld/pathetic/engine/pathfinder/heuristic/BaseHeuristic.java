@@ -20,4 +20,11 @@ public abstract class BaseHeuristic implements IHeuristic {
     this.target = target;
     this.heuristicWeights = heuristicWeights;
   }
+
+  @Override
+  public double calculate() {
+    return heuristic();
+  }
+
+  protected abstract double heuristic();
 }

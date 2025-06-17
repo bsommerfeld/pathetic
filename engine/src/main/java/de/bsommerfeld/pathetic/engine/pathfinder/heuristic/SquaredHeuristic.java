@@ -14,11 +14,6 @@ public class SquaredHeuristic extends BaseHeuristic {
     super(position, start, target, heuristicWeights);
   }
 
-  @Override
-  public double calculate() {
-    return heuristic();
-  }
-
   /**
    * Calculates the heuristic (H-cost) for the A* search algorithm.
    *
@@ -29,7 +24,8 @@ public class SquaredHeuristic extends BaseHeuristic {
    *
    * @return The composite heuristic value, representing a weighted sum of squared distances.
    */
-  private double heuristic() {
+  @Override
+  protected double heuristic() {
     double manhattan = this.position.manhattanDistance(target);
     double manhattanDistanceSquared = manhattan * manhattan;
 
