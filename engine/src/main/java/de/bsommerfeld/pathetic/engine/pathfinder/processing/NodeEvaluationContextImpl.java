@@ -80,14 +80,13 @@ public class NodeEvaluationContextImpl implements NodeEvaluationContext {
       return 0.0;
     }
 
-    switch (heuristicMode) {
-      case PRECISION:
-        return this.engineNode.getPosition().distance(this.parentEngineNode.getPosition());
-      case PERFORMANCE:
-        return this.engineNode.getPosition().distanceSquared(this.parentEngineNode.getPosition());
-      default:
-        throw new IllegalStateException(
-            "Could not find transition cost calculation for HeuristicMode: " + heuristicMode);
+    PathPosition from = this.parentEngineNode.getPosition();
+    PathPosition to = this.engineNode.getPosition();
+
+    if (from.getFlooredX() != to.getFlooredX() && from.getFlooredZ() != to.getFlooredZ()) {
+      return heuristicMode == HeuristicMode.PRECISION ? Math.sqrt(2) : 2.0; // Diagonal
+    } else {
+      return 1.0; // Horizontal/Vertical
     }
   }
 
