@@ -328,6 +328,6 @@ public class PathPosition implements Cloneable {
   }
 
   public String toString() {
-    return ", x=" + this.getX() + ", y=" + this.getY() + ", z=" + this.getZ() + ")";
+    return "PathPosition(x=" + this.getX() + ", y=" + this.getY() + ", z=" + this.getZ() + ")";
   }
 }
