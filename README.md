@@ -49,8 +49,8 @@ While its roots are in gaming, `pathetic` is a top-tier solution for a wide rang
 
 ---
 
-### The Story Behind the Name
+## The Story Behind the Name
 
-The name **"pathetic"** is a tongue-in-cheek reminder of the project's humble beginnings. What started as a simple
-pathfinder quickly evolved into a highly-optimized engine. We kept the name as a testament to that journey and as a
-humorous contrast to its powerful capabilities.
+The name **"path-etic"** is a tongue-in-cheek reminder of the project's humble beginnings. What started as a simple pathfinder quickly evolved into a highly-optimized engine. We kept the name as a testament to that journey and as a humorous contrast to its powerful capabilities.
+
+**Pathetic-Bukkit** (https://github.com/bsommerfeld/pathetic-bukkit) was also an early part of this project, developed in collaboration with [@Ollie](https://github.com/olijeffers0n), who co-founded Pathetic and contributed significantly in its initial stages.
