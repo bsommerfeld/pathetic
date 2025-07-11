@@ -30,31 +30,51 @@ jobs:
           cache: maven
 
       - name: Build and Test with Maven
+        id: build_test
+        continue-on-error: true
         run: |
           echo "Building and testing with Maven..."
           mvn clean install -U
-          echo "Build and tests completed."
+          EXIT_CODE=$?
+          echo "Maven exit code: $EXIT_CODE"
+          # wir brechen hier ab mit dem gleichen Exit-Code,
+          # damit steps.build_test.conclusion korrekt auf 'failure' springt
+          exit $EXIT_CODE
+
 
       - name: Read CHANGELOG.md Content
         id: read_manual_changelog
         run: |
           CHANGELOG_SOURCE_FILE="CHANGELOG.md"
           if [ -f "${CHANGELOG_SOURCE_FILE}" ]; then
-            CHANGELOG_CONTENT=$(cat "${CHANGELOG_SOURCE_FILE}" 2>/dev/null)
+          CHANGELOG_CONTENT=$(cat "${CHANGELOG_SOURCE_FILE}" 2>/dev/null)
           else
-            CHANGELOG_CONTENT="### Changelog für ${{ github.ref_name }}\n\n*${CHANGELOG_SOURCE_FILE} nicht gefunden oder leer.*"
-            echo "## Changelog\n\n### Added\n\n### Changed\n\n### Fixed\n\n### Removed\n" > "${CHANGELOG_SOURCE_FILE}"
-            echo "Created empty CHANGELOG.md template file."
+          CHANGELOG_CONTENT="### Changelog für ${{ github.ref_name }}\n\n*${CHANGELOG_SOURCE_FILE} nicht gefunden oder leer.*"
+          echo "## Changelog\n\n### Added\n\n### Changed\n\n### Fixed\n\n### Removed\n" > "${CHANGELOG_SOURCE_FILE}"
           fi
-          
-          # Escape für multiline string in environment variable for next step
+
+          # Build/Test Status auswerten
+          if [ "${{ steps.build_test.outcome }}" = "success" ]; then
+          BUILD_BADGE="![Build Success](https://img.shields.io/badge/Build-Success-brightgreen)"
+          TEST_BADGE="![Tests Succeeded](https://img.shields.io/badge/Tests-Succeeded-brightgreen)"
+          else
+          BUILD_BADGE="![Build Failed](https://img.shields.io/badge/Build-Failed-red)"
+          TEST_BADGE="![Tests Failed](https://img.shields.io/badge/Tests-Failed-red)"
+          fi
+
+          STATUS_BADGES="${BUILD_BADGE} ${TEST_BADGE}\n\n"
+          CHANGELOG_CONTENT="${STATUS_BADGES}${CHANGELOG_CONTENT}"
+
+          # Escape für multiline string
           CHANGELOG_CONTENT="${CHANGELOG_CONTENT//'%'/'%25'}"
           CHANGELOG_CONTENT="${CHANGELOG_CONTENT//$'\n'/'%0A'}"
           CHANGELOG_CONTENT="${CHANGELOG_CONTENT//$'\r'/'%0D'}"
           echo "changelog_text=${CHANGELOG_CONTENT}" >> $GITHUB_OUTPUT
-          
-          echo "--- Inhalt von ${CHANGELOG_SOURCE_FILE} ---"
-          cat "${CHANGELOG_SOURCE_FILE}" || echo "${CHANGELOG_SOURCE_FILE} nicht gefunden."
+
+          # Debug-Ausgabe
+          echo "--- Inhalt von ${CHANGELOG_SOURCE_FILE} (mit Badges) ---"
+          echo -e "${STATUS_BADGES}"
+          echo -e "${CHANGELOG_CONTENT//%0A/\\n}"
           echo "-----------------------------------------"
 
       - name: Create GitHub Release
@@ -88,14 +108,14 @@ jobs:
         run: |
           git config user.name "GitHub Actions Bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
+
           TARGET_BRANCH="${DEFAULT_BRANCH}"
           if [ -z "$TARGET_BRANCH" ]; then
             echo "Warning: Default branch could not be determined automatically. Using 'main' as fallback."
             TARGET_BRANCH="main" 
           fi
           echo "Target branch for clearing the changelog: ${TARGET_BRANCH}"
-          
+
           CURRENT_GIT_STATE=$(git rev-parse --abbrev-ref HEAD)
           if [[ "${CURRENT_GIT_STATE}" == "HEAD" ]]; then 
             echo "In detached HEAD state. Checking out branch ${TARGET_BRANCH}."
@@ -108,15 +128,15 @@ jobs:
             echo "Switching from ${CURRENT_GIT_STATE} to ${TARGET_BRANCH}."
             git checkout "${TARGET_BRANCH}"
           fi
-          
+
           echo "Updating local branch ${TARGET_BRANCH}..."
           git pull origin "${TARGET_BRANCH}" --ff-only
-          
+
           CHANGELOG_FILE_TO_CLEAR="CHANGELOG.md"
           if [ -f "${CHANGELOG_FILE_TO_CLEAR}" ]; then
             echo -e "## Changelog\n\n### Added\n\n### Changed\n\n### Fixed\n\n### Removed\n" > "${CHANGELOG_FILE_TO_CLEAR}"
             echo "CHANGELOG.md has been reset with the template for the next release."
-          
+
             git add "${CHANGELOG_FILE_TO_CLEAR}"
             if ! git diff --staged --quiet; then
               git commit -m "chore: Reset ${CHANGELOG_FILE_TO_CLEAR} for next release [skip ci]"
