@@ -1,20 +1,17 @@
 package de.bsommerfeld.pathetic.engine.result;
 
-import com.google.common.collect.Iterables;
+import de.bsommerfeld.pathetic.api.pathing.result.Path;
+import de.bsommerfeld.pathetic.api.util.ParameterizedSupplier;
+import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
+import de.bsommerfeld.pathetic.engine.util.ErrorLogger;
+import de.bsommerfeld.pathetic.engine.util.Iterables;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import de.bsommerfeld.pathetic.api.pathing.result.Path;
-import de.bsommerfeld.pathetic.api.util.ParameterizedSupplier;
-import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
-import de.bsommerfeld.pathetic.engine.util.ErrorLogger;
 
 public class PathImpl implements Path {
 
@@ -24,10 +21,7 @@ public class PathImpl implements Path {
 
   private final int length;
 
-  public PathImpl(
-       PathPosition start,
-       PathPosition end,
-       Iterable< PathPosition> positions) {
+  public PathImpl(PathPosition start, PathPosition end, Iterable<PathPosition> positions) {
     this.start = start;
     this.end = end;
     this.positions = positions;
@@ -49,7 +43,7 @@ public class PathImpl implements Path {
   }
 
   @Override
-  public  Iterator<PathPosition> iterator() {
+  public Iterator<PathPosition> iterator() {
     return positions.iterator();
   }
 
@@ -138,7 +132,6 @@ public class PathImpl implements Path {
     return new PathImpl(start, Iterables.getLast(limitedPositions), limitedPositions);
   }
 
-  
   @Override
   public Path mutatePositions(ParameterizedSupplier<PathPosition> mutator) {
     List<PathPosition> positionList = new LinkedList<>();
