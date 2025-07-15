@@ -9,7 +9,7 @@
 ### Changed
 
 - Now using custom Iterables class instead of Guavas
-- Offset got replaced with a new NeighborStrategy to provide more flexible offsets
+- Offset got replaced with a new NeighborStrategy to provide more flexible offsets and control over the path density
 
 ### Fixed
 
