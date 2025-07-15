@@ -2,8 +2,9 @@ package de.bsommerfeld.pathetic.api.pathing.configuration;
 
 import de.bsommerfeld.pathetic.api.pathing.INeighborStrategy;
 import de.bsommerfeld.pathetic.api.pathing.NeighborStrategies;
-import de.bsommerfeld.pathetic.api.pathing.heuristic.HeuristicMode;
+import de.bsommerfeld.pathetic.api.pathing.heuristic.HeuristicStrategies;
 import de.bsommerfeld.pathetic.api.pathing.heuristic.HeuristicWeights;
+import de.bsommerfeld.pathetic.api.pathing.heuristic.IHeuristicStrategy;
 import de.bsommerfeld.pathetic.api.pathing.processing.NodeCostProcessor;
 import de.bsommerfeld.pathetic.api.pathing.processing.NodeValidationProcessor;
 import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
@@ -129,13 +130,7 @@ public class PathfinderConfiguration {
      */
     private final double bloomFilterFpp;
 
-    /**
-     * The heuristic mode to be used in pathfinding calculations. This determines the balance between performance and
-     * precision in the pathfinding algorithm.
-     *
-     * <p>Default: {@link HeuristicMode#PRECISION}
-     */
-    private final HeuristicMode heuristicMode;
+    private final IHeuristicStrategy heuristicStrategy;
 
     private PathfinderConfiguration(
             int maxIterations,
@@ -151,7 +146,7 @@ public class PathfinderConfiguration {
             int gridCellSize,
             int bloomFilterSize,
             double bloomFilterFpp,
-            HeuristicMode heuristicMode) {
+            IHeuristicStrategy heuristicStrategy) {
         this.maxIterations = maxIterations;
         this.maxLength = maxLength;
         this.async = async;
@@ -165,7 +160,7 @@ public class PathfinderConfiguration {
         this.gridCellSize = gridCellSize;
         this.bloomFilterSize = bloomFilterSize;
         this.bloomFilterFpp = bloomFilterFpp;
-        this.heuristicMode = heuristicMode;
+        this.heuristicStrategy = heuristicStrategy;
     }
 
     /**
@@ -192,7 +187,7 @@ public class PathfinderConfiguration {
                 .gridCellSize(pathfinderConfiguration.gridCellSize)
                 .bloomFilterSize(pathfinderConfiguration.bloomFilterSize)
                 .bloomFilterFpp(pathfinderConfiguration.bloomFilterFpp)
-                .heuristicMode(pathfinderConfiguration.heuristicMode)
+                .heuristicStrategy(pathfinderConfiguration.heuristicStrategy)
                 .build();
     }
 
@@ -252,8 +247,8 @@ public class PathfinderConfiguration {
         return bloomFilterFpp;
     }
 
-    public HeuristicMode getHeuristicMode() {
-        return heuristicMode;
+    public IHeuristicStrategy getHeuristicStrategy() {
+        return heuristicStrategy;
     }
 
     @Override
@@ -286,7 +281,7 @@ public class PathfinderConfiguration {
                 + ", bloomFilterFpp="
                 + bloomFilterFpp
                 + ", heuristicMode="
-                + heuristicMode
+                + heuristicStrategy
                 + '}';
     }
 
@@ -308,7 +303,7 @@ public class PathfinderConfiguration {
                 && Objects.equals(nodeValidationProcessors, that.nodeValidationProcessors)
                 && Objects.equals(nodeCostProcessors, that.nodeCostProcessors)
                 && Objects.equals(neighborStrategy, that.neighborStrategy)
-                && heuristicMode == that.heuristicMode;
+                && heuristicStrategy == that.heuristicStrategy;
     }
 
     @Override
@@ -327,7 +322,7 @@ public class PathfinderConfiguration {
                 gridCellSize,
                 bloomFilterSize,
                 bloomFilterFpp,
-                heuristicMode);
+                heuristicStrategy);
     }
 
     public static class PathfinderConfigurationBuilder {
@@ -344,7 +339,7 @@ public class PathfinderConfiguration {
         private int gridCellSize = 12;
         private int bloomFilterSize = 1000;
         private double bloomFilterFpp = 0.01;
-        private HeuristicMode heuristicMode = HeuristicMode.PRECISION;
+        private IHeuristicStrategy heuristicStrategy = HeuristicStrategies.LINEAR;
 
         PathfinderConfigurationBuilder() {
         }
@@ -423,9 +418,9 @@ public class PathfinderConfiguration {
             return this;
         }
 
-        public PathfinderConfiguration.PathfinderConfigurationBuilder heuristicMode(
-                HeuristicMode heuristicMode) {
-            this.heuristicMode = Objects.requireNonNull(heuristicMode);
+        public PathfinderConfiguration.PathfinderConfigurationBuilder heuristicStrategy(
+                IHeuristicStrategy heuristicStrategy) {
+            this.heuristicStrategy = Objects.requireNonNull(heuristicStrategy);
             return this;
         }
 
@@ -444,7 +439,7 @@ public class PathfinderConfiguration {
                     this.gridCellSize,
                     this.bloomFilterSize,
                     this.bloomFilterFpp,
-                    this.heuristicMode);
+                    this.heuristicStrategy);
         }
     }
 }

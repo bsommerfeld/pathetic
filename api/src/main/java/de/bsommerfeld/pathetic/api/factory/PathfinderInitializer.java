@@ -8,11 +8,11 @@ import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration
  */
 public interface PathfinderInitializer {
 
-  /**
-   * Initializes the given {@link Pathfinder} with the given {@link PathfinderConfiguration}.
-   *
-   * @param pathfinder The pathfinder to initialize.
-   * @param configuration The configuration for the pathfinder.
-   */
-  void initialize(Pathfinder pathfinder, PathfinderConfiguration configuration);
+    /**
+     * Initializes the given {@link Pathfinder} with the given {@link PathfinderConfiguration}.
+     *
+     * @param pathfinder    The pathfinder to initialize.
+     * @param configuration The configuration for the pathfinder.
+     */
+    void initialize(Pathfinder pathfinder, PathfinderConfiguration configuration);
 }

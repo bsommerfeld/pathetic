@@ -10,6 +10,7 @@
 
 - Now using custom Iterables class instead of Guavas
 - Offset got replaced with a new NeighborStrategy to provide more flexible offsets and control over the path density
+- HeuristicMode got replaced with IHeuristicStrategy, allowing the user more freedom regarding custom heuristics
 
 ### Fixed
 
@@ -17,3 +18,6 @@
 - Fixed initial node processing by @steve
 
 ### Removed
+
+- Removed HeuristicMode
+- Removed Offset

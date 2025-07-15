@@ -173,7 +173,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
                             searchContext,
                             startNode,
                             null,
-                            pathfinderConfiguration.getHeuristicMode());
+                            pathfinderConfiguration.getHeuristicStrategy());
 
             if (this.nodeValidationProcessors != null && !this.nodeValidationProcessors.isEmpty()) {
                 final boolean isStartNodeInvalid =
@@ -285,7 +285,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
                 startPos,
                 targetPos,
                 pathfinderConfiguration.getHeuristicWeights(),
-                pathfinderConfiguration.getHeuristicMode(),
+                pathfinderConfiguration.getHeuristicStrategy(),
                 0); // Depth of start node is 0
     }
 

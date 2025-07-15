@@ -101,7 +101,7 @@ public class AStarPathfinder extends AbstractPathfinder {
                                 searchContext,
                                 existingNodeInHeap,
                                 currentNode,
-                                pathfinderConfiguration.getHeuristicMode());
+                                pathfinderConfiguration.getHeuristicStrategy());
 
                 double newGCostForExisting = calculateGCostForSuccessor(nodeEvalContext);
 
@@ -132,13 +132,13 @@ public class AStarPathfinder extends AbstractPathfinder {
                             requestStart,
                             requestTarget,
                             pathfinderConfiguration.getHeuristicWeights(),
-                            pathfinderConfiguration.getHeuristicMode(),
+                            pathfinderConfiguration.getHeuristicStrategy(),
                             currentNode.getDepth() + 1);
             neighborNode.setParent(currentNode); // Set parent early for context
 
             NodeEvaluationContext nodeEvalContext =
                     new NodeEvaluationContextImpl(
-                            searchContext, neighborNode, currentNode, pathfinderConfiguration.getHeuristicMode());
+                            searchContext, neighborNode, currentNode, pathfinderConfiguration.getHeuristicStrategy());
 
             // Validate the new neighbor node
             boolean isValidByCustomProcessors = true;
