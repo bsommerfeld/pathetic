@@ -9,7 +9,11 @@
 ### Changed
 
 - Now using custom Iterables class instead of Guavas
+- Offset got replaced with a new NeighborStrategy to provide more flexible offsets
 
 ### Fixed
+
+- Fixed PathPosition toString formatting by @steve
+- Fixed initial node processing by @steve
 
 ### Removed
