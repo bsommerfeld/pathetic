@@ -70,6 +70,8 @@ public class NodeEvaluationContextImpl implements NodeEvaluationContext {
         PathPosition from = this.parentEngineNode.getPosition();
         PathPosition to = this.engineNode.getPosition();
 
+        // TODO: negative costs check
+
         return this.heuristicStrategy.calculateTransitionCost(from, to);
     }
 
