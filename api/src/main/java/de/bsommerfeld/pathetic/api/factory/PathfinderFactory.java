@@ -9,6 +9,13 @@ import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration
 public interface PathfinderFactory {
 
     /**
+     * Creates a new instance of a {@link Pathfinder} with a default {@link PathfinderConfiguration}.
+     *
+     * @return A new {@link Pathfinder} instance.
+     */
+    Pathfinder createPathfinder();
+
+    /**
      * Creates a new {@link Pathfinder} instance with the given configuration.
      *
      * @param configuration The configuration for the pathfinder.
