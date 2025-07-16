@@ -58,18 +58,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
     static {
         Runtime.getRuntime()
                 .addShutdownHook(
-                        new Thread(
-                                () -> {
-                                    PATHING_EXECUTOR_SERVICE.shutdown();
-                                    try {
-                                        if (!PATHING_EXECUTOR_SERVICE.awaitTermination(5, TimeUnit.SECONDS)) {
-                                            PATHING_EXECUTOR_SERVICE.shutdownNow();
-                                        }
-                                    } catch (InterruptedException e) {
-                                        PATHING_EXECUTOR_SERVICE.shutdownNow();
-                                        Thread.currentThread().interrupt();
-                                    }
-                                }));
+                        new Thread(AbstractPathfinder::shutdownExecutor));
     }
 
     protected final PathfinderConfiguration pathfinderConfiguration;
@@ -77,7 +66,9 @@ public abstract class AbstractPathfinder implements Pathfinder {
     protected final List<NodeValidationProcessor> nodeValidationProcessors;
     protected final List<NodeCostProcessor> nodeCostProcessors;
     protected final Iterable<PathVector> offsets;
+
     private final Set<PathfinderHook> pathfinderHooks = Collections.synchronizedSet(new HashSet<>());
+
     private volatile boolean abortRequested = false;
 
     protected AbstractPathfinder(PathfinderConfiguration pathfinderConfiguration) {
@@ -92,6 +83,18 @@ public abstract class AbstractPathfinder implements Pathfinder {
         this.nodeValidationProcessors = pathfinderConfiguration.getNodeValidationProcessors();
         this.nodeCostProcessors = pathfinderConfiguration.getNodeCostProcessors();
         this.offsets = pathfinderConfiguration.getNeighborStrategy().getOffsets();
+    }
+
+    private static void shutdownExecutor() {
+        PATHING_EXECUTOR_SERVICE.shutdown();
+        try {
+            if (!PATHING_EXECUTOR_SERVICE.awaitTermination(5, TimeUnit.SECONDS)) {
+                PATHING_EXECUTOR_SERVICE.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            PATHING_EXECUTOR_SERVICE.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
     }
 
     @Override
