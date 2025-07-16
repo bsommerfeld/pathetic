@@ -49,6 +49,14 @@ While its roots are in gaming, `pathetic` is a top-tier solution for a wide rang
 
 ---
 
+## 📖 Documentation
+
+For comprehensive guides, API reference, and usage examples, please see the **official project wiki**. It contains detailed information on everything from installation and basic usage to advanced topics like custom processors.
+
+### **[Pathetic Wiki](https://github.com/bsommerfeld/pathetic/wiki)**
+
+---
+
 ## The Story Behind the Name
 
 The name **"path-etic"** is a tongue-in-cheek reminder of the project's humble beginnings. What started as a simple pathfinder quickly evolved into a highly-optimized engine. We kept the name as a testament to that journey and as a humorous contrast to its powerful capabilities.
