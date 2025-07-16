@@ -331,7 +331,7 @@ public class PathfinderConfiguration {
         private boolean async;
         private boolean fallback = true;
         private boolean negativeCostsAllowed = false;
-        private NavigationPointProvider provider;
+        private NavigationPointProvider provider = (position, environmentContext) -> () -> true;
         private HeuristicWeights heuristicWeights = HeuristicWeights.DEFAULT_WEIGHTS;
         private List<NodeValidationProcessor> nodeValidationProcessors = Collections.emptyList();
         private List<NodeCostProcessor> nodeCostProcessors = Collections.emptyList();
