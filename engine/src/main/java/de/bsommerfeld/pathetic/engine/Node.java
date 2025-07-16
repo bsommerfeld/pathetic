@@ -98,9 +98,7 @@ public class Node implements Comparable<Node> {
     }
 
     public boolean isTarget() {
-        return this.position.getFlooredX() == target.getFlooredX()
-                && this.position.getFlooredY() == target.getFlooredY()
-                && this.position.getFlooredZ() == target.getFlooredZ();
+        return this.position.equals(target);
     }
 
     /**
