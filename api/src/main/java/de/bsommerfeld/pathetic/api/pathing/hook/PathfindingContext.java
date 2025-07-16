@@ -1,16 +1,26 @@
 package de.bsommerfeld.pathetic.api.pathing.hook;
 
 import de.bsommerfeld.pathetic.api.wrapper.Depth;
+import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 
 import java.util.Objects;
 
 /** Context for the current step of the pathfinding process. */
 public final class PathfindingContext {
 
+    private final PathPosition currentPosition;
     private final Depth depth;
 
-    public PathfindingContext(Depth depth) {
+    public PathfindingContext(PathPosition position, Depth depth) {
+        this.currentPosition = position;
         this.depth = depth;
+    }
+
+    /**
+     * The current position of the pathfinding step.
+     */
+    public PathPosition currentPosition() {
+        return currentPosition;
     }
 
     /**

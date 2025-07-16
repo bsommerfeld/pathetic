@@ -5,7 +5,6 @@ import de.bsommerfeld.pathetic.api.pathing.context.EnvironmentContext;
 import de.bsommerfeld.pathetic.api.pathing.hook.PathfinderHook;
 import de.bsommerfeld.pathetic.api.pathing.hook.PathfindingContext;
 import de.bsommerfeld.pathetic.api.pathing.processing.context.SearchContext;
-import de.bsommerfeld.pathetic.api.pathing.result.Path;
 import de.bsommerfeld.pathetic.api.pathing.result.PathState;
 import de.bsommerfeld.pathetic.api.pathing.result.PathfinderResult;
 import de.bsommerfeld.pathetic.api.provider.NavigationPoint;
@@ -22,16 +21,17 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 class AbstractPathfinderTest {
 
@@ -162,10 +162,10 @@ class AbstractPathfinderTest {
      */
     private static class TestPathfinder extends AbstractPathfinder {
 
-        private boolean simulateDelay = false;
-        private boolean abortImmediately = false;
         private final List<Node> expandedNodes = new ArrayList<>();
         private final Set<PathfinderHook> testHooks = new HashSet<>();
+        private boolean simulateDelay = false;
+        private boolean abortImmediately = false;
 
         public TestPathfinder(PathfinderConfiguration pathfinderConfiguration) {
             super(pathfinderConfiguration);
@@ -191,10 +191,10 @@ class AbstractPathfinderTest {
         }
 
         @Override
-        protected void processSuccessors(PathPosition requestStart, PathPosition requestTarget, 
-                                        Node currentNode, int currentSearchDepth, 
-                                        FibonacciHeap<Double, Node> openSet, 
-                                        de.bsommerfeld.pathetic.api.pathing.processing.context.SearchContext searchContext) {
+        protected void processSuccessors(PathPosition requestStart, PathPosition requestTarget,
+                                         Node currentNode, int currentSearchDepth,
+                                         FibonacciHeap<Double, Node> openSet,
+                                         SearchContext searchContext) {
             // If abortImmediately is true, abort immediately by not adding any successors
             if (abortImmediately) {
                 abort();
@@ -236,7 +236,7 @@ class AbstractPathfinderTest {
             }
 
             // Notify hooks about the step
-            PathfindingContext context = new PathfindingContext(Depth.of(currentSearchDepth));
+            PathfindingContext context = new PathfindingContext(currentNode.getPosition(), Depth.of(currentSearchDepth));
             for (PathfinderHook hook : testHooks) {
                 hook.onPathfindingStep(context);
             }

@@ -199,16 +199,16 @@ public abstract class AbstractPathfinder implements Pathfinder {
             while (!openSet.isEmpty() && currentDepth < pathfinderConfiguration.getMaxIterations()) {
                 currentDepth++;
 
-                final int finalCurrentDepth = currentDepth;
-                pathfinderHooks.forEach(
-                        hook -> hook.onPathfindingStep(new PathfindingContext(Depth.of(finalCurrentDepth))));
-
                 if (this.abortRequested) {
                     return createAbortedResult(bestFallbackNode);
                 }
 
                 Node currentNode = openSet.deleteMin().getValue();
                 markNodeAsExpanded(currentNode);
+
+                final int finalCurrentDepth = currentDepth;
+                pathfinderHooks.forEach(
+                        hook -> hook.onPathfindingStep(new PathfindingContext(currentNode.getPosition(), Depth.of(finalCurrentDepth))));
 
                 if (currentNode.getHeuristic().get() < bestFallbackNode.getHeuristic().get()) {
                     bestFallbackNode = currentNode;
