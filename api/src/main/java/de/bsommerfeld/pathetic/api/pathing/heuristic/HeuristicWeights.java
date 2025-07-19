@@ -17,19 +17,6 @@ package de.bsommerfeld.pathetic.api.pathing.heuristic;
 public final class HeuristicWeights {
 
     /**
-     * Provides a set of default heuristic weights that may be suitable for natural pathfinding. These values can be
-     * adjusted for specific scenarios.
-     */
-    @Deprecated
-    public static final HeuristicWeights NATURAL_PATH_WEIGHTS = create(0.3, 0.15, 0.6, 0.3);
-
-    /**
-     * Provides a set of weights strongly prioritizing the shortest direct path, even if diagonally.
-     */
-    @Deprecated
-    public static final HeuristicWeights DIRECT_PATH_WEIGHTS = create(0.6, 0.3, 0.0, 0.1);
-
-    /**
      * Represents the default set of heuristic weights used for pathfinding calculations. This instance is initialized
      * with equal weights for all heuristic components: {@code manhattanWeight}, {@code octileWeight},
      * {@code perpendicularWeight}, and {@code heightWeight}, each set to 1.0.

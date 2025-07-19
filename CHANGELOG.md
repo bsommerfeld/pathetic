@@ -10,3 +10,5 @@
 ### Fixed
 
 ### Removed
+
+- Deprecated NATURAL and DIRECT HeuristicWeights
