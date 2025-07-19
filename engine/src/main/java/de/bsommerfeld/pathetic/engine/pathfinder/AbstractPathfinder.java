@@ -378,8 +378,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
 
     /**
      * Abstract method for algorithm-specific cleanup, called after pathfinding execution. To be implemented by
-     * subclasses like {@link AStarPathfinder}. The previous @Deprecated status is removed as this is a valid hook for
-     * subclasses.
+     * subclasses like {@link AStarPathfinder}.
      */
     protected abstract void performAlgorithmCleanup();
 
