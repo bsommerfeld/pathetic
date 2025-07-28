@@ -1,64 +1,42 @@
-# pathetic: The Pathfinding Engine
+# pathetic
 
-> ### Ironically named, seriously powerful.
+[![Mentioned in Awesome Java](https://awesome.re/mentioned-badge.svg)](https://github.com/akullpp/awesome-java)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/bsommerfeld/pathetic/build.yml?branch=production)](https://github.com/bsommerfeld/pathetic/actions)
+[![JitPack](https://jitpack.io/v/bsommerfeld/pathetic.svg)](https://jitpack.io/#bsommerfeld/pathetic)
+[![License](https://img.shields.io/github/license/bsommerfeld/pathetic)](https://github.com/bsommerfeld/pathetic/blob/main/LICENSE)
 
----
+A high-performance, concurrent pathfinding library for Java.
 
-**pathetic** is a high-performance, battle-tested pathfinding library engineered for demanding, concurrent backend
-systems. Forged and hardened in the high-traffic environment of large-scale Minecraft servers, its architecture is
-designed from the ground up for **server-side performance, scalability, and extensibility.**
+`pathetic` is a thread-safe pathfinding engine built for demanding, server-side applications. Originally developed for large-scale game servers, it uses an optimized A* algorithm to deliver fast and scalable results in complex environments.
 
-It's the ideal engine for bringing intelligent navigation to your most challenging projects.
-
----
+***
 
 ## Core Features
 
-### 🚀 Extreme Performance
+* **High-Performance A\***: Utilizes a **Fibonacci Heap** for the open set and optional **Bloom filters** for the closed set, ensuring excellent performance in large search spaces.
+* **Concurrent by Design**: Fully thread-safe to handle multiple pathfinding requests simultaneously, making it ideal for microservices and other backend systems.
+* **Highly Extensible**: Customize pathfinding behavior using `NodeValidationProcessor` and `NodeCostProcessor` to model complex rules and traversal costs.
 
-A state-of-the-art A* implementation that leverages advanced data structures like a **Fibonacci Heap** and closed-set
-optimizations (using Bloom filters) to dramatically reduce search times in large spaces.
+***
 
-### 🛡️ Battle-Tested Robustness
+## Use Cases
 
-Engineered and stabilized in live, high-traffic gaming environments, ensuring stability and resilience under heavy load.
-It's not just tested; it's proven in combat.
+While born from gaming, `pathetic` is suited for any problem requiring efficient graph traversal:
 
-### ⚙️ Built for Concurrency
+* **Logistics & Robotics**: Calculate optimal routes for delivery fleets or autonomous agents.
+* **Game Development**: Power NPC navigation in real-time simulations.
+* **Network & System Simulation**: Model and analyze data flow or crowd movement.
 
-The engine is inherently thread-safe, effortlessly handling multiple pathfinding requests simultaneously. This makes it
-ideal for use in microservices and other modern backend architectures.
+***
 
-### 🧩 Highly Extensible
+## Documentation & Usage
 
-Customize the pathfinding logic with custom `NodeValidationProcessor` and `NodeCostProcessor` implementations to model
-any environmental rule or cost heuristic you can imagine.
+For installation instructions, getting started guides, and the complete API reference, please visit the official project wiki.
 
----
+### **[Explore the Wiki](https://github.com/bsommerfeld/pathetic/wiki)**
 
-## Ideal Use Cases
+***
 
-While its roots are in gaming, `pathetic` is a top-tier solution for a wide range of professional applications:
+### Project Origin
 
-| Category                        | Application                                                                               |
-|:--------------------------------|:------------------------------------------------------------------------------------------|
-| 🚚 **Logistics & Supply Chain** | Calculate optimal routes for delivery fleets in complex, dynamic environments.            |
-| 🤖 **Robotics & Automation**    | Power the navigation for autonomous robots in warehouses, factories, or outdoor settings. |
-| 🎮 **Gaming & Simulation**      | Drive pathfinding for thousands of NPCs in real-time or model complex movement.           |
-| 🔬 **Complex Systems**          | Analyze and simulate crowd flow, network traffic, or other path-based systems.            |
-
----
-
-## 📖 Documentation
-
-For comprehensive guides, API reference, and usage examples, please see the **official project wiki**. It contains detailed information on everything from installation and basic usage to advanced topics like custom processors.
-
-### **[Pathetic Wiki](https://github.com/bsommerfeld/pathetic/wiki)**
-
----
-
-## The Story Behind the Name
-
-The name **"path-etic"** is a tongue-in-cheek reminder of the project's humble beginnings. What started as a simple pathfinder quickly evolved into a highly-optimized engine. We kept the name as a testament to that journey and as a humorous contrast to its powerful capabilities.
-
-**Pathetic-Bukkit** (https://github.com/bsommerfeld/pathetic-bukkit) was also an early part of this project, developed in collaboration with [@Ollie](https://github.com/olijeffers0n), who co-founded Pathetic and contributed significantly in its initial stages.
+The name "pathetic" is a tongue-in-cheek nod to the project's humble beginnings. The library was co-founded and initially developed with [@Ollie](https://github.com/olijeffers0n).
