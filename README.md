@@ -41,6 +41,8 @@ For installation instructions, getting started guides, and the complete API refe
 
 The name "pathetic" is a tongue-in-cheek nod to the project's humble beginnings. The library was co-founded and initially developed with [@Ollie](https://github.com/olijeffers0n).
 
+***
+
 ### Powered by
 
 [![JetBrains logo.](https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg)](https://jb.gg/OpenSource)
