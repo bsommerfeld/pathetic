@@ -54,20 +54,6 @@
         <module>engine</module>
     </modules>
 
-    <reporting>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.11.2</version>
-                <configuration>
-                    <reportOutputDirectory>${project.reporting.outputDirectory}/myoutput</reportOutputDirectory>
-                    <destDir>myapidocs</destDir>
-                </configuration>
-            </plugin>
-        </plugins>
-    </reporting>
-
     <dependencyManagement>
         <dependencies>
             <dependency>
@@ -128,8 +114,7 @@
                 <version>3.11.2</version>
                 <configuration>
                     <source>8</source>
-                    <reportOutputDirectory>../</reportOutputDirectory>
-                    <destDir>javadoc</destDir>
+                    <outputDirectory>../javadoc</outputDirectory>
                     <tags>
                         <tag>
                             <name>api.Note</name>
