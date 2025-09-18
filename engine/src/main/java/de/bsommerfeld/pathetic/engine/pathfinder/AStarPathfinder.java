@@ -106,9 +106,21 @@ public class AStarPathfinder extends AbstractPathfinder {
                 double newGCostForExisting = calculateGCostForSuccessor(nodeEvalContext);
 
                 if (newGCostForExisting < existingNodeInHeap.getGCost()) {
-                    existingNodeInHeap.setParent(currentNode);
-                    existingNodeInHeap.setGCost(newGCostForExisting);
-                    existingHandle.decreaseKey(existingNodeInHeap.getFCost());
+                    boolean isValidByCustomProcessors = true;
+                    if (this.nodeValidationProcessors != null && !this.nodeValidationProcessors.isEmpty()) {
+                        for (final NodeValidationProcessor validator : this.nodeValidationProcessors) {
+                            if (!validator.isValid(nodeEvalContext)) {
+                                isValidByCustomProcessors = false;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (isValidByCustomProcessors) {
+                        existingNodeInHeap.setParent(currentNode);
+                        existingNodeInHeap.setGCost(newGCostForExisting);
+                        existingHandle.decreaseKey(existingNodeInHeap.getFCost());
+                    }
                 }
                 continue; // Already processed or updated in open set
             }
