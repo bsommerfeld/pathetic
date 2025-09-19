@@ -176,7 +176,7 @@ public class ExpiringHashMap<K, V> extends ConcurrentHashMap<K, ExpiringHashMap.
     Entry<V> entry = super.get(key);
     if (entry != null && entry.isExpired()) {
       // Remove expired entry
-      remove(key, entry);
+      super.remove(key, entry);
       return false;
     }
     removeExpiredEntries();
@@ -231,7 +231,7 @@ public class ExpiringHashMap<K, V> extends ConcurrentHashMap<K, ExpiringHashMap.
     Entry<V> existing = super.get(key);
     if (existing != null && existing.isExpired()) {
       // Remove expired entry
-      remove(key, existing);
+      super.remove(key, existing);
       existing = null;
     }
     return existing != null ? existing : super.putIfAbsent(key, value);
@@ -242,7 +242,7 @@ public class ExpiringHashMap<K, V> extends ConcurrentHashMap<K, ExpiringHashMap.
     Entry<V> entry = super.get(key);
     if (entry != null && entry.isExpired()) {
       // Remove expired entry
-      remove(key, entry);
+      super.remove(key, entry);
       return null;
     }
     removeExpiredEntries();
@@ -346,7 +346,7 @@ public class ExpiringHashMap<K, V> extends ConcurrentHashMap<K, ExpiringHashMap.
     for (K key : keySet()) {
       Entry<V> value = super.get(key);
       if (value != null && value.isExpired()) {
-        remove(key, value);
+        super.remove(key, value);
       }
     }
 
