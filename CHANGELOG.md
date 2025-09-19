@@ -9,6 +9,8 @@
 
 ### Fixed
 
+- Fixed StackOverflow in ExpiringHashMap
+
 ### Removed
 
 - Deprecated NATURAL and DIRECT HeuristicWeights
