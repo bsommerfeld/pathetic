@@ -14,4 +14,4 @@
 
 ### Removed
 
-- Deprecated NATURAL and DIRECT HeuristicWeights
+- Deprecated NATURAL and DIRECT HeuristicWeights has been removed
