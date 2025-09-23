@@ -10,6 +10,7 @@
 ### Fixed
 
 - Fixed StackOverflow in ExpiringHashMap
+- Fixed validate transitions when updating existing nodes with better paths by @steveb05
 
 ### Removed
 
