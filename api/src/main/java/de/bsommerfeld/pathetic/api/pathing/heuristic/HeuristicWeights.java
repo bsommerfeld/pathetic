@@ -105,6 +105,7 @@ public final class HeuristicWeights {
         return this.heightWeight;
     }
 
+    @Override
     public boolean equals(final Object o) {
         if (o == this) return true;
         if (!(o instanceof HeuristicWeights)) return false;
@@ -116,6 +117,7 @@ public final class HeuristicWeights {
         return Double.compare(this.getHeightWeight(), other.getHeightWeight()) == 0;
     }
 
+    @Override
     public int hashCode() {
         final int PRIME = 59;
         int result = 1;
@@ -126,6 +128,7 @@ public final class HeuristicWeights {
         return result;
     }
 
+    @Override
     public String toString() {
         return "HeuristicWeights(manhattanWeight="
                 + this.getManhattanWeight()
