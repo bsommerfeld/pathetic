@@ -128,8 +128,10 @@ public class AStarPathfinder extends AbstractPathfinder {
             // 2. Check if the neighbor has already been expanded (in the closed set)
             GridRegionData regionData = session.getOrCreateRegionData(neighborPosition);
             boolean alreadyExpanded =
-                    regionData.getBloomFilter().mightContain(neighborPosition)
-                            && regionData.getRegionalExaminedPositions().contains(neighborPosition);
+                    regionData.getBloomFilter().mightContain(neighborPosition);
+
+            if(!alreadyExpanded)
+                alreadyExpanded = regionData.getRegionalExaminedPositions().contains(neighborPosition);
 
             if (alreadyExpanded) {
                 // Standard A* with a consistent heuristic assumes the first time a node
@@ -229,11 +231,9 @@ public class AStarPathfinder extends AbstractPathfinder {
         // Remove from open set tracking
         session.openSetEntries.remove(position);
 
-        // Add to closed set (visitedRegionGrid)
+        // And add to closed set
         GridRegionData regionData = session.getOrCreateRegionData(position);
-        if (!regionData.getBloomFilter().mightContain(position)) {
-            regionData.getBloomFilter().put(position);
-        }
+        regionData.getBloomFilter().put(position);
         regionData.getRegionalExaminedPositions().add(position);
     }
 
