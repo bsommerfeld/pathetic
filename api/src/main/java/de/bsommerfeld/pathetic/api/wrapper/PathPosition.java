@@ -327,6 +327,7 @@ public class PathPosition implements Cloneable {
     return this.z;
   }
 
+  @Override
   public String toString() {
     return "PathPosition(x=" + this.getX() + ", y=" + this.getY() + ", z=" + this.getZ() + ")";
   }

@@ -27,4 +27,13 @@ public class Tuple3<T> {
   public int hashCode() {
     return Objects.hash(x, y, z);
   }
+
+  @Override
+  public String toString() {
+    return "Tuple3{" +
+            "x=" + x +
+            ", y=" + y +
+            ", z=" + z +
+            '}';
+  }
 }
