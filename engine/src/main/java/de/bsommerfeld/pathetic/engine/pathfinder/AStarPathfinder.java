@@ -69,7 +69,6 @@ public class AStarPathfinder extends AbstractPathfinder {
      * @param requestStart       The starting position of the overall pathfinding request.
      * @param requestTarget      The target position of the overall pathfinding request.
      * @param currentNode        The node currently being expanded.
-     * @param currentSearchDepth The current depth of the search (number of expansions).
      * @param openSet            The priority queue (FibonacciHeap) holding nodes to be explored.
      * @param searchContext      The context for the current search operation.
      */
@@ -78,7 +77,6 @@ public class AStarPathfinder extends AbstractPathfinder {
             PathPosition requestStart,
             PathPosition requestTarget,
             Node currentNode,
-            int currentSearchDepth,
             FibonacciHeap<Double, Node> openSet,
             SearchContext searchContext) {
 
@@ -127,16 +125,14 @@ public class AStarPathfinder extends AbstractPathfinder {
 
             // 2. Check if the neighbor has already been expanded (in the closed set)
             GridRegionData regionData = session.getOrCreateRegionData(neighborPosition);
-            boolean alreadyExpanded =
-                    regionData.getBloomFilter().mightContain(neighborPosition);
+            boolean foundInBloomFilter = regionData.getBloomFilter().mightContain(neighborPosition);
 
-            if(!alreadyExpanded)
-                alreadyExpanded = regionData.getRegionalExaminedPositions().contains(neighborPosition);
+            if (foundInBloomFilter) {
+                if(regionData.getRegionalExaminedPositions().contains(neighborPosition))
+                    continue;
 
-            if (alreadyExpanded) {
                 // Standard A* with a consistent heuristic assumes the first time a node
                 // is expanded, it's via the optimal path. So, skip.
-                continue;
             }
 
             // 3. Process as a new node
@@ -249,6 +245,9 @@ public class AStarPathfinder extends AbstractPathfinder {
     /**
      * Encapsulates all state required for a single pathfinding operation. This ensures thread-safety by giving each
      * pathfinding operation its own isolated state.
+     *
+     * @apiNote A PathfindingSession is NOT threadsafe and is currently only used within a ThreadLocal.
+     * If this should change, the developer must ensure thread-safety by synchronizing access to shared resources.
      */
     private class PathfindingSession {
 

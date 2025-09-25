@@ -222,7 +222,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
                     return new PathfinderResultImpl(PathState.FOUND, reconstructPath(currentNode));
                 }
 
-                processSuccessors(start, target, currentNode, currentDepth, openSet, searchContext);
+                processSuccessors(start, target, currentNode, openSet, searchContext);
             }
 
             return determinePostLoopResult(currentDepth, start, target, bestFallbackNode);
@@ -398,14 +398,12 @@ public abstract class AbstractPathfinder implements Pathfinder {
      * @param requestStart       The original start {@link PathPosition} of the pathfinding request.
      * @param requestTarget      The original target {@link PathPosition} of the pathfinding request.
      * @param currentNode        The current {@link Node} being expanded.
-     * @param currentSearchDepth The current depth of the search.
      * @param openSet            The priority queue (open set) to add new successor nodes to.
      */
     protected abstract void processSuccessors(
             PathPosition requestStart,
             PathPosition requestTarget,
             Node currentNode,
-            int currentSearchDepth,
             FibonacciHeap<Double, Node> openSet,
             SearchContext searchContext);
 }
