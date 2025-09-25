@@ -2,9 +2,10 @@
 
 ### Added
 
+- Added 3 tests for AStarPathfinder behavior
+
 ### Changed
 
-- processSuccessors current depth parameter has been removed
 - AStarPathfinder is now final
 
 ### Fixed
