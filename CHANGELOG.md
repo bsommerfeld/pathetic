@@ -2,16 +2,12 @@
 
 ### Added
 
-- Added new factory method in PathfinderFactory with no arguments
-- PathfindingContext in PathfinderHook now contains the current PathPosition
-
 ### Changed
+
+- processSuccessors current depth parameter has been removed
+- AStarPathfinder is now final
 
 ### Fixed
 
-- Fixed StackOverflow in ExpiringHashMap
-- Fixed validate transitions when updating existing nodes with better paths by @steveb05
-
 ### Removed
 
-- Deprecated NATURAL and DIRECT HeuristicWeights has been removed

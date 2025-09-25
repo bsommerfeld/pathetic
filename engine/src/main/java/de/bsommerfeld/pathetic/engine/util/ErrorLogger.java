@@ -30,4 +30,8 @@ public class ErrorLogger {
     Logger.error(cause, "Stacktrace:");
     return exception;
   }
+
+  public static void debug(String message, Object... args) {
+    Logger.debug(message, args);
+  }
 }
