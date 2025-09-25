@@ -77,6 +77,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
             PathPosition requestStart,
             PathPosition requestTarget,
             Node currentNode,
+            int currentDepth,
             FibonacciHeap<Double, Node> openSet,
             SearchContext searchContext) {
 
@@ -92,6 +93,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
             // 1. Check if the neighbor is already in the open set
             AddressableHeap.Handle<Double, Node> existingHandle =
                     session.openSetEntries.get(neighborPosition);
+
             if (existingHandle != null) {
                 Node existingNodeInHeap = existingHandle.getValue();
                 NodeEvaluationContext nodeEvalContext =
@@ -103,21 +105,17 @@ public final class AStarPathfinder extends AbstractPathfinder {
 
                 double newGCostForExisting = calculateGCostForSuccessor(nodeEvalContext);
 
+                // Check the new gcost against the current to avoid unnecessary updates
                 if (newGCostForExisting < existingNodeInHeap.getGCost()) {
-                    boolean isValidByCustomProcessors = true;
-                    if (this.nodeValidationProcessors != null && !this.nodeValidationProcessors.isEmpty()) {
-                        for (final NodeValidationProcessor validator : this.nodeValidationProcessors) {
-                            if (!validator.isValid(nodeEvalContext)) {
-                                isValidByCustomProcessors = false;
-                                break;
-                            }
-                        }
-                    }
-
-                    if (isValidByCustomProcessors) {
+                    if (isIsValidByCustomProcessors(nodeEvalContext)) {
                         existingNodeInHeap.setParent(currentNode);
                         existingNodeInHeap.setGCost(newGCostForExisting);
-                        existingHandle.decreaseKey(existingNodeInHeap.getFCost());
+
+                        double newFCost = existingNodeInHeap.getFCost();
+                        double currentFCost = existingHandle.getKey();
+
+                        if(newFCost < currentFCost)
+                            existingHandle.decreaseKey(existingNodeInHeap.getFCost());
                     }
                 }
                 continue; // Already processed or updated in open set
@@ -151,17 +149,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
                             searchContext, neighborNode, currentNode, pathfinderConfiguration.getHeuristicStrategy());
 
             // Validate the new neighbor node
-            boolean isValidByCustomProcessors = true;
-            if (this.nodeValidationProcessors != null && !this.nodeValidationProcessors.isEmpty()) {
-                for (NodeValidationProcessor validator : this.nodeValidationProcessors) {
-                    if (!validator.isValid(nodeEvalContext)) {
-                        isValidByCustomProcessors = false;
-                        break;
-                    }
-                }
-            }
-
-            if (!isValidByCustomProcessors) {
+            if (!isIsValidByCustomProcessors(nodeEvalContext)) {
                 continue;
             }
 
@@ -173,6 +161,19 @@ public final class AStarPathfinder extends AbstractPathfinder {
                     openSet.insert(neighborNode.getFCost(), neighborNode);
             session.openSetEntries.put(neighborPosition, newHandle);
         }
+    }
+
+    private boolean isIsValidByCustomProcessors(NodeEvaluationContext nodeEvalContext) {
+        boolean isValidByCustomProcessors = true;
+        if (this.nodeValidationProcessors != null && !this.nodeValidationProcessors.isEmpty()) {
+            for (final NodeValidationProcessor validator : this.nodeValidationProcessors) {
+                if (!validator.isValid(nodeEvalContext)) {
+                    isValidByCustomProcessors = false;
+                    break;
+                }
+            }
+        }
+        return isValidByCustomProcessors;
     }
 
     /**

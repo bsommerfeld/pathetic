@@ -226,7 +226,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
                     return new PathfinderResultImpl(PathState.FOUND, reconstructPath(currentNode));
                 }
 
-                processSuccessors(start, target, currentNode, openSet, searchContext);
+                processSuccessors(start, target, currentNode, currentDepth, openSet, searchContext);
             }
 
             return determinePostLoopResult(currentDepth, start, target, bestFallbackNode);
@@ -411,6 +411,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
             PathPosition requestStart,
             PathPosition requestTarget,
             Node currentNode,
+            int currentDepth,
             FibonacciHeap<Double, Node> openSet,
             SearchContext searchContext);
 }
