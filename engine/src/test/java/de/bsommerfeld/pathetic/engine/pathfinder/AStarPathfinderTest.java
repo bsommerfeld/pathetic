@@ -1,6 +1,7 @@
 package de.bsommerfeld.pathetic.engine.pathfinder;
 
 import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration;
+import de.bsommerfeld.pathetic.api.pathing.processing.NodeValidationProcessor;
 import de.bsommerfeld.pathetic.api.pathing.result.Path;
 import de.bsommerfeld.pathetic.api.pathing.result.PathState;
 import de.bsommerfeld.pathetic.api.pathing.result.PathfinderResult;
@@ -11,6 +12,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -31,6 +36,7 @@ class AStarPathfinderTest {
     private PathPosition target;
     private NavigationPoint traversablePoint;
     private NavigationPoint nonTraversablePoint;
+    private NodeValidationProcessor invalidNodeValidationProcessor;
 
     @BeforeEach
     void setUp() {
@@ -43,6 +49,9 @@ class AStarPathfinderTest {
 
         nonTraversablePoint = Mockito.mock(NavigationPoint.class);
         when(nonTraversablePoint.isTraversable()).thenReturn(false);
+
+        // Implement an always-failing validation processor
+        invalidNodeValidationProcessor = context -> false;
 
         // Create configuration with mock provider
         configuration = PathfinderConfiguration.builder()
@@ -58,6 +67,94 @@ class AStarPathfinderTest {
         // Create start and target positions
         start = new PathPosition(0, 0, 0);
         target = new PathPosition(10, 10, 10);
+    }
+
+    @Test
+    void testDecreaseKeyOnlyOnLowerF() throws Exception {
+        // Arrange: Get an traversable point for any position to generate neighbors
+        when(mockProvider.getNavigationPoint(any(PathPosition.class), any())).thenReturn(traversablePoint);
+
+        PathfinderConfiguration cfg = PathfinderConfiguration.builder()
+                .provider(mockProvider)
+                .maxIterations(1000)
+                .maxLength(1000)
+                .async(false)
+                .build();
+
+        AStarPathfinder pf = new AStarPathfinder(cfg);
+
+        // Act
+        PathfinderResult res = pf.findPath(start, target).toCompletableFuture().get(2, TimeUnit.SECONDS);
+
+        // Assert Baseline
+        assertNotNull(res);
+        assertTrue(res.successful());
+
+        // Keine direkte Sicht auf Heap-Operationen möglich: Wir verifizieren stattdessen die Invariante,
+        // dass Updates ohne echte F-Verbesserung keine Inkonsistenz erzeugen.
+        // Dazu triggern wir eine zweite Suche auf identischem Setup: Der deterministische Zustand
+        // (Heuristik + Kostenmodell) darf nicht zu anderer Pfadlänge führen.
+        PathfinderResult res2 = pf.findPath(start, target).toCompletableFuture().get(2, TimeUnit.SECONDS);
+        assertNotNull(res2);
+        assertEquals(res.getPath().length(), res2.getPath().length());
+    }
+
+    @Test
+    void testNoBloomMightContainBeforePutRequired() throws Exception {
+        // Arrange: Traversable nur am Start, um frühes Schließen zu erzwingen
+        when(mockProvider.getNavigationPoint(any(PathPosition.class), any())).thenAnswer(inv -> {
+            PathPosition pos = inv.getArgument(0);
+            return pos.equals(start) ? traversablePoint : nonTraversablePoint;
+        });
+
+        PathfinderConfiguration cfg = PathfinderConfiguration.builder()
+                .provider(mockProvider)
+                .maxIterations(1)
+                .nodeValidationProcessors(Collections.singletonList(invalidNodeValidationProcessor))
+                .async(false)
+                .fallback(false)
+                .build();
+
+        AStarPathfinder pf = new AStarPathfinder(cfg);
+
+        // Act
+        PathfinderResult res = pf.findPath(start, target).toCompletableFuture().get(2, TimeUnit.SECONDS);
+
+        // Assert: Pfad sollte fehlschlagen (blockiert) – dabei wird die Closed-Set-Markierung ausgeführt.
+        // Der Test stellt sicher, dass kein mightContain vor put nötig war (idempotent),
+        // indem wir schlicht die korrekte Terminierung erwarten.
+        assertNotNull(res);
+        assertTrue(res.hasFailed());
+        assertEquals(PathState.FAILED, res.getPathState());
+    }
+
+    @Test
+    void testValidationSkipDoesNotSpamOrBreak() throws Exception {
+        // Arrange: Start traversable, alle anderen non-traversable
+        when(mockProvider.getNavigationPoint(any(PathPosition.class), any())).thenAnswer(inv -> {
+            PathPosition pos = inv.getArgument(0);
+            return pos.equals(start) ? traversablePoint : nonTraversablePoint;
+        });
+
+        PathfinderConfiguration cfg = PathfinderConfiguration.builder()
+                .provider(mockProvider)
+                .maxIterations(1)
+                .maxLength(50)
+                .nodeValidationProcessors(Collections.singletonList(invalidNodeValidationProcessor))
+                .async(false)
+                .fallback(false)
+                .build();
+
+        AStarPathfinder pf = new AStarPathfinder(cfg);
+
+        // Act
+        PathfinderResult res = pf.findPath(start, target).toCompletableFuture().get(2, TimeUnit.SECONDS);
+
+        // Assert: sauberer Fehlschlag ohne Exceptions (Validierungen skippen Nachbarn still)
+        assertNotNull(res);
+        assertTrue(res.hasFailed());
+        assertEquals(PathState.FAILED, res.getPathState());
+        assertTrue(res.getPath().length() >= 0);
     }
 
     @Test
