@@ -36,7 +36,7 @@ import java.util.Map;
  * pathfinding operation, ensuring thread-safety even when multiple pathfinding requests are
  * executed concurrently.
  */
-public class AStarPathfinder extends AbstractPathfinder {
+public final class AStarPathfinder extends AbstractPathfinder {
 
     /**
      * Thread-local storage for the current pathfinding session. This ensures that each pathfinding operation has its
