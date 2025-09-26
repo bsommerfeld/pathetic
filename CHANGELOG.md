@@ -10,5 +10,7 @@
 
 ### Fixed
 
+- Fixed JavaDoc Deploy Action by @olijeffers0n
+
 ### Removed
 
