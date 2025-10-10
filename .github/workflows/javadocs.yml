@@ -2,8 +2,7 @@ name: Deploy Javadoc
 
 on:
   push:
-    branches:
-      - production
+    branches: [ production ]
 
 jobs:
   publish:
@@ -11,47 +10,38 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
           cache: maven
 
-      # Create root redirect
-      - name: Create root redirect
-        run: |
-          mkdir -p docs
-          cat > docs/index.html <<'HTML'
-          <!doctype html><html lang="en"><head>
-            <meta charset="utf-8">
-            <meta http-equiv="refresh" content="0; url=./apidocs/">
-            <link rel="canonical" href="./apidocs/">
-            <title>Redirecting…</title>
-            <script>location.replace("./apidocs/");</script>
-            <style>body{font:16px/1.4 system-ui,Segoe UI,Roboto,Helvetica,Arial}</style>
-          </head><body>
-            Redirecting to <a href="./apidocs/">API docs</a> …
-          </body></html>
-          HTML
-
-      # Build aggregated Javadoc for the whole multi-module project into ./docs
+      # 1) Build aggregated Javadoc -> docs/apidocs
       - name: Build aggregated Javadoc
         run: mvn -B -DskipTests javadoc:aggregate -Dmaven.javadoc.failOnError=false
 
-      # Publish the pre-built Javadoc from ./docs to the javadoc branch (GitHub Pages)
-      - name: Deploy JavaDoc 🚀
-        uses: MathieuSoysal/Javadoc-publisher.yml@v3.0.2
+      # 2) Root-Redirect anlegen (docs/index.html) – und CNAME sicherstellen
+      - name: Create root redirect and CNAME
+        run: |
+          mkdir -p docs
+          cat > docs/index.html <<'HTML'
+          <!doctype html><meta charset="utf-8">
+          <meta http-equiv="refresh" content="0; url=./apidocs/">
+          <link rel="canonical" href="./apidocs/">
+          <title>Redirecting…</title>
+          <script>location.replace("./apidocs/");</script>
+          Redirecting to <a href="./apidocs/">API docs</a> …
+          HTML
+
+      # 3) Alles unter docs/ auf den javadoc-Branch veröffentlichen
+      - name: Deploy to GitHub Pages (javadoc branch)
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          javadoc-branch: javadoc
-          java-version: 17
-          project: maven
-          custom-command: mvn -B -DskipTests javadoc:aggregate -Dmaven.javadoc.failOnError=false
-          javadoc-source-folder: docs
-          target-folder: docs
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: javadoc
+          publish_dir: docs
+          # optional: true, wenn du ältere Dateien erhalten willst
+          keep_files: false
