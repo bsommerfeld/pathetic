@@ -11,11 +11,28 @@ jobs:
     permissions:
       contents: write
     steps:
-    - name: Deploy JavaDoc 🚀
-      uses: MathieuSoysal/Javadoc-publisher.yml@v3.0.2
-      with:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        javadoc-branch: javadoc
-        java-version: 17
-        project: maven
-        javadoc-source-path: api/target/site/apidocs
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: maven
+
+      # Build aggregated Javadoc for the whole multi-module project into ./docs
+      - name: Build aggregated Javadoc
+        run: mvn -B -DskipTests javadoc:aggregate -Dmaven.javadoc.failOnError=false
+
+      # Publish the pre-built Javadoc from ./docs to the javadoc branch (GitHub Pages)
+      - name: Deploy JavaDoc 🚀
+        uses: MathieuSoysal/Javadoc-publisher.yml@v3.0.2
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          javadoc-branch: javadoc
+          java-version: 17
+          project: maven
+          javadoc-source-path: docs
