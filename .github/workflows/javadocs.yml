@@ -35,4 +35,6 @@ jobs:
           javadoc-branch: javadoc
           java-version: 17
           project: maven
-          javadoc-source-path: docs
+          custom-command: mvn -B -DskipTests javadoc:aggregate -Dmaven.javadoc.failOnError=false
+          javadoc-source-folder: docs
+          target-folder: docs
