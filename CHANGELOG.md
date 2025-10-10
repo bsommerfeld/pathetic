@@ -2,16 +2,9 @@
 
 ### Added
 
-- Added 3 tests for AStarPathfinder behavior
-
 ### Changed
 
-- Small improvements for negative coordinates and cost comparison
-- AStarPathfinder is now final
-
 ### Fixed
-
-- Fixed JavaDoc Deploy Action by @olijeffers0n and @bsommerfeld
 
 ### Removed
 
