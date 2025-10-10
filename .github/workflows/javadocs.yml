@@ -23,23 +23,6 @@ jobs:
           java-version: 17
           cache: maven
 
-      # Create root redirect
-      - name: Create root redirect
-        run: |
-          mkdir -p docs
-          cat > docs/index.html <<'HTML'
-          <!doctype html><html lang="en"><head>
-            <meta charset="utf-8">
-            <meta http-equiv="refresh" content="0; url=./apidocs/">
-            <link rel="canonical" href="./apidocs/">
-            <title>Redirecting…</title>
-            <script>location.replace("./apidocs/");</script>
-            <style>body{font:16px/1.4 system-ui,Segoe UI,Roboto,Helvetica,Arial}</style>
-          </head><body>
-            Redirecting to <a href="./apidocs/">API docs</a> …
-          </body></html>
-          HTML
-
       # Build aggregated Javadoc for the whole multi-module project into ./docs
       - name: Build aggregated Javadoc
         run: mvn -B -DskipTests javadoc:aggregate -Dmaven.javadoc.failOnError=false
