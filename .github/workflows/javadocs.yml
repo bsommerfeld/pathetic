@@ -26,6 +26,7 @@ jobs:
       # Create root redirect
       - name: Create root redirect
         run: |
+          mkdir -p docs
           cat > docs/index.html <<'HTML'
           <!doctype html><html lang="en"><head>
             <meta charset="utf-8">
