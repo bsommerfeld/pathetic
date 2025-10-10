@@ -6,6 +6,7 @@
 
 ### Changed
 
+- Small improvements for negative coordinates and cost comparison
 - AStarPathfinder is now final
 
 ### Fixed
