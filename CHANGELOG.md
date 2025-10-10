@@ -11,7 +11,7 @@
 
 ### Fixed
 
-- Fixed JavaDoc Deploy Action by @olijeffers0n
+- Fixed JavaDoc Deploy Action by @olijeffers0n and @bsommerfeld
 
 ### Removed
 
