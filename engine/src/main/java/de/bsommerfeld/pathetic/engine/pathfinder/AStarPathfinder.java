@@ -114,7 +114,6 @@ public final class AStarPathfinder extends AbstractPathfinder {
                         double newFCost = existingNodeInHeap.getFCost();
                         double currentFCost = existingHandle.getKey();
 
-                        // Last line of defense against unnecessary updates
                         if(newFCost < currentFCost)
                             existingHandle.decreaseKey(existingNodeInHeap.getFCost());
                     }
