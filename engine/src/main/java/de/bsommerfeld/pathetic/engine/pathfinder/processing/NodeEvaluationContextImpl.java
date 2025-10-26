@@ -1,6 +1,5 @@
 package de.bsommerfeld.pathetic.engine.pathfinder.processing;
 
-import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration;
 import de.bsommerfeld.pathetic.api.pathing.heuristic.IHeuristicStrategy;
 import de.bsommerfeld.pathetic.api.pathing.processing.context.NodeEvaluationContext;
 import de.bsommerfeld.pathetic.api.pathing.processing.context.SearchContext;
@@ -71,22 +70,13 @@ public class NodeEvaluationContextImpl implements NodeEvaluationContext {
     PathPosition to = this.engineNode.getPosition();
 
     double baseCost = this.heuristicStrategy.calculateTransitionCost(from, to);
-    PathfinderConfiguration pathfinderConfiguration = searchContext.getPathfinderConfiguration();
 
     if (Double.isNaN(baseCost) || Double.isInfinite(baseCost)) {
       throw new IllegalStateException(
           "Heuristic transition cost produced an invalid numeric value: " + baseCost);
     }
 
-    if (baseCost < 0.0) {
-      if (!pathfinderConfiguration.areNegativeCostsAllowed()) {
-        return 0.0;
-      } else {
-        return baseCost;
-      }
-    }
-
-    return baseCost;
+    return Math.max(baseCost, 0.0);
   }
 
   @Override

@@ -194,7 +194,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
     }
 
     double transitionCost = baseCost + additionalCost;
-    if (transitionCost < 0 && !pathfinderConfiguration.areNegativeCostsAllowed()) {
+    if (transitionCost < 0) {
       transitionCost = 0;
     }
     return context.getPathCostToPreviousPosition() + transitionCost;
