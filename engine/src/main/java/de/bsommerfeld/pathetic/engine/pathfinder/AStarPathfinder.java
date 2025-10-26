@@ -111,7 +111,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
 
         // Check the new gcost against the current to avoid unnecessary updates
         if (newG + EPS < existing.getGCost()) {
-          if (isIsValidByCustomProcessors(nodeEvalContext)) {
+          if (isValidByCustomProcessors(nodeEvalContext)) {
             existing.setParent(currentNode);
             existing.setGCost(newG);
 
@@ -155,7 +155,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
               pathfinderConfiguration.getHeuristicStrategy());
 
       // Validate the new neighbor node
-      if (!isIsValidByCustomProcessors(nodeEvalContext)) {
+      if (!isValidByCustomProcessors(nodeEvalContext)) {
         continue;
       }
 
@@ -211,7 +211,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
     }
   }
 
-  private boolean isIsValidByCustomProcessors(NodeEvaluationContext nodeEvalContext) {
+  private boolean isValidByCustomProcessors(NodeEvaluationContext nodeEvalContext) {
     boolean isValidByCustomProcessors = true;
     if (this.nodeValidationProcessors != null && !this.nodeValidationProcessors.isEmpty()) {
       for (final NodeValidationProcessor validator : this.nodeValidationProcessors) {
