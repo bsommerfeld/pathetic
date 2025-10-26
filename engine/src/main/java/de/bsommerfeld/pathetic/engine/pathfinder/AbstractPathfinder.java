@@ -23,8 +23,6 @@ import de.bsommerfeld.pathetic.engine.pathfinder.processing.SearchContextImpl;
 import de.bsommerfeld.pathetic.engine.result.PathImpl;
 import de.bsommerfeld.pathetic.engine.result.PathfinderResultImpl;
 import de.bsommerfeld.pathetic.engine.util.ErrorLogger;
-import org.jheaps.tree.FibonacciHeap;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -37,6 +35,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import org.jheaps.tree.FibonacciHeap;
 
 /**
  * Provides a skeletal implementation of the {@link Pathfinder} interface, defining common behavior for pathfinding
@@ -226,7 +225,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
                     return new PathfinderResultImpl(PathState.FOUND, reconstructPath(currentNode));
                 }
 
-                processSuccessors(start, target, currentNode, currentDepth, openSet, searchContext);
+                processSuccessors(start, target, currentNode, openSet, searchContext);
             }
 
             return determinePostLoopResult(currentDepth, start, target, bestFallbackNode);
@@ -411,7 +410,6 @@ public abstract class AbstractPathfinder implements Pathfinder {
             PathPosition requestStart,
             PathPosition requestTarget,
             Node currentNode,
-            int currentDepth,
             FibonacciHeap<Double, Node> openSet,
             SearchContext searchContext);
 }

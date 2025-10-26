@@ -18,320 +18,248 @@ import org.jheaps.AddressableHeap;
 import org.jheaps.tree.FibonacciHeap;
 
 /**
- * An A* (A-star) pathfinding algorithm implementation. It uses a heuristic to guide the search
- * towards the target and considers both the actual cost from the start (G-cost) and the estimated
- * cost to the target (H-cost).
+ * An A* pathfinding algorithm that uses a heuristic to guide the search toward the target. It
+ * balances the actual cost from the start (G-cost) with the estimated cost to the target (H-cost).
  *
- * <p>This implementation employs:
+ * <p>This implementation uses:
  *
  * <ul>
- *   <li>An open set (priority queue) implemented with a {@link FibonacciHeap}.
- *   <li>A mechanism to track nodes in the open set via {@link AddressableHeap.Handle} objects for
- *       efficient G-cost updates (decrease-key operations).
- *   <li>A closed set optimization using a grid-based approach with Bloom filters (via {@link
- *       GridRegionData}) to quickly identify previously expanded nodes.
+ *   <li>A Fibonacci heap for the open set (priority queue).
+ *   <li>Addressable heap handles for efficient G-cost updates (decrease-key).
+ *   <li>A grid-based closed set with Bloom filters ({@link GridRegionData}) to quickly check
+ *       expanded nodes.
  * </ul>
  *
- * <p>Thread-Safety: This implementation creates a new {@link PathfindingSession} for each
- * pathfinding operation, ensuring thread-safety even when multiple pathfinding requests are
- * executed concurrently.
+ * <p>Thread-safety: Each pathfinding operation gets its own {@link PathfindingSession}, ensuring
+ * thread-safety for concurrent requests.
  */
 public final class AStarPathfinder extends AbstractPathfinder {
 
-  private static final double EPS = 1e-9; // tolerance for double-comparison
   private static final double TIE_BREAKER_WEIGHT = 1e-6;
 
-  /**
-   * Thread-local storage for the current pathfinding session. This ensures that each pathfinding
-   * operation has its own isolated state.
-   */
   private final ThreadLocal<PathfindingSession> currentSession = new ThreadLocal<>();
 
-  /**
-   * Constructs an AStarPathfinder with the given configuration.
-   *
-   * @param pathfinderConfiguration The configuration for this pathfinder.
-   */
-  public AStarPathfinder(PathfinderConfiguration pathfinderConfiguration) {
-    super(pathfinderConfiguration);
+  public AStarPathfinder(PathfinderConfiguration configuration) {
+    super(configuration);
   }
 
-  /**
-   * Initializes data structures for a new search by creating a new PathfindingSession. Each search
-   * gets its own isolated state to prevent race conditions.
-   */
   @Override
   protected void initializeSearch() {
     currentSession.set(new PathfindingSession());
   }
 
   /**
-   * Processes the successors of the {@code currentNode}. For each successor, it checks if it's
-   * already in the open or closed set, calculates costs, validates traversability, and updates the
-   * open set accordingly.
+   * Processes the successors of the current node, checking if they're in the open or closed set,
+   * calculating costs, validating traversability, and updating the open set as needed.
    *
-   * @param requestStart The starting position of the overall pathfinding request.
-   * @param requestTarget The target position of the overall pathfinding request.
-   * @param currentNode The node currently being expanded.
-   * @param openSet The priority queue (FibonacciHeap) holding nodes to be explored.
-   * @param searchContext The context for the current search operation.
+   * @param start The starting position of the pathfinding request.
+   * @param target The target position of the pathfinding request.
+   * @param currentNode The node being expanded.
+   * @param openSet The priority queue (Fibonacci heap) holding nodes to explore.
+   * @param searchContext The context for the current search.
    */
   @Override
   protected void processSuccessors(
-      PathPosition requestStart,
-      PathPosition requestTarget,
+      PathPosition start,
+      PathPosition target,
       Node currentNode,
-      int currentDepth,
       FibonacciHeap<Double, Node> openSet,
       SearchContext searchContext) {
 
-    PathfindingSession session = currentSession.get();
-    if (session == null) {
-      throw new IllegalStateException("PathfindingSession not initialized.");
-    }
+    PathfindingSession session = getSessionOrThrow();
 
     for (PathVector offset : offsets) {
-      PathPosition neighborPosition = currentNode.getPosition().add(offset);
+      PathPosition neighborPos = currentNode.getPosition().add(offset);
 
-      // 1. Check if the neighbor is already in the open set
-      AddressableHeap.Handle<Double, Node> existingHandle =
-          session.openSetEntries.get(neighborPosition);
-
-      if (existingHandle != null) {
-        Node existing = existingHandle.getValue();
-
-        NodeEvaluationContext nodeEvalContext =
-            new NodeEvaluationContextImpl(
-                searchContext,
-                existing,
-                currentNode,
-                pathfinderConfiguration.getHeuristicStrategy());
-
-        double newG = calculateGCostForSuccessor(nodeEvalContext);
-
-        // Check the new gcost against the current to avoid unnecessary updates
-        if (newG + EPS < existing.getGCost()) {
-          if (isValidByCustomProcessors(nodeEvalContext)) {
-            existing.setParent(currentNode);
-            existing.setGCost(newG);
-
-            double newF = existing.getFCost();
-            double oldF = existingHandle.getKey();
-
-            if (newF + EPS < oldF) existingHandle.decreaseKey(existing.getFCost());
-            else if (Math.abs(newF - oldF) <= EPS) existingHandle.decreaseKey(oldF - EPS);
-          }
-        }
-        continue; // Already processed or updated in open set
-      }
-
-      // 2. Check if the neighbor has already been expanded (in the closed set)
-      GridRegionData regionData = session.getOrCreateRegionData(neighborPosition);
-      boolean possiblyVisited = regionData.getBloomFilter().mightContain(neighborPosition);
-
-      if (possiblyVisited && regionData.getRegionalExaminedPositions().contains(neighborPosition)) {
-        // Standard A* with a consistent heuristic assumes the first time a node
-        // is expanded, it's via the optimal path. So, skip.
+      // Check if neighbor is in the open set
+      AddressableHeap.Handle<Double, Node> handle = session.openSetEntries.get(neighborPos);
+      if (handle != null) {
+        updateExistingNode(handle, currentNode, searchContext);
         continue;
       }
 
-      // 3. Process as a new node
-      Node neighborNode =
-          new Node(
-              neighborPosition,
-              requestStart,
-              requestTarget,
-              pathfinderConfiguration.getHeuristicWeights(),
-              pathfinderConfiguration.getHeuristicStrategy(),
-              currentNode.getDepth() + 1);
+      // Check if neighbor is in the closed set
+      GridRegionData regionData = session.getOrCreateRegionData(neighborPos);
+      if (regionData.getBloomFilter().mightContain(neighborPos)
+          && regionData.getRegionalExaminedPositions().contains(neighborPos)) {
+        continue; // Skip if already expanded (assumes consistent heuristic)
+      }
 
-      neighborNode.setParent(currentNode); // Set parent early for context
-
-      NodeEvaluationContext nodeEvalContext =
+      // Process as a new node
+      Node neighbor = createNeighborNode(neighborPos, start, target, currentNode);
+      NodeEvaluationContext context =
           new NodeEvaluationContextImpl(
-              searchContext,
-              neighborNode,
-              currentNode,
-              pathfinderConfiguration.getHeuristicStrategy());
+              searchContext, neighbor, currentNode, pathfinderConfiguration.getHeuristicStrategy());
 
-      // Validate the new neighbor node
-      if (!isValidByCustomProcessors(nodeEvalContext)) {
+      if (!isValidByCustomProcessors(context)) {
         continue;
       }
 
       /*
-       * ---------------------------------------------------------------------------
-       * Calculate the G-cost for the new neighbor and add it to the open set.
+       * --------------------------------------------------------------------------------
+       * Calculates the G-cost for the new neighbor and adds it to the open set.
        *
-       * This block performs three key tasks:
-       *  1. Computes the transition cost (G) from the current node to the neighbor.
-       *  2. Calculates the total estimated cost (F = G + H) for prioritization.
-       *  3. Inserts the node into the open set (FibonacciHeap) with a tiny heuristic-based
-       *     tie-breaker to ensure smoother pathfinding performance when multiple nodes
-       *     have identical F-costs.
+       * This block handles three main tasks:
+       *  1. Figures out the transition cost (G) from the current node to the neighbor.
+       *  2. Computes the total estimated cost (F = G + H) for prioritization.
+       *  3. Inserts the node into the open set (Fibonacci heap) with a small tie-breaker
+       *     to make pathfinding smoother when multiple nodes have the same F-cost.
        *
-       * Tie-breaker explanation:
-       * ------------------------
-       *   - When multiple nodes share the same F-cost, A* may expand them arbitrarily,
-       *     which can cause zig-zag or inconsistent exploration.
-       *   - To stabilize this, we slightly bias the F-cost by a very small multiple
-       *     of the heuristic (H). Nodes closer to the goal (smaller H) get marginally
-       *     lower F' = F - 1e-6 * H, and are therefore expanded first.
-       *   - This does NOT affect optimality or correctness, since the bias is negligible.
+       * What's the tie-breaker about?
+       * -----------------------------
+       * If multiple nodes have the same F-cost, A* might pick them randomly, which can
+       * lead to jagged or inconsistent paths. To smooth things out, we give a tiny
+       * advantage to nodes closer to the goal (smaller H). We do this by subtracting
+       * a small value (TIE_BREAKER_WEIGHT * (H / (|F| + 1))) from F. This ensures
+       * nodes closer to the goal get expanded first, without messing up correctness
+       * or optimality—the bias is super small!
        *
-       * EPS note:
-       * ----------
-       *   A minimal safety check is included to protect against floating-point
-       *   inaccuracies or NaN/Infinity values.
-       * ---------------------------------------------------------------------------
+       * Note on numerics:
+       * -----------------
+       * To handle floating-point inaccuracies or problematic values (like NaN/Infinity),
+       * we include a safety check and use Math.ulp for precise comparisons that adapt
+       * to the magnitude of the values.
+       * --------------------------------------------------------------------------------
        */
+      double gCost = calculateGCost(context);
+      neighbor.setGCost(gCost);
+      double fCost = neighbor.getFCost();
+      double heapKey = calculateHeapKey(neighbor, fCost);
 
-      // Calculate base G-cost for the new neighbor
-      double gCostForNewNeighbor = calculateGCostForSuccessor(nodeEvalContext);
-      neighborNode.setGCost(gCostForNewNeighbor);
-
-      // Standard F-cost (F = G + H)
-      double fCost = neighborNode.getFCost();
-
-      // Apply a small heuristic-based tie-breaker for smoother queue behavior
-      double heuristic = neighborNode.getHeuristic().get();
-      double fForHeap =
-          fCost - TIE_BREAKER_WEIGHT * heuristic; // smaller H → slightly higher priority
-
-      // Numerical safety guard (avoid NaN or Infinity)
-      if (Double.isNaN(fForHeap) || Double.isInfinite(fForHeap)) {
-        fForHeap = fCost; // fallback to default
-      }
-
-      // Insert into open set (priority queue)
-      AddressableHeap.Handle<Double, Node> newHandle = openSet.insert(fForHeap, neighborNode);
-
-      // Track the handle in session for future decreaseKey updates
-      session.openSetEntries.put(neighborPosition, newHandle);
+      AddressableHeap.Handle<Double, Node> newHandle = openSet.insert(heapKey, neighbor);
+      session.openSetEntries.put(neighborPos, newHandle);
     }
   }
 
-  private boolean isValidByCustomProcessors(NodeEvaluationContext nodeEvalContext) {
-    boolean isValidByCustomProcessors = true;
-    if (this.nodeValidationProcessors != null && !this.nodeValidationProcessors.isEmpty()) {
-      for (final NodeValidationProcessor validator : this.nodeValidationProcessors) {
-        if (!validator.isValid(nodeEvalContext)) {
-          isValidByCustomProcessors = false;
-          break;
-        }
-      }
+  private double calculateHeapKey(Node neighbor, double fCost) {
+    double heuristic = neighbor.getHeuristic().get();
+    double tieBreaker = TIE_BREAKER_WEIGHT * (heuristic / (Math.abs(fCost) + 1));
+    double heapKey = fCost - tieBreaker;
+
+    if (Double.isNaN(heapKey) || Double.isInfinite(heapKey)) {
+      heapKey = fCost;
     }
-    return isValidByCustomProcessors;
+
+    return heapKey;
   }
 
-  /**
-   * Calculates the G-cost for a successor node based on the transition from its predecessor. This
-   * involves the base transition cost and contributions from {@link NodeCostProcessor}s.
-   *
-   * @param nodeEvalContext The evaluation context for the successor node. Its {@code
-   *     getPathCostToPreviousPosition()} should provide the G-cost of the predecessor.
-   * @return The calculated G-cost for the successor node.
-   */
-  private double calculateGCostForSuccessor(NodeEvaluationContext nodeEvalContext) {
-    double baseTransitionCost = nodeEvalContext.getBaseTransitionCost();
-    double accumulatedContributions = 0.0;
+  private void updateExistingNode(
+      AddressableHeap.Handle<Double, Node> handle, Node currentNode, SearchContext searchContext) {
+    Node existing = handle.getValue();
+    NodeEvaluationContext context =
+        new NodeEvaluationContextImpl(
+            searchContext, existing, currentNode, pathfinderConfiguration.getHeuristicStrategy());
 
-    // Ensure nodeCostProcessors is accessed from the instance (inherited from AbstractPathfinder)
-    if (super.nodeCostProcessors != null && !super.nodeCostProcessors.isEmpty()) {
-      for (NodeCostProcessor costCalculator : super.nodeCostProcessors) {
-        Cost contribution = costCalculator.calculateCostContribution(nodeEvalContext);
-        if (contribution == null) {
-          contribution = Cost.ZERO;
-        }
-        accumulatedContributions += contribution.getValue();
+    double newG = calculateGCost(context);
+    if (newG + Math.ulp(newG) >= existing.getGCost()) {
+      return;
+    }
+
+    if (!isValidByCustomProcessors(context)) {
+      return;
+    }
+
+    existing.setParent(currentNode);
+    existing.setGCost(newG);
+
+    double newF = existing.getFCost();
+    double oldKey = handle.getKey();
+    double newKey = calculateHeapKey(existing, newF);
+
+    if (newKey + Math.ulp(newKey) < oldKey) {
+      handle.decreaseKey(newKey);
+    } else if (Math.abs(newKey - oldKey) <= Math.ulp(newKey)) {
+      handle.decreaseKey(oldKey - Math.ulp(oldKey));
+    }
+  }
+
+  private Node createNeighborNode(
+      PathPosition position, PathPosition start, PathPosition target, Node parent) {
+    return new Node(
+        position,
+        start,
+        target,
+        pathfinderConfiguration.getHeuristicWeights(),
+        pathfinderConfiguration.getHeuristicStrategy(),
+        parent.getDepth() + 1);
+  }
+
+  private boolean isValidByCustomProcessors(NodeEvaluationContext context) {
+    if (nodeValidationProcessors == null || nodeValidationProcessors.isEmpty()) {
+      return true;
+    }
+    for (NodeValidationProcessor validator : nodeValidationProcessors) {
+      if (!validator.isValid(context)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private double calculateGCost(NodeEvaluationContext context) {
+    double baseCost = context.getBaseTransitionCost();
+    double additionalCost = 0.0;
+
+    if (nodeCostProcessors != null && !nodeCostProcessors.isEmpty()) {
+      for (NodeCostProcessor processor : nodeCostProcessors) {
+        Cost contribution = processor.calculateCostContribution(context);
+        additionalCost += (contribution != null) ? contribution.getValue() : Cost.ZERO.getValue();
       }
     }
 
-    double finalTransitionCost = baseTransitionCost + accumulatedContributions;
-    if (finalTransitionCost < 0 && !pathfinderConfiguration.areNegativeCostsAllowed()) {
-      finalTransitionCost = 0;
+    double transitionCost = baseCost + additionalCost;
+    if (transitionCost < 0 && !pathfinderConfiguration.areNegativeCostsAllowed()) {
+      transitionCost = 0;
     }
-    // nodeEvalContext.getPathCostToPreviousPosition() gets the G-cost of the node *from which* we
-    // are moving.
-    return nodeEvalContext.getPathCostToPreviousPosition() + finalTransitionCost;
+    return context.getPathCostToPreviousPosition() + transitionCost;
   }
 
-  /**
-   * Marks the given node as expanded (i.e., moved to the "closed set"). This involves removing it
-   * from the {@code openSetEntries} tracker and adding its position to the {@code
-   * visitedRegionGrid}.
-   *
-   * @param node The node that has been taken from the open set and is being expanded.
-   */
   @Override
   protected void markNodeAsExpanded(Node node) {
-    PathfindingSession session = currentSession.get();
-    if (session == null) {
-      throw new IllegalStateException(
-          "PathfindingSession not initialized. Call initializeSearch() first.");
-    }
-
+    PathfindingSession session = getSessionOrThrow();
     PathPosition position = node.getPosition();
 
-    // Remove from open set tracking
     session.openSetEntries.remove(position);
 
-    // And add to closed set
     GridRegionData regionData = session.getOrCreateRegionData(position);
     regionData.getBloomFilter().put(position);
     regionData.getRegionalExaminedPositions().add(position);
   }
 
-  /**
-   * Performs cleanup after a pathfinding search is complete. This clears the thread-local session
-   * to prevent memory leaks.
-   */
   @Override
   protected void performAlgorithmCleanup() {
-    currentSession.remove(); // Clear the thread-local session
+    currentSession.remove();
+  }
+
+  private PathfindingSession getSessionOrThrow() {
+    PathfindingSession session = currentSession.get();
+    if (session == null) {
+      throw new IllegalStateException(
+          "Pathfinding session not initialized. Call initializeSearch() first.");
+    }
+    return session;
   }
 
   /**
-   * Encapsulates all state required for a single pathfinding operation. This ensures thread-safety
-   * by giving each pathfinding operation its own isolated state.
+   * Manages state for a single pathfinding operation, ensuring thread-safety via isolation.
    *
-   * @apiNote A PathfindingSession is NOT threadsafe and is currently only used within a
-   *     ThreadLocal. If this should change, the developer must ensure thread-safety by
-   *     synchronizing access to shared resources.
+   * @apiNote This class is not thread-safe and is used within a ThreadLocal. If used elsewhere,
+   *     developers must synchronize access to shared resources.
    */
   private class PathfindingSession {
-
-    /**
-     * Stores regional data for the closed set optimization. Keys are grid cell coordinates, values
-     * contain Bloom filters and sets of examined positions.
-     */
-    private final Map<Tuple3<Integer>, GridRegionData> visitedRegionGrid = new HashMap<>();
-
-    /**
-     * Tracks heap handles for nodes currently in the open set, keyed by their {@link PathPosition}.
-     * This allows for efficient lookup and updates (e.g., {@code decreaseKey}) if a cheaper path to
-     * an already-open node is found.
-     */
+    private final Map<Tuple3<Integer>, GridRegionData> visitedRegions = new HashMap<>();
     private final Map<PathPosition, AddressableHeap.Handle<Double, Node>> openSetEntries =
         new HashMap<>();
 
-    /**
-     * Retrieves or creates {@link GridRegionData} for the grid cell corresponding to the given
-     * position. This is part of the closed set optimization.
-     *
-     * @param position The {@link PathPosition}.
-     * @return The {@link GridRegionData} for that region.
-     */
-    private GridRegionData getOrCreateRegionData(PathPosition position) {
-      int gridCellSize = pathfinderConfiguration.getGridCellSize();
-      int gridX = Math.floorDiv(position.getFlooredX(), gridCellSize);
-      int gridY = Math.floorDiv(position.getFlooredY(), gridCellSize);
-      int gridZ = Math.floorDiv(position.getFlooredZ(), gridCellSize);
+    GridRegionData getOrCreateRegionData(PathPosition position) {
+      int cellSize = pathfinderConfiguration.getGridCellSize();
+      Tuple3<Integer> gridKey =
+          new Tuple3<>(
+              Math.floorDiv(position.getFlooredX(), cellSize),
+              Math.floorDiv(position.getFlooredY(), cellSize),
+              Math.floorDiv(position.getFlooredZ(), cellSize));
 
-      // Using Tuple3 as a key for the grid cell coordinates
-      Tuple3<Integer> gridKey = new Tuple3<>(gridX, gridY, gridZ);
-
-      return visitedRegionGrid.computeIfAbsent(
+      return visitedRegions.computeIfAbsent(
           gridKey, k -> new GridRegionData(pathfinderConfiguration));
     }
   }
