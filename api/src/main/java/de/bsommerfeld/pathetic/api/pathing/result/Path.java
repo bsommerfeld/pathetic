@@ -2,6 +2,7 @@ package de.bsommerfeld.pathetic.api.pathing.result;
 
 import de.bsommerfeld.pathetic.api.util.ParameterizedSupplier;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
+import java.util.Collection;
 
 /**
  * A Path is a sequence of positions that represents a path through a 3D space. The positions are
@@ -82,4 +83,11 @@ public interface Path extends Iterable<PathPosition> {
    * @return {@link PathPosition} The position of the target
    */
   PathPosition getEnd();
+
+  /**
+   * Returns a new Collection of the Path Positions of the path.
+   *
+   * @return {@link Collection} of the PathPositions
+   */
+  Collection<PathPosition> collect();
 }

@@ -35,8 +35,6 @@ import org.jheaps.tree.FibonacciHeap;
  */
 public final class AStarPathfinder extends AbstractPathfinder {
 
-  private static final double TIE_BREAKER_WEIGHT = 1e-6;
-
   private final ThreadLocal<PathfindingSession> currentSession = new ThreadLocal<>();
 
   public AStarPathfinder(PathfinderConfiguration configuration) {
@@ -87,6 +85,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
 
       // Process as a new node
       Node neighbor = createNeighborNode(neighborPos, start, target, currentNode);
+      neighbor.setParent(currentNode);
       NodeEvaluationContext context =
           new NodeEvaluationContextImpl(
               searchContext, neighbor, currentNode, pathfinderConfiguration.getHeuristicStrategy());
@@ -131,18 +130,6 @@ public final class AStarPathfinder extends AbstractPathfinder {
     }
   }
 
-  private double calculateHeapKey(Node neighbor, double fCost) {
-    double heuristic = neighbor.getHeuristic().get();
-    double tieBreaker = TIE_BREAKER_WEIGHT * (heuristic / (Math.abs(fCost) + 1));
-    double heapKey = fCost - tieBreaker;
-
-    if (Double.isNaN(heapKey) || Double.isInfinite(heapKey)) {
-      heapKey = fCost;
-    }
-
-    return heapKey;
-  }
-
   private void updateExistingNode(
       AddressableHeap.Handle<Double, Node> handle, Node currentNode, SearchContext searchContext) {
     Node existing = handle.getValue();
@@ -151,9 +138,8 @@ public final class AStarPathfinder extends AbstractPathfinder {
             searchContext, existing, currentNode, pathfinderConfiguration.getHeuristicStrategy());
 
     double newG = calculateGCost(context);
-    if (newG + Math.ulp(newG) >= existing.getGCost()) {
-      return;
-    }
+    double tol = Math.ulp(Math.max(Math.abs(newG), Math.abs(existing.getGCost())));
+    if (newG + tol >= existing.getGCost()) return;
 
     if (!isValidByCustomProcessors(context)) {
       return;
