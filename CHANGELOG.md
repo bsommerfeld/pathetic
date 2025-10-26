@@ -8,6 +8,8 @@
 ### Changed
 
 - Optimized tie-breaker calculations
+- Cost now only can be positive
+- Deprecated negativeCost configuration
 
 ### Fixed
 
