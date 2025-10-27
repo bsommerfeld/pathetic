@@ -32,8 +32,7 @@ a versatile library for any pathfinding challenge.
 
 ## Contributing
 
-We welcome contributions! Check out our [**Contributing Guide
-**](https://github.com/bsommerfeld/pathetic/blob/trunk/CONTRIBUTING.md) to get started.
+We welcome contributions! Check out our [**Contributing Guide**](https://github.com/bsommerfeld/pathetic/blob/trunk/CONTRIBUTING.md) to get started.
 
 ***
 
