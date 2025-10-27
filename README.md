@@ -1,50 +1,49 @@
-# pathetic
+# Pathetic
+
+**A high-performance, thread-safe pathfinding library for Java.**
 
 [![Mentioned in Awesome Java](https://awesome.re/mentioned-badge.svg)](https://github.com/akullpp/awesome-java)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/bsommerfeld/pathetic/build.yml?branch=production)](https://github.com/bsommerfeld/pathetic/actions)
 [![JitPack](https://jitpack.io/v/bsommerfeld/pathetic.svg)](https://jitpack.io/#bsommerfeld/pathetic)
 [![License](https://img.shields.io/github/license/bsommerfeld/pathetic)](https://github.com/bsommerfeld/pathetic/blob/main/LICENSE)
 
-A high-performance, concurrent pathfinding library for Java.
-
-`pathetic` is a thread-safe pathfinding engine built for demanding, server-side applications. Originally developed for large-scale game servers, it uses an optimized A* algorithm to deliver fast and scalable results in complex environments.
-
-***
-
-## Core Features
-
-* **High-Performance A\***: Utilizes a **Fibonacci Heap** for the open set and optional **Bloom filters** for the closed set, ensuring excellent performance in large search spaces.
-* **Concurrent by Design**: Fully thread-safe to handle multiple pathfinding requests simultaneously, making it ideal for microservices and other backend systems.
-* **Highly Extensible**: Customize pathfinding behavior using `NodeValidationProcessor` and `NodeCostProcessor` to model complex rules and traversal costs.
+`Pathetic` is a concurrent, scalable pathfinding engine built for server-side applications. Powered by an optimized A*
+algorithm, it delivers fast and reliable results for complex graph traversal tasks, from game servers to logistics
+systems.
 
 ***
 
-## Use Cases
+## Installation & Usage
 
-While born from gaming, `pathetic` is suited for any problem requiring efficient graph traversal:
-
-* **Logistics & Robotics**: Calculate optimal routes for delivery fleets or autonomous agents.
-* **Game Development**: Power NPC navigation in real-time simulations.
-* **Network & System Simulation**: Model and analyze data flow or crowd movement.
-
-***
-
-## Documentation & Usage
-
-For installation instructions, getting started guides, and the complete API reference, please visit the official project wiki.
+For installation instructions, getting started guides, and the complete API reference, please visit the official project
+wiki.
 
 ### **[Explore the Wiki](https://github.com/bsommerfeld/pathetic/wiki)**
 
 ***
 
-### Project Origin
+## Background
 
-The name "pathetic" is a tongue-in-cheek nod to the project's humble beginnings. The library was co-founded and initially developed with [@Ollie](https://github.com/olijeffers0n).
+Originally developed for large-scale game servers, `path-etic` was co-founded by
+[@bsommerfeld](https://github.com/bsommerfeld) and [@Ollie](https://github.com/olijeffers0n). It has since evolved into
+a versatile library for any pathfinding challenge.
 
 ***
 
-### Powered by
+## Contributing
+
+We welcome contributions! Check out our [**Contributing Guide
+**](https://github.com/bsommerfeld/pathetic/blob/trunk/CONTRIBUTING.md) to get started.
+
+***
+
+## Support
+
+Have questions or need help? Open an issue on [GitHub](https://github.com/bsommerfeld/pathetic/issues) or join
+our [community Discord](https://discord.gg/zGx9BSzKfJ).
+
+## Powered by
 
 [![JetBrains logo.](https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg)](https://jb.gg/OpenSource)
 
-Thanks to JetBrains for sponsoring this project!
+A huge thanks to JetBrains for providing top-tier development tools to support this project!
