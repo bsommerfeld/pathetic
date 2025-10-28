@@ -41,7 +41,7 @@ class PathImplTest {
 
     Path interpolatedPath = path.interpolate(0.5);
 
-    assertEquals(6, interpolatedPath.length());
+    assertEquals(5, interpolatedPath.length());
   }
 
   @Test
@@ -97,10 +97,7 @@ class PathImplTest {
     Path mutatedPath =
         path.mutatePositions(
             position ->
-                new PathPosition(
-                    position.getX() + 1,
-                    position.getY() + 1,
-                    position.getZ() + 1));
+                new PathPosition(position.getX() + 1, position.getY() + 1, position.getZ() + 1));
 
     assertEquals(5, mutatedPath.length());
   }

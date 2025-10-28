@@ -6,8 +6,6 @@ import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.engine.util.ErrorLogger;
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.LinkedHashSet;
-import java.util.Set;
 
 /**
  * Utility class providing post-processing operations on {@link Path} objects.
@@ -192,7 +190,7 @@ public final class PathUtils {
     double distance = start.distance(end);
     int steps = (int) Math.ceil(distance / resolution);
 
-    for (int i = 1; i <= steps; i++) {
+    for (int i = 1; i < steps; i++) {
       double progress = (double) i / steps;
       result.addLast(start.interpolate(end, progress));
     }
@@ -218,23 +216,29 @@ public final class PathUtils {
   /**
    * Removes duplicate consecutive positions while preserving order.
    *
-   * <p>Uses {@link LinkedHashSet} internally to maintain insertion order and eliminate duplicates.
-   * Non-consecutive duplicates are <em>not</em> removed.
-   *
-   * @param path the path to clean
-   * @return a new path with no consecutive duplicate positions
+   * <p>Nur direkt aufeinanderfolgende Duplikate werden entfernt. Vergleich erfolgt über exakte
+   * Koordinaten (mit kleinem EPS), nicht über equals()/floor.
    */
   private static Path removeDuplicates(Path path) {
-    Set<PathPosition> seen = new LinkedHashSet<>();
+    final double EPS = 1e-12;
+
     Deque<PathPosition> result = new ArrayDeque<>();
+    PathPosition last = null;
 
     for (PathPosition pos : path) {
-      if (seen.add(pos)) {
+      if (last == null || !samePoint(last, pos, EPS)) {
         result.addLast(pos);
+        last = pos;
       }
     }
 
     return new PathImpl(result.peekFirst(), result.peekLast(), result);
+  }
+
+  private static boolean samePoint(PathPosition a, PathPosition b, double eps) {
+    return Math.abs(a.getX() - b.getX()) <= eps
+        && Math.abs(a.getY() - b.getY()) <= eps
+        && Math.abs(a.getZ() - b.getZ()) <= eps;
   }
 
   /** Validates that epsilon is in the range (0.0, 1.0]. */
