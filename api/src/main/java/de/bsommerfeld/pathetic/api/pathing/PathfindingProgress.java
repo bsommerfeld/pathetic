@@ -1,6 +1,7 @@
 package de.bsommerfeld.pathetic.api.pathing;
 
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
+import java.util.Objects;
 
 /**
  * Immutable container for the three core positions in a pathfinding operation.
@@ -48,5 +49,31 @@ public class PathfindingProgress {
    */
   public PathPosition targetPosition() {
     return target;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (o == null || getClass() != o.getClass()) return false;
+    PathfindingProgress that = (PathfindingProgress) o;
+    return Objects.equals(start, that.start)
+        && Objects.equals(current, that.current)
+        && Objects.equals(target, that.target);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(start, current, target);
+  }
+
+  @Override
+  public String toString() {
+    return "PathfindingProgress{"
+        + "start="
+        + start
+        + ", current="
+        + current
+        + ", target="
+        + target
+        + '}';
   }
 }
