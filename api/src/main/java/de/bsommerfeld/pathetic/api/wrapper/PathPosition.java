@@ -155,6 +155,27 @@ public class PathPosition implements Cloneable {
   }
 
   /**
+   * @return the centered X coordinate (flooredX + 0.5)
+   */
+  public double getCenteredX() {
+    return getFlooredX() + 0.5;
+  }
+
+  /**
+   * @return the centered Y coordinate (flooredY + 0.5)
+   */
+  public double getCenteredY() {
+    return getFlooredY() + 0.5;
+  }
+
+  /**
+   * @return the centered Z coordinate (flooredZ + 0.5)
+   */
+  public double getCenteredZ() {
+    return getFlooredZ() + 0.5;
+  }
+
+  /**
    * Returns the x-coordinate of the block this position is located in. This is equivalent to
    * flooring the x-coordinate.
    *

@@ -17,6 +17,12 @@ public class HeuristicContext {
     this.heuristicWeights = heuristicWeights;
   }
 
+  public HeuristicContext(
+      PathfindingProgress pathfindingProgress, HeuristicWeights heuristicWeights) {
+    this.pathfindingProgress = pathfindingProgress;
+    this.heuristicWeights = heuristicWeights;
+  }
+
   /**
    * @return the {@link PathfindingProgress}
    */

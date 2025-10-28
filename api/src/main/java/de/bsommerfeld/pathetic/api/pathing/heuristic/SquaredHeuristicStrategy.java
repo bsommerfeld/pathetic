@@ -3,7 +3,6 @@ package de.bsommerfeld.pathetic.api.pathing.heuristic;
 import de.bsommerfeld.pathetic.api.pathing.PathfindingProgress;
 import de.bsommerfeld.pathetic.api.pathing.calc.DistanceCalculator;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
-import de.bsommerfeld.pathetic.api.wrapper.PathVector;
 
 /**
  * A performance-optimized heuristic strategy using squared distance metrics.
@@ -23,6 +22,21 @@ import de.bsommerfeld.pathetic.api.wrapper.PathVector;
  * admissibility <strong>if weights are tuned appropriately</strong>.
  *
  * <p>Ideal for high-performance pathfinding in large 3D environments.
+ *
+ * @apiNote This heuristic strategy operates on floored coordinates to ensure consistent and
+ *     predictable pathfinding behavior in grid-based environments. The floored coordinates
+ *     represent the discrete grid cell positions that nodes occupy, which is essential for
+ *     maintaining the admissibility and consistency of heuristic calculations in traditional
+ *     pathfinding algorithms. Using floored coordinates prevents fractional grid positions from
+ *     introducing inaccuracies or inconsistencies in distance calculations that could lead to
+ *     suboptimal paths or heuristic violations.
+ *     <p>While floored coordinates are preferred for grid-based pathfinding to maintain
+ *     mathematical correctness and performance, there may be scenarios where continuous coordinates
+ *     provide more accurate path planning. For example, when dealing with environments where nodes
+ *     can occupy positions between grid cells or when high precision is required for movement
+ *     within a cell, continuous coordinate handling should be considered. However, in standard 3D
+ *     grid environments with discrete cell-based navigation, floored coordinates remain the optimal
+ *     choice for reliable heuristic evaluation.
  */
 public class SquaredHeuristicStrategy implements IHeuristicStrategy {
 
@@ -47,6 +61,8 @@ public class SquaredHeuristicStrategy implements IHeuristicStrategy {
    * degenerates to a point, and the squared Euclidean distance to the start position is returned
    * instead to avoid division by zero.
    *
+   * <p>Computed on cell centers (floor+0.5) to avoid asymmetries at cell boundaries.
+   *
    * <p>This squared version is mathematically consistent with the linear perpendicular distance
    * when used in a fully squared heuristic, and is significantly faster due to the elimination of
    * the square root.
@@ -55,22 +71,34 @@ public class SquaredHeuristicStrategy implements IHeuristicStrategy {
    */
   private final DistanceCalculator<Double> perpendicularCalc =
       progress -> {
-        PathPosition start = progress.startPosition();
-        PathPosition pos = progress.currentPosition();
-        PathPosition target = progress.targetPosition();
+        PathPosition s = progress.startPosition();
+        PathPosition c = progress.currentPosition();
+        PathPosition t = progress.targetPosition();
 
-        PathVector lineVec = target.toVector().subtract(start.toVector());
-        double lineLenSq = lineVec.dot(lineVec);
+        double sx = s.getCenteredX(), sy = s.getCenteredY(), sz = s.getCenteredZ();
+        double cx = c.getCenteredX(), cy = c.getCenteredY(), cz = c.getCenteredZ();
+        double tx = t.getCenteredX(), ty = t.getCenteredY(), tz = t.getCenteredZ();
 
-        if (lineLenSq < EPSILON) {
-          return pos.distanceSquared(start);
+        double lineX = tx - sx;
+        double lineY = ty - sy;
+        double lineZ = tz - sz;
+        double lineSq = lineX * lineX + lineY * lineY + lineZ * lineZ;
+
+        if (lineSq < EPSILON) {
+          double dx = cx - sx, dy = cy - sy, dz = cz - sz;
+          return dx * dx + dy * dy + dz * dz;
         }
 
-        PathVector toCurr = pos.toVector().subtract(start.toVector());
-        PathVector cross = toCurr.getCrossProduct(lineVec);
-        double crossLenSq = cross.dot(cross);
+        double toX = cx - sx;
+        double toY = cy - sy;
+        double toZ = cz - sz;
 
-        return crossLenSq / lineLenSq;
+        double crossX = toY * lineZ - toZ * lineY;
+        double crossY = toZ * lineX - toX * lineZ;
+        double crossZ = toX * lineY - toY * lineX;
+        double crossSq = crossX * crossX + crossY * crossY + crossZ * crossZ;
+
+        return crossSq / lineSq;
       };
 
   /**
@@ -105,13 +133,19 @@ public class SquaredHeuristicStrategy implements IHeuristicStrategy {
    */
   private final DistanceCalculator<Double> octileCalc =
       progress -> {
-        double dx = Math.abs(progress.currentPosition().getX() - progress.targetPosition().getX());
-        double dy = Math.abs(progress.currentPosition().getY() - progress.targetPosition().getY());
-        double dz = Math.abs(progress.currentPosition().getZ() - progress.targetPosition().getZ());
+        int dx =
+            Math.abs(
+                progress.currentPosition().getFlooredX() - progress.targetPosition().getFlooredX());
+        int dy =
+            Math.abs(
+                progress.currentPosition().getFlooredY() - progress.targetPosition().getFlooredY());
+        int dz =
+            Math.abs(
+                progress.currentPosition().getFlooredZ() - progress.targetPosition().getFlooredZ());
 
-        double min = Math.min(Math.min(dx, dy), dz);
-        double max = Math.max(Math.max(dx, dy), dz);
-        double mid = dx + dy + dz - min - max;
+        int min = Math.min(Math.min(dx, dy), dz);
+        int max = Math.max(Math.max(dx, dy), dz);
+        int mid = dx + dy + dz - min - max;
 
         double octile = (D3 - D2) * min + (D2 - D1) * mid + D1 * max;
         return octile * octile;
@@ -152,10 +186,9 @@ public class SquaredHeuristicStrategy implements IHeuristicStrategy {
         PathPosition t = progress.targetPosition();
 
         double manhattan =
-            (double)
-                (Math.abs(c.getFlooredX() - t.getFlooredX())
-                    + Math.abs(c.getFlooredY() - t.getFlooredY())
-                    + Math.abs(c.getFlooredZ() - t.getFlooredZ()));
+            Math.abs(c.getFlooredX() - t.getFlooredX())
+                + Math.abs(c.getFlooredY() - t.getFlooredY())
+                + Math.abs(c.getFlooredZ() - t.getFlooredZ());
         return manhattan * manhattan;
       };
 
@@ -203,6 +236,9 @@ public class SquaredHeuristicStrategy implements IHeuristicStrategy {
 
   @Override
   public double calculateTransitionCost(PathPosition from, PathPosition to) {
-    return to.distanceSquared(from);
+    double dx = to.getCenteredX() - from.getCenteredX();
+    double dy = to.getCenteredY() - from.getCenteredY();
+    double dz = to.getCenteredZ() - from.getCenteredZ();
+    return dx * dx + dy * dy + dz * dz;
   }
 }
