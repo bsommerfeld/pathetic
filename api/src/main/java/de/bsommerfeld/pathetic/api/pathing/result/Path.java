@@ -32,6 +32,7 @@ public interface Path extends Iterable<PathPosition> {
    *     performance.
    * @return a newly created Path with interpolated positions.
    */
+  @Deprecated
   Path interpolate(double resolution);
 
   /**
@@ -44,6 +45,7 @@ public interface Path extends Iterable<PathPosition> {
    * @throws IllegalArgumentException if epsilon is not in the range greater than 0.0 to 1.0,
    *     inclusive
    */
+  @Deprecated
   Path simplify(double epsilon);
 
   /**
@@ -52,6 +54,7 @@ public interface Path extends Iterable<PathPosition> {
    * @param path which will be appended at the end.
    * @return {@link Path} the new Path
    */
+  @Deprecated
   Path join(Path path);
 
   /**
@@ -60,6 +63,7 @@ public interface Path extends Iterable<PathPosition> {
    * @param length the length to which the Path will be trimmed.
    * @return {@link Path} the new Path
    */
+  @Deprecated
   Path trim(int length);
 
   /**
@@ -68,6 +72,7 @@ public interface Path extends Iterable<PathPosition> {
    * @param mutator the {@link ParameterizedSupplier} to mutate the positions with
    * @return {@link Path} the new Path
    */
+  @Deprecated
   Path mutatePositions(ParameterizedSupplier<PathPosition> mutator);
 
   /**

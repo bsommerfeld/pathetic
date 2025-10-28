@@ -3,16 +3,10 @@ package de.bsommerfeld.pathetic.engine.result;
 import de.bsommerfeld.pathetic.api.pathing.result.Path;
 import de.bsommerfeld.pathetic.api.util.ParameterizedSupplier;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
-import de.bsommerfeld.pathetic.engine.util.ErrorLogger;
 import de.bsommerfeld.pathetic.engine.util.Iterables;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Deque;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
 import java.util.function.Consumer;
 
 public class PathImpl implements Path {
@@ -50,91 +44,44 @@ public class PathImpl implements Path {
     positions.forEach(action);
   }
 
+  /**
+   * @deprecated Delegates to {@link PathUtils} - you should use that too!
+   */
   @Override
   public Path interpolate(double resolution) {
-    if (resolution <= 0) throw new IllegalArgumentException("Resolution cannot be <= 0");
-
-    List<PathPosition> enlargedPositions = new ArrayList<>();
-
-    PathPosition previousPosition = null;
-    for (PathPosition position : positions) {
-      if (previousPosition != null)
-        interpolateBetweenPositions(previousPosition, position, resolution, enlargedPositions);
-
-      enlargedPositions.add(position);
-      previousPosition = position;
-    }
-
-    return new PathImpl(start, end, enlargedPositions);
+    return PathUtils.interpolate(this, resolution);
   }
 
-  private void interpolateBetweenPositions(
-      PathPosition startPosition,
-      PathPosition endPosition,
-      double resolution,
-      List<PathPosition> result) {
-    double distance = startPosition.distance(endPosition);
-    int steps = (int) Math.ceil(distance / resolution);
-
-    for (int i = 1; i <= steps; i++) {
-      double progress = (double) i / steps;
-
-      PathPosition interpolatedPosition = startPosition.interpolate(endPosition, progress);
-      result.add(interpolatedPosition);
-    }
-  }
-
+  /**
+   * @deprecated Delegates to {@link PathUtils} - you should use that too!
+   */
   @Override
   public Path simplify(double epsilon) {
-    try {
-      validateEpsilon(epsilon);
-
-      Set<PathPosition> simplifiedPositions =
-          new LinkedHashSet<>(filterPositionsByEpsilon(epsilon));
-
-      return new PathImpl(start, end, simplifiedPositions);
-    } catch (IllegalArgumentException e) {
-      throw ErrorLogger.logFatalError("Invalid epsilon value for path simplification", e);
-    }
+    return PathUtils.simplify(this, epsilon);
   }
 
-  private Set<PathPosition> filterPositionsByEpsilon(double epsilon) {
-    Set<PathPosition> filteredPositions = new LinkedHashSet<>();
-
-    int index = 0;
-    for (PathPosition pathPosition : positions) {
-      int stride = Math.max(1, (int) Math.round(1.0 / epsilon));
-      if (index % stride == 0) {
-        filteredPositions.add(pathPosition);
-      }
-      index++;
-    }
-
-    return filteredPositions;
-  }
-
-  private void validateEpsilon(double epsilon) {
-    if (epsilon <= 0.0 || epsilon > 1.0) {
-      throw ErrorLogger.logFatalError("Epsilon must be in the range of 0.0 to 1.0, inclusive");
-    }
-  }
-
+  /**
+   * @deprecated Delegates to {@link PathUtils} - you should use that too!
+   */
   @Override
   public Path join(Path path) {
-    return new PathImpl(start, path.getEnd(), Iterables.concat(positions, path));
+    return PathUtils.join(this, path);
   }
 
+  /**
+   * @deprecated Delegates to {@link PathUtils} - you should use that too!
+   */
   @Override
   public Path trim(int length) {
-    Iterable<PathPosition> limitedPositions = Iterables.limit(positions, length);
-    return new PathImpl(start, Iterables.getLast(limitedPositions), limitedPositions);
+    return PathUtils.trim(this, length);
   }
 
+  /**
+   * @deprecated Delegates to {@link PathUtils} - you should use that too!
+   */
   @Override
   public Path mutatePositions(ParameterizedSupplier<PathPosition> mutator) {
-    Deque<PathPosition> stack = new ArrayDeque<>();
-    applyMutator(mutator, stack);
-    return new PathImpl(stack.peek(), stack.peekLast(), stack);
+    return PathUtils.mutatePositions(this, mutator);
   }
 
   @Override
@@ -147,10 +94,5 @@ public class PathImpl implements Path {
     Collection<PathPosition> collection = new ArrayList<>(length);
     positions.forEach(collection::add);
     return collection;
-  }
-
-  private void applyMutator(
-      ParameterizedSupplier<PathPosition> mutator, Deque<PathPosition> positionList) {
-    for (PathPosition position : this.positions) positionList.add(mutator.accept(position));
   }
 }
