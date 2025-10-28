@@ -16,6 +16,8 @@
 - Introduced DistanceCalculator interface
 - Introduced PathfindingProgress class
 - Deprecated PathPosition#isInSameBlock
+- Refactored heuristic implementations with DistanceCalculators
+- Improved SquaredHeuristicStrategy with now a matching squared manhattan, octile and heightDiff calculation
 
 ### Fixed
 

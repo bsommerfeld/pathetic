@@ -17,6 +17,13 @@ public class HeuristicContext {
     this.heuristicWeights = heuristicWeights;
   }
 
+  /**
+   * @return the {@link PathfindingProgress}
+   */
+  public PathfindingProgress getPathfindingProgress() {
+    return pathfindingProgress;
+  }
+
   /** The current to-evaluate position. */
   public PathPosition position() {
     return pathfindingProgress.currentPosition();
