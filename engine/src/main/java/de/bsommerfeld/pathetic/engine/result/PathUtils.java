@@ -20,6 +20,7 @@ import java.util.Set;
  *
  * @see Path
  * @see PathPosition
+ * @since 5.3.3
  */
 public final class PathUtils {
 
