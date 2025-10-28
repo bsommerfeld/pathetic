@@ -5,11 +5,12 @@ import de.bsommerfeld.pathetic.api.util.ParameterizedSupplier;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.engine.util.ErrorLogger;
 import de.bsommerfeld.pathetic.engine.util.Iterables;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -131,10 +132,9 @@ public class PathImpl implements Path {
 
   @Override
   public Path mutatePositions(ParameterizedSupplier<PathPosition> mutator) {
-    List<PathPosition> positionList = new LinkedList<>();
-    applyMutator(mutator, positionList);
-    return new PathImpl(
-        positionList.get(0), positionList.get(positionList.size() - 1), positionList);
+    Deque<PathPosition> stack = new ArrayDeque<>();
+    applyMutator(mutator, stack);
+    return new PathImpl(stack.peek(), stack.peekLast(), stack);
   }
 
   @Override
@@ -150,7 +150,7 @@ public class PathImpl implements Path {
   }
 
   private void applyMutator(
-      ParameterizedSupplier<PathPosition> mutator, List<PathPosition> positionList) {
+      ParameterizedSupplier<PathPosition> mutator, Deque<PathPosition> positionList) {
     for (PathPosition position : this.positions) positionList.add(mutator.accept(position));
   }
 }
