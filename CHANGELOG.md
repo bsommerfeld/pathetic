@@ -12,6 +12,10 @@
 - Deprecated negativeCost configuration
 - PathImpl now delegates several functions to new PathUtils class
 - Several Path post-processing methods are now Deprecated and PathUtils should be used
+- Deprecated several specific distance calculations inside PathPosition
+- Introduced DistanceCalculator interface
+- Introduced PathfindingProgress class
+- Deprecated PathPosition#isInSameBlock
 
 ### Fixed
 

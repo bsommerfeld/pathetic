@@ -32,7 +32,9 @@ public class PathPosition implements Cloneable {
    * @param progress The interpolation progress, typically between 0.0 (this position) and 1.0
    *     (other position).
    * @return A new {@code PathPosition} representing the interpolated point.
+   * @deprecated marked for removal
    */
+  @Deprecated
   public PathPosition interpolate(PathPosition other, double progress) {
     double x = NumberUtils.interpolate(this.x, other.x, progress);
     double y = NumberUtils.interpolate(this.y, other.y, progress);
@@ -46,7 +48,9 @@ public class PathPosition implements Cloneable {
    * @param otherPosition The other position to compare with.
    * @return {@code true} if both positions share the same block coordinates (floored x, y, z
    *     values), {@code false} otherwise.
+   * @deprecated use {@link #equals(Object)}
    */
+  @Deprecated
   public boolean isInSameBlock(PathPosition otherPosition) {
     return this.getFlooredX() == otherPosition.getFlooredX()
         && this.getFlooredY() == otherPosition.getFlooredY()
@@ -59,7 +63,9 @@ public class PathPosition implements Cloneable {
    *
    * @param otherPosition The other position to calculate the distance to.
    * @return The Manhattan distance between the two positions.
+   * @deprecated marked for removal
    */
+  @Deprecated
   public double manhattanDistance(PathPosition otherPosition) {
     return Math.abs(this.getFlooredX() - otherPosition.getFlooredX())
         + Math.abs(this.getFlooredY() - otherPosition.getFlooredY())
@@ -73,7 +79,9 @@ public class PathPosition implements Cloneable {
    *
    * @param otherPosition The other position to calculate the distance to.
    * @return The Octile distance between the two positions.
+   * @deprecated marked for removal
    */
+  @Deprecated
   public double octileDistance(PathPosition otherPosition) {
 
     double dx = Math.abs(this.x - otherPosition.x);
