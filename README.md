@@ -1,6 +1,6 @@
 # Pathetic
 
-**A high-performance, thread-safe pathfinding library for Java.**
+**A generic high-performance, thread-safe pathfinding library for Java.**
 
 [![Mentioned in Awesome Java](https://awesome.re/mentioned-badge.svg)](https://github.com/akullpp/awesome-java)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/bsommerfeld/pathetic/build.yml?branch=production)](https://github.com/bsommerfeld/pathetic/actions)
