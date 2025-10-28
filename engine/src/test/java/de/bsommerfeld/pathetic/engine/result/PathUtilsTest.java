@@ -11,9 +11,6 @@ import org.junit.jupiter.api.Test;
 
 class PathUtilsTest {
 
-  // ========================================================================
-  // 3D PathPosition Factory mit korrektem Verhalten
-  // ========================================================================
   private PathPosition p(double x, double y, double z) {
     return new PathPosition(x, y, z);
   }
@@ -172,7 +169,7 @@ class PathUtilsTest {
   }
 
   // ========================================================================
-  // Minimal PathImpl (nur für Tests)
+  // Minimal PathImpl
   // ========================================================================
   private static class PathImpl implements Path {
     private final PathPosition start;
