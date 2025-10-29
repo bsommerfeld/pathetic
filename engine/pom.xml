@@ -4,8 +4,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <artifactId>pathetic-main</artifactId>
-        <groupId>de.bsommerfeld</groupId>
+        <artifactId>pathetic-parent</artifactId>
+        <groupId>de.bsommerfeld.pathetic</groupId>
         <version>${revision}</version>
     </parent>
 
@@ -139,7 +139,7 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>de.bsommerfeld</groupId>
+            <groupId>de.bsommerfeld.pathetic</groupId>
             <artifactId>api</artifactId>
             <version>${revision}</version>
             <scope>compile</scope>

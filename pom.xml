@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>de.bsommerfeld</groupId>
-    <artifactId>pathetic-main</artifactId>
+    <groupId>de.bsommerfeld.pathetic</groupId>
+    <artifactId>pathetic-parent</artifactId>
     <packaging>pom</packaging>
     <version>${revision}</version>
 
@@ -37,9 +37,20 @@
 
     <scm>
         <connection>scm:git:https://github.com/bsommerfeld/pathetic.git</connection>
-        <developerConnection>scm:git:https://github.com/bsommerfeld/pathetic.git</developerConnection>
+        <developerConnection>scm:git:ssh://git@github.com/bsommerfeld/pathetic.git</developerConnection>
         <url>https://github.com/bsommerfeld/pathetic</url>
     </scm>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
 
     <properties>
         <revision>5.3.2</revision>
@@ -57,7 +68,7 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
-                <groupId>de.bsommerfeld</groupId>
+                <groupId>de.bsommerfeld.pathetic</groupId>
                 <artifactId>api</artifactId>
                 <version>${revision}</version>
                 <scope>provided</scope>
@@ -112,6 +123,17 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <version>3.12.0</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <failOnError>false</failOnError>
+                        </configuration>
+                    </execution>
+                </executions>
                 <configuration>
                     <source>8</source>
                     <outputDirectory>${project.basedir}/docs</outputDirectory>
@@ -137,6 +159,44 @@
                             <head>Depends on:</head>
                         </tag>
                     </tags>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.3.0</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>3.2.4</version>
+                <executions>
+                    <execution>
+                        <id>sign</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.13</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>ossrh</serverId>
+                    <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
                 </configuration>
             </plugin>
             <plugin>
