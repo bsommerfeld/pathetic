@@ -1,40 +1,42 @@
-name: Deploy Javadoc
-
+name: Publish Javadoc
 on:
   push:
-    branches:
-      - production
+    branches: [ production ]
+    paths:
+      - '**/*.java'
+      - '**/pom.xml'
+      - '.github/workflows/publish-javadoc.yml'
+  workflow_dispatch: { }
 
 jobs:
-  publish:
+  javadoc:
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 17
           cache: maven
 
-      # Build aggregated Javadoc for the whole multi-module project into ./docs
+      # Baut Aggregat-Javadoc in target/site/apidocs
       - name: Build aggregated Javadoc
         run: mvn -B -DskipTests javadoc:aggregate -Dmaven.javadoc.failOnError=false
 
-      # Publish the pre-built Javadoc from ./docs to the javadoc branch (GitHub Pages)
-      - name: Deploy JavaDoc 🚀
-        uses: MathieuSoysal/Javadoc-publisher.yml@v3.0.2
+      # In Root publishen (kein /apidocs), CNAME + .nojekyll dazu
+      - name: Prepare publish folder
+        run: |
+          mkdir -p publish
+          rsync -a --delete target/site/apidocs/ publish/
+          echo "docs.pathetic.site" > publish/CNAME
+          touch publish/.nojekyll
+
+      - name: Deploy to javadoc branch (root)
+        uses: peaceiris/actions-gh-pages@v3
         with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          javadoc-branch: javadoc
-          java-version: 17
-          project: maven
-          custom-command: mvn -B -DskipTests javadoc:aggregate -Dmaven.javadoc.failOnError=false
-          javadoc-source-folder: docs
-          target-folder: docs
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: publish
+          publish_branch: javadoc
