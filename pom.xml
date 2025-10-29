@@ -65,17 +65,6 @@
         <module>engine</module>
     </modules>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>de.bsommerfeld.pathetic</groupId>
-                <artifactId>api</artifactId>
-                <version>${revision}</version>
-                <scope>provided</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <build>
         <pluginManagement>
             <plugins>
