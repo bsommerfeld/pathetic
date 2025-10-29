@@ -5,7 +5,7 @@ on:
     paths:
       - '**/*.java'
       - '**/pom.xml'
-      - '.github/workflows/publish-javadoc.yml'
+      - '.github/workflows/javadocs.yml'
   workflow_dispatch: { }
 
 jobs:
