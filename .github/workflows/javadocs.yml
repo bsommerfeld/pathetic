@@ -23,11 +23,14 @@ jobs:
           java-version: 17
           cache: maven
 
-      # Build aggregated Javadoc for the whole multi-module project into ./docs
       - name: Build aggregated Javadoc
         run: mvn -B -DskipTests javadoc:aggregate -Dmaven.javadoc.failOnError=false
 
-      # Publish the pre-built Javadoc from ./docs to the javadoc branch (GitHub Pages)
+      - name: Add CNAME and .nojekyll to Javadoc output
+        run: |
+          echo "docs.pathetic.site" > docs/apidocs/CNAME
+          touch docs/apidocs/.nojekyll
+
       - name: Deploy JavaDoc 🚀
         uses: MathieuSoysal/Javadoc-publisher.yml@v3.0.2
         with:
@@ -36,5 +39,5 @@ jobs:
           java-version: 17
           project: maven
           custom-command: mvn -B -DskipTests javadoc:aggregate -Dmaven.javadoc.failOnError=false
-          javadoc-source-folder: docs
-          target-folder: docs
+          javadoc-source-folder: docs/apidocs
+          target-folder: .
