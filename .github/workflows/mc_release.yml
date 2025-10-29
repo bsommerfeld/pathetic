@@ -1,0 +1,47 @@
+name: Release to Maven Central
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK + Maven + GPG
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+          server-id: ossrh
+          server-username: OSSRH_USERNAME
+          server-password: OSSRH_PASSWORD
+          gpg-private-key: ${{ secrets.GPG_KEY }}
+          gpg-passphrase: GPG_PASSPHRASE
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          TAG_NAME="${GITHUB_REF_NAME}"
+          # optional: führendes "v" entfernen, falls vorhanden
+          VERSION="${TAG_NAME#v}"
+          echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Detected version: $VERSION"
+
+      - name: Set Maven project version
+        run: mvn -B versions:set -DnewVersion=${{ steps.version.outputs.VERSION }} -DgenerateBackupPoms=false
+
+      - name: Deploy (sign, stage & release)
+        env:
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: mvn -B -DskipTests deploy
