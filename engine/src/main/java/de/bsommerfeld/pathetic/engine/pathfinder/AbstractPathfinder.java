@@ -179,8 +179,6 @@ public abstract class AbstractPathfinder implements Pathfinder {
                 .anyMatch(validator -> !validator.isValid(startNodeContext));
 
         if (isStartNodeInvalid) {
-          // The start position itself is invalid
-          ErrorLogger.debug("Start node validation failed for start position: {}", start);
           return new PathfinderResultImpl(
               PathState.FAILED, new PathImpl(start, target, EMPTY_PATH_POSITIONS));
         }
@@ -203,7 +201,6 @@ public abstract class AbstractPathfinder implements Pathfinder {
         currentDepth++;
 
         if (this.abortRequested) {
-          ErrorLogger.debug("Pathfinding aborted");
           return createAbortedResult(bestFallbackNode);
         }
 
@@ -222,12 +219,10 @@ public abstract class AbstractPathfinder implements Pathfinder {
         }
 
         if (hasReachedPathLengthLimit(currentNode)) {
-          ErrorLogger.debug("Path length limit reached");
           return new PathfinderResultImpl(PathState.LENGTH_LIMITED, reconstructPath(currentNode));
         }
 
         if (currentNode.isTarget()) {
-          ErrorLogger.debug("Target node found");
           return new PathfinderResultImpl(PathState.FOUND, reconstructPath(currentNode));
         }
 
@@ -337,17 +332,14 @@ public abstract class AbstractPathfinder implements Pathfinder {
       int depthReached, PathPosition start, PathPosition target, Node fallbackNode) {
 
     if (depthReached >= pathfinderConfiguration.getMaxIterations()) {
-      ErrorLogger.debug("Max iterations reached");
       return new PathfinderResultImpl(
           PathState.MAX_ITERATIONS_REACHED, reconstructPath(fallbackNode));
     }
 
     if (pathfinderConfiguration.isFallback()) {
-      ErrorLogger.debug("Fallback enabled");
       return new PathfinderResultImpl(PathState.FALLBACK, reconstructPath(fallbackNode));
     }
 
-    ErrorLogger.debug("End of the road, pathfinding failed.");
     return new PathfinderResultImpl(
         PathState.FAILED, new PathImpl(start, target, EMPTY_PATH_POSITIONS));
   }
