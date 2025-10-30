@@ -160,7 +160,7 @@
                 <configuration>
                     <publishingServerId>central</publishingServerId>
                     <autoPublish>false</autoPublish>
-                    <waitUntil>published</waitUntil>
+                    <waitUntil>validated</waitUntil>
                 </configuration>
             </plugin>
             <plugin>
