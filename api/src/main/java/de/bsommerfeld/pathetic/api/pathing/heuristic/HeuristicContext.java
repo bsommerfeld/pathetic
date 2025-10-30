@@ -3,6 +3,7 @@ package de.bsommerfeld.pathetic.api.pathing.heuristic;
 import de.bsommerfeld.pathetic.api.pathing.PathfindingProgress;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 
+/** An immutable context object used for heuristic calculations providing the essentials. */
 public class HeuristicContext {
 
   private final PathfindingProgress pathfindingProgress;
