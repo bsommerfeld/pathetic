@@ -11,7 +11,7 @@ import java.util.Objects;
  *
  * @since 5.3.3
  */
-public class PathfindingProgress {
+public final class PathfindingProgress {
 
   private final PathPosition start;
   private final PathPosition current;
