@@ -48,29 +48,6 @@ public class PathfinderConfiguration {
   private final boolean fallback;
 
   /**
-   * Determines whether negative costs are permitted during pathfinding calculations.
-   *
-   * <p>When set to {@code true}, cost contributions from processors or base transition costs that
-   * result in a negative effective cost for a path segment are allowed. This can be useful for
-   * scenarios modeling rewards or preferences that reduce the overall path cost. However, allowing
-   * negative costs can affect the behavior and guarantees of certain pathfinding algorithms (e.g.,
-   * A* might not find the optimal path if negative cycles are introduced or if the heuristic is no
-   * longer consistent).
-   *
-   * <p>When set to {@code false} (or if a mechanism enforces it), the pathfinding engine or
-   * pipeline might clamp negative effective transition costs to zero or throw an error, ensuring
-   * that path segments do not have a negative cost. This is generally safer for standard A*
-   * implementations to guarantee optimality with admissible heuristics.
-   *
-   * <p>The default behavior if this configuration is not explicitly handled might vary (e.g., a
-   * warning for negative costs, as seen in the {@code Cost.of()} method, or clamping within the
-   * pipeline). This flag provides a more explicit control point for such behavior.
-   *
-   * @deprecated marked for removal
-   */
-  @Deprecated private final boolean negativeCostsAllowed;
-
-  /**
    * The provider responsible for supplying navigation points to the pathfinding algorithm. This
    * provider determines how the pathfinder interacts with the environment and accesses information
    * about positions.
@@ -144,7 +121,6 @@ public class PathfinderConfiguration {
       int maxLength,
       boolean async,
       boolean fallback,
-      boolean negativeCostsAllowed,
       NavigationPointProvider provider,
       HeuristicWeights heuristicWeights,
       List<NodeValidationProcessor> nodeValidationProcessors,
@@ -158,7 +134,6 @@ public class PathfinderConfiguration {
     this.maxLength = maxLength;
     this.async = async;
     this.fallback = fallback;
-    this.negativeCostsAllowed = negativeCostsAllowed;
     this.provider = provider;
     this.heuristicWeights = heuristicWeights;
     this.nodeValidationProcessors = Collections.unmodifiableList(nodeValidationProcessors);
@@ -218,10 +193,6 @@ public class PathfinderConfiguration {
     return this.fallback;
   }
 
-  public boolean areNegativeCostsAllowed() {
-    return this.negativeCostsAllowed;
-  }
-
   public NavigationPointProvider getProvider() {
     return provider;
   }
@@ -269,8 +240,6 @@ public class PathfinderConfiguration {
         + async
         + ", fallback="
         + fallback
-        + ", negativeCostsAllowed="
-        + negativeCostsAllowed
         + ", provider="
         + provider
         + ", heuristicWeights="
@@ -301,7 +270,6 @@ public class PathfinderConfiguration {
         && maxLength == that.maxLength
         && async == that.async
         && fallback == that.fallback
-        && negativeCostsAllowed == that.negativeCostsAllowed
         && gridCellSize == that.gridCellSize
         && bloomFilterSize == that.bloomFilterSize
         && Double.compare(that.bloomFilterFpp, bloomFilterFpp) == 0
@@ -320,7 +288,6 @@ public class PathfinderConfiguration {
         maxLength,
         async,
         fallback,
-        negativeCostsAllowed,
         provider,
         heuristicWeights,
         nodeValidationProcessors,
@@ -337,7 +304,6 @@ public class PathfinderConfiguration {
     private int maxLength;
     private boolean async;
     private boolean fallback = true;
-    private boolean negativeCostsAllowed = false;
     private NavigationPointProvider provider = (position, environmentContext) -> () -> true;
     private HeuristicWeights heuristicWeights = HeuristicWeights.DEFAULT_WEIGHTS;
     private List<NodeValidationProcessor> nodeValidationProcessors = Collections.emptyList();
@@ -368,12 +334,6 @@ public class PathfinderConfiguration {
     public PathfinderConfiguration.PathfinderConfigurationBuilder fallback(
         boolean allowingFallback) {
       this.fallback = allowingFallback;
-      return this;
-    }
-
-    public PathfinderConfiguration.PathfinderConfigurationBuilder negativeCostsAllowed(
-        boolean negativeCosts) {
-      this.negativeCostsAllowed = negativeCosts;
       return this;
     }
 
@@ -436,7 +396,6 @@ public class PathfinderConfiguration {
           this.maxLength,
           this.async,
           this.fallback,
-          this.negativeCostsAllowed,
           this.provider,
           this.heuristicWeights,
           this.nodeValidationProcessors,
