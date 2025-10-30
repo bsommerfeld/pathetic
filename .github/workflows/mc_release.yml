@@ -1,4 +1,4 @@
-name: Release to Maven Central
+name: Release to Maven Central (Central Publishing)
 
 on:
   push:
@@ -10,38 +10,35 @@ jobs:
     permissions:
       contents: read
     env:
-      OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
-      OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
-      GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      CENTRAL_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+      CENTRAL_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up JDK + Maven + GPG
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
           cache: maven
-          server-id: ossrh
-          server-username: OSSRH_USERNAME
-          server-password: OSSRH_PASSWORD
-          gpg-private-key: ${{ secrets.GPG_KEY }}
-          gpg-passphrase: GPG_PASSPHRASE
 
-      - name: Extract version from tag
-        id: version
+      - name: Write ~/.m2/settings.xml for Central
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-          echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Detected version: $VERSION"
+          mkdir -p ~/.m2
+          cat > ~/.m2/settings.xml <<'XML'
+          <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                    xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
+            <servers>
+              <server>
+                <id>central</id>
+                <username>${env.CENTRAL_USERNAME}</username>
+                <password>${env.CENTRAL_PASSWORD}</password>
+              </server>
+            </servers>
+          </settings>
+          XML
 
-      - name: Show effective settings (diagnose)
-        run: mvn -B -X help:effective-settings | sed -n '/<servers>/,/<\/servers>/p'
-
-      - name: Set Maven project version
-        run: mvn -B versions:set -DnewVersion=${{ steps.version.outputs.VERSION }} -DgenerateBackupPoms=false
-
-      - name: Deploy (sign, stage & release)
-        run: mvn -B -DskipTests deploy
+      - name: Build & Publish (Central)
+        run: mvn -B -DskipTests clean deploy
