@@ -9,6 +9,7 @@
         <version>${revision}</version>
     </parent>
 
+    <name>Pathetic-Engine</name>
     <artifactId>engine</artifactId>
     <version>${revision}</version>
 

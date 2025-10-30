@@ -10,6 +10,7 @@
         <version>${revision}</version>
     </parent>
 
+    <name>Pathetic-API</name>
     <artifactId>api</artifactId>
     <version>${revision}</version>
 </project>

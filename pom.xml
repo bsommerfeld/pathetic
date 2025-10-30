@@ -9,7 +9,7 @@
     <packaging>pom</packaging>
     <version>${revision}</version>
 
-    <name>pathetic</name>
+    <name>Pathetic</name>
     <description>
         A highly configurable A* pathfinding library for Java, designed for extensibility through custom node validation
         and cost processing. Ideal for 3D environments and game development.
