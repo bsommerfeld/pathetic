@@ -3,8 +3,8 @@
 **A generic high-performance, thread-safe pathfinding library for Java.**
 
 [![Mentioned in Awesome Java](https://awesome.re/mentioned-badge.svg)](https://github.com/akullpp/awesome-java)
+[![Maven Central](https://img.shields.io/maven-central/v/de.bsommerfeld.pathetic/api.svg?label=Maven%20Central)](https://central.sonatype.com/search?q=de.bsommerfeld.pathetic)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/bsommerfeld/pathetic/build.yml?branch=production)](https://github.com/bsommerfeld/pathetic/actions)
-[![JitPack](https://jitpack.io/v/bsommerfeld/pathetic.svg)](https://jitpack.io/#bsommerfeld/pathetic)
 [![License](https://img.shields.io/github/license/bsommerfeld/pathetic)](https://github.com/bsommerfeld/pathetic/blob/main/LICENSE)
 
 `Pathetic` is a concurrent, scalable pathfinding engine built for server-side applications. Powered by an optimized A*
