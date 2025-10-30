@@ -9,29 +9,57 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+
     env:
       CENTRAL_USERNAME: ${{ secrets.OSSRH_USERNAME }}
       CENTRAL_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Set up JDK
+      # ──────────────────────────────────────────────────────
+      # 1. Gen Passphrase
+      # ──────────────────────────────────────────────────────
+      - name: Export GPG Passphrase to Environment
+        run: |
+          echo "GPG_PASSPHRASE_ENV=${{ secrets.GPG_PASSPHRASE }}" >> $GITHUB_ENV
+
+      # ──────────────────────────────────────────────────────
+      # 2. JDK + Key Import
+      # ──────────────────────────────────────────────────────
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
           cache: maven
           gpg-private-key: ${{ secrets.GPG_KEY }}
-          gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
+          gpg-passphrase: GPG_PASSPHRASE_ENV
 
-      - name: Write ~/.m2/settings.xml for Central
+      # ──────────────────────────────────────────────────────
+      # 3. GPG Agent
+      # ──────────────────────────────────────────────────────
+      - name: Configure GPG Agent (Loopback)
+        run: |
+          mkdir -p ~/.gnupg
+          echo "allow-loopback-pinentry" >> ~/.gnupg/gpg-agent.conf
+          echo "pinentry-mode loopback" >> ~/.gnupg/gpg.conf
+          gpg-connect-agent reloadagent /bye
+
+      # ──────────────────────────────────────────────────────
+      # 4. settings.xml
+      # ──────────────────────────────────────────────────────
+      - name: Create ~/.m2/settings.xml
         run: |
           mkdir -p ~/.m2
-          cat > ~/.m2/settings.xml <<'XML'
+          cat > ~/.m2/settings.xml <<'EOF'
           <settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
                     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                    xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
+                    xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0
+                                        https://maven.apache.org/xsd/settings-1.0.0.xsd">
             <servers>
               <server>
                 <id>central</id>
@@ -39,8 +67,25 @@ jobs:
                 <password>${env.CENTRAL_PASSWORD}</password>
               </server>
             </servers>
+            <profiles>
+              <profile>
+                <id>gpg</id>
+                <properties>
+                  <gpg.passphrase>${env.GPG_PASSPHRASE_ENV}</gpg.passphrase>
+                </properties>
+              </profile>
+            </profiles>
+            <activeProfiles>
+              <activeProfile>gpg</activeProfile>
+            </activeProfiles>
           </settings>
-          XML
+          EOF
 
-      - name: Build & Publish (Central)
-        run: mvn -B -DskipTests clean deploy
+      # ──────────────────────────────────────────────────────
+      # 5. Deploy
+      # ──────────────────────────────────────────────────────
+      - name: Build & Publish
+        run: |
+          mvn -B -DskipTests clean deploy \
+            -P gpg \
+            -s ~/.m2/settings.xml
