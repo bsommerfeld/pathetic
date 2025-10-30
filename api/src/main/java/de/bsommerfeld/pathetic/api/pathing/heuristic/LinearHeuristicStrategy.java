@@ -44,18 +44,23 @@ public class LinearHeuristicStrategy implements IHeuristicStrategy {
   private static final double D3 = Math.sqrt(3); // ≈1.732
 
   /**
-   * Calculates the perpendicular distance from the current node's position to the straight line
-   * segment defined by the start and target nodes.
+   * Calculates the <strong>linear perpendicular distance</strong> from the current node to the
+   * straight line segment defined by the start and target positions.
    *
-   * <p>This metric is used as a component of the main heuristic to penalize nodes that stray far
-   * from the direct path. The calculation uses vector mathematics and returns a true linear
-   * distance via a final square root operation. This is the main difference from the performance
-   * variant, which works with squared distances to avoid costly {@code sqrt} operations.
+   * <p>This metric penalizes nodes that deviate from the direct path between start and target. The
+   * formula used is:
+   *
+   * <pre>
+   * d = √[ | (current - start) × (target - start) |² / |target - start|² ]
+   * </pre>
+   *
+   * <p>If the start and target are nearly identical (line length squared < 1e-9), the Euclidean
+   * distance to the start position is returned instead to avoid division by zero.
    *
    * <p>Computed on cell centers (floor+0.5) to avoid asymmetries at cell boundaries.
    *
-   * <p>Returns the perpendicular distance of the current node from the start-target line. If the
-   * start and target are nearly identical, it returns the distance to the start node.
+   * <p>This linear version uses {@code sqrt} for true distance, unlike the squared variant which
+   * avoids it for performance.
    */
   private final DistanceCalculator<Double> perpendicularCalc =
       progress -> {
@@ -90,25 +95,24 @@ public class LinearHeuristicStrategy implements IHeuristicStrategy {
       };
 
   /**
-   * Calculates the <strong>linear Octile distance</strong> between current and target positions.
+   * Calculates the <strong>linear Octile distance</strong> between the current and target
+   * positions.
    *
-   * <p>Octile distance is a 3D diagonal heuristic that approximates the true Euclidean distance in
-   * grid-based environments with 26-directional movement. It is computed as:
+   * <p>Octile distance is a diagonal-aware heuristic for 3D grid movement, providing a more
+   * accurate approximation than Manhattan distance when diagonal and "knight-like" moves (1,1,1)
+   * are allowed. The linear Octile distance is computed as:
    *
    * <pre>
    * D1 = 1, D2 = √2 ≈ 1.414, D3 = √3 ≈ 1.732
    * octile = (D3 - D2)·min + (D2 - D1)·mid + D1·max
    * </pre>
    *
-   * where {@code min}, {@code mid}, {@code max} are the sorted absolute differences in x, y, z.
+   * where {@code min}, {@code mid}, and {@code max} are the sorted absolute differences in x, y,
+   * and z coordinates.
    *
-   * <p>This linear version returns the true distance (not squared), making it admissible when used
-   * with appropriate weights. It operates on <strong>floored integer coordinates</strong> for
-   * consistency with grid-based pathfinding.
+   * <p>This implementation returns the <strong>true linear distance</strong> (not squared).
    *
-   * <p>More accurate than Manhattan, but slower than squared variants.
-   *
-   * @see SquaredHeuristicStrategy
+   * <p>Ideal for accurate 3D pathfinding with 26-directional movement.
    */
   private final DistanceCalculator<Double> octileCalc =
       progress -> {
@@ -130,8 +134,26 @@ public class LinearHeuristicStrategy implements IHeuristicStrategy {
       };
 
   /**
-   * Calculates the Manhattan distance between this position and target position. Manhattan distance
-   * is the sum of the absolute differences of their coordinates.
+   * Calculates the <strong>linear Manhattan distance</strong> between the current and target
+   * positions using floored block coordinates.
+   *
+   * <p>Manhattan distance (also known as taxicab or L1 distance) is the sum of absolute differences
+   * in each axis:
+   *
+   * <pre>
+   * manhattan = |Δx| + |Δy| + |Δz|
+   * </pre>
+   *
+   * This version operates on <strong>floored integer coordinates</strong> ({@link
+   * PathPosition#getFlooredX()}, etc.), making it suitable for block-based grid environments.
+   *
+   * <p>The result is the <strong>true linear distance</strong> (not squared).
+   *
+   * <p>Fast and admissible when used with appropriate weights. Use with higher weights than in
+   * squared heuristics.
+   *
+   * @see PathPosition#getFlooredX()
+   * @see #manhattanCalc
    */
   private final DistanceCalculator<Double> manhattanCalc =
       progress -> {
@@ -144,7 +166,28 @@ public class LinearHeuristicStrategy implements IHeuristicStrategy {
                 + Math.abs(position.getFlooredZ() - target.getFlooredZ()));
       };
 
-  /** Calculates the height difference between this position to the target position. */
+  /**
+   * Calculates the <strong>linear vertical height difference</strong> between the current and
+   * target positions.
+   *
+   * <p>This simple metric measures only the Y-axis (vertical) difference using floored block
+   * coordinates:
+   *
+   * <pre>
+   * heightDiff = |current.flooredY - target.flooredY|
+   * </pre>
+   *
+   * <p>Useful in environments where climbing or falling is costly (e.g. stairs, ladders, or
+   * gravity-influenced movement).
+   *
+   * <p>This metric is extremely cheap to compute and pairs well with horizontal distance
+   * heuristics. In linear heuristics, it scales naturally with distance.
+   *
+   * <p>Weight this higher if vertical movement should be discouraged.
+   *
+   * @see PathPosition#getFlooredY()
+   * @see #heightCalc
+   */
   private final DistanceCalculator<Double> heightCalc =
       progress -> {
         PathPosition position = progress.currentPosition();
