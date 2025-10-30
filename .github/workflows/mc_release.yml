@@ -22,6 +22,8 @@ jobs:
           distribution: temurin
           java-version: "17"
           cache: maven
+          gpg-private-key: ${{ secrets.GPG_KEY }}
+          gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
 
       - name: Write ~/.m2/settings.xml for Central
         run: |
