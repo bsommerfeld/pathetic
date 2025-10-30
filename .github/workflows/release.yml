@@ -17,7 +17,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Wichtig für den Git-Commit am Ende
+          fetch-depth: 0 #
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -28,7 +28,7 @@ jobs:
 
       - name: Build and Test with Maven
         id: build_test
-        run: mvn clean install -U
+        run: mvn clean install -U -Dgpg.skip=true
 
       - name: Create Draft GitHub Release
         id: create_release
@@ -37,7 +37,7 @@ jobs:
           tag_name: ${{ github.ref_name }}
           name: Release ${{ github.ref_name }}
           body: "Release notes are being generated..." # Platzhalter-Text
-          draft: true # Wichtig: Erstelle zuerst einen Entwurf
+          draft: true
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Prepare Release Notes File
