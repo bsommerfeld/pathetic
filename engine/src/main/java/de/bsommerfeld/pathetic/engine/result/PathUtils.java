@@ -1,6 +1,7 @@
 package de.bsommerfeld.pathetic.engine.result;
 
 import de.bsommerfeld.pathetic.api.pathing.result.Path;
+import de.bsommerfeld.pathetic.api.util.NumberUtils;
 import de.bsommerfeld.pathetic.api.util.ParameterizedSupplier;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.engine.util.ErrorLogger;
@@ -192,8 +193,22 @@ public final class PathUtils {
 
     for (int i = 1; i < steps; i++) {
       double progress = (double) i / steps;
-      result.addLast(start.interpolate(end, progress));
+      result.addLast(interpolate(start, end, progress));
     }
+  }
+
+  /**
+   * Interpolates between this position and another position based on a given progress value.
+   *
+   * @param progress The interpolation progress, typically between 0.0 (this position) and 1.0
+   *     (other position).
+   * @return A new {@code PathPosition} representing the interpolated point.
+   */
+  private static PathPosition interpolate(PathPosition pos1, PathPosition pos2, double progress) {
+    double x = NumberUtils.interpolate(pos1.getX(), pos2.getX(), progress);
+    double y = NumberUtils.interpolate(pos1.getY(), pos2.getY(), progress);
+    double z = NumberUtils.interpolate(pos1.getZ(), pos2.getZ(), progress);
+    return new PathPosition(x, y, z);
   }
 
   /**

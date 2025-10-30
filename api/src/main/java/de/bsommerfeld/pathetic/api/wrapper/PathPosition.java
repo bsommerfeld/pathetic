@@ -26,23 +26,6 @@ public class PathPosition implements Cloneable {
   }
 
   /**
-   * Interpolates between this position and another position based on a given progress value.
-   *
-   * @param other The other position to interpolate towards.
-   * @param progress The interpolation progress, typically between 0.0 (this position) and 1.0
-   *     (other position).
-   * @return A new {@code PathPosition} representing the interpolated point.
-   * @deprecated marked for removal
-   */
-  @Deprecated
-  public PathPosition interpolate(PathPosition other, double progress) {
-    double x = NumberUtils.interpolate(this.x, other.x, progress);
-    double y = NumberUtils.interpolate(this.y, other.y, progress);
-    double z = NumberUtils.interpolate(this.z, other.z, progress);
-    return new PathPosition(x, y, z);
-  }
-
-  /**
    * Checks if this position and another position are within the same block in the environment.
    *
    * @param otherPosition The other position to compare with.
