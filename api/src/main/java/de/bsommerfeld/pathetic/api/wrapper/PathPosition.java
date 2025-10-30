@@ -26,21 +26,6 @@ public class PathPosition implements Cloneable {
   }
 
   /**
-   * Checks if this position and another position are within the same block in the environment.
-   *
-   * @param otherPosition The other position to compare with.
-   * @return {@code true} if both positions share the same block coordinates (floored x, y, z
-   *     values), {@code false} otherwise.
-   * @deprecated use {@link #equals(Object)}
-   */
-  @Deprecated
-  public boolean isInSameBlock(PathPosition otherPosition) {
-    return this.getFlooredX() == otherPosition.getFlooredX()
-        && this.getFlooredY() == otherPosition.getFlooredY()
-        && this.getFlooredZ() == otherPosition.getFlooredZ();
-  }
-
-  /**
    * Calculates the Manhattan distance between this position and another position. Manhattan
    * distance is the sum of the absolute differences of their coordinates.
    *

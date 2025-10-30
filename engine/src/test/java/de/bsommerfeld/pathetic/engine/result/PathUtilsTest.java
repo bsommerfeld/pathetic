@@ -3,7 +3,6 @@ package de.bsommerfeld.pathetic.engine.result;
 import static org.junit.jupiter.api.Assertions.*;
 
 import de.bsommerfeld.pathetic.api.pathing.result.Path;
-import de.bsommerfeld.pathetic.api.util.ParameterizedSupplier;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import java.util.*;
 import org.junit.jupiter.api.DisplayName;
@@ -195,31 +194,6 @@ class PathUtilsTest {
     @Override
     public int length() {
       return positions.size();
-    }
-
-    @Override
-    public Path interpolate(double resolution) {
-      return null;
-    }
-
-    @Override
-    public Path simplify(double epsilon) {
-      return null;
-    }
-
-    @Override
-    public Path join(Path path) {
-      return null;
-    }
-
-    @Override
-    public Path trim(int length) {
-      return null;
-    }
-
-    @Override
-    public Path mutatePositions(ParameterizedSupplier<PathPosition> mutator) {
-      return null;
     }
 
     @Override

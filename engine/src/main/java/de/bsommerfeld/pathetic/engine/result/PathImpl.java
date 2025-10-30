@@ -1,7 +1,6 @@
 package de.bsommerfeld.pathetic.engine.result;
 
 import de.bsommerfeld.pathetic.api.pathing.result.Path;
-import de.bsommerfeld.pathetic.api.util.ParameterizedSupplier;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.engine.util.Iterables;
 import java.util.ArrayList;
@@ -42,46 +41,6 @@ public class PathImpl implements Path {
   @Override
   public void forEach(Consumer<? super PathPosition> action) {
     positions.forEach(action);
-  }
-
-  /**
-   * @deprecated Delegates to {@link PathUtils} - you should use that too!
-   */
-  @Override
-  public Path interpolate(double resolution) {
-    return PathUtils.interpolate(this, resolution);
-  }
-
-  /**
-   * @deprecated Delegates to {@link PathUtils} - you should use that too!
-   */
-  @Override
-  public Path simplify(double epsilon) {
-    return PathUtils.simplify(this, epsilon);
-  }
-
-  /**
-   * @deprecated Delegates to {@link PathUtils} - you should use that too!
-   */
-  @Override
-  public Path join(Path path) {
-    return PathUtils.join(this, path);
-  }
-
-  /**
-   * @deprecated Delegates to {@link PathUtils} - you should use that too!
-   */
-  @Override
-  public Path trim(int length) {
-    return PathUtils.trim(this, length);
-  }
-
-  /**
-   * @deprecated Delegates to {@link PathUtils} - you should use that too!
-   */
-  @Override
-  public Path mutatePositions(ParameterizedSupplier<PathPosition> mutator) {
-    return PathUtils.mutatePositions(this, mutator);
   }
 
   @Override
