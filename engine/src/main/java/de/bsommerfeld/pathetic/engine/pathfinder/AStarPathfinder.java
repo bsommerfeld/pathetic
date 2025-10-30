@@ -80,6 +80,13 @@ public final class AStarPathfinder extends AbstractPathfinder {
       GridRegionData regionData = session.getOrCreateRegionData(neighborPos);
       if (regionData.getBloomFilter().mightContain(neighborPos)
           && regionData.getRegionalExaminedPositions().contains(neighborPos)) {
+
+        /*
+         * TODO 30.10.2025 bsommerfeld: At some point we might want to enable
+         *  reopening nodes from the closed set. This would be the point to achieve this.
+         *  In order to implement this, past me suggests implementing a new config value.
+         */
+
         continue; // Skip if already expanded (assumes consistent heuristic)
       }
 
