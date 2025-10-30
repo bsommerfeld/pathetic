@@ -10,8 +10,17 @@
     </parent>
 
     <name>Pathetic-Engine</name>
+    <description></description>
     <artifactId>engine</artifactId>
     <version>${revision}</version>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
     <build>
         <plugins>
