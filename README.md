@@ -91,9 +91,9 @@ Because that’s what every other library became the moment we released this.
 
 ### Hang out with us
 
-Wiki – for mortals who still read docs <br>
-Discord – come cry or worship <br>
+[Wiki](https://github.com/bsommerfeld/pathetic/wiki) – for mortals who still read docs <br>
+[Discord](https://discord.gg/zGx9BSzKfJ) – come cry or worship <br>
 Issues, PRs, death threats → right here: https://github.com/bsommerfeld/pathetic/issues
 
 **Powered by JetBrains** (they saw the name and still sponsored us – legends recognize legends ❤️) <br>
-JetBrains Logo
+[![JetBrains logo.](https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg)](https://jb.gg/OpenSource)
