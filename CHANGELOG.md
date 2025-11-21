@@ -6,6 +6,8 @@
 
 ### Changed
 
+- changed README
+
 ### Fixed
 
 - removed legacy lazy computing of hcost
