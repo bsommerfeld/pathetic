@@ -201,7 +201,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
         currentDepth++;
 
         if (this.abortRequested) {
-          return createAbortedResult(bestFallbackNode);
+          return createAbortedResult(start, target, bestFallbackNode);
         }
 
         Node currentNode = openSet.deleteMin().getValue();
@@ -214,16 +214,18 @@ public abstract class AbstractPathfinder implements Pathfinder {
                     new PathfindingContext(
                         currentNode.getPosition(), Depth.of(finalCurrentDepth))));
 
-        if (currentNode.getHeuristic().get() < bestFallbackNode.getHeuristic().get()) {
+        if (currentNode.getHeuristic() < bestFallbackNode.getHeuristic()) {
           bestFallbackNode = currentNode;
         }
 
         if (hasReachedPathLengthLimit(currentNode)) {
-          return new PathfinderResultImpl(PathState.LENGTH_LIMITED, reconstructPath(currentNode));
+          return new PathfinderResultImpl(
+              PathState.LENGTH_LIMITED, reconstructPath(start, target, currentNode));
         }
 
-        if (currentNode.isTarget()) {
-          return new PathfinderResultImpl(PathState.FOUND, reconstructPath(currentNode));
+        if (currentNode.isTarget(target)) {
+          return new PathfinderResultImpl(
+              PathState.FOUND, reconstructPath(start, target, currentNode));
         }
 
         processSuccessors(start, target, currentNode, openSet, searchContext);
@@ -251,7 +253,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
   }
 
   double calculateHeapKey(Node neighbor, double fCost) {
-    double heuristic = neighbor.getHeuristic().get();
+    double heuristic = neighbor.getHeuristic();
     double tieBreaker = TIE_BREAKER_WEIGHT * (heuristic / (Math.abs(fCost) + 1));
     double heapKey = fCost - tieBreaker;
 
@@ -278,9 +280,11 @@ public abstract class AbstractPathfinder implements Pathfinder {
     return processors;
   }
 
-  private PathfinderResult createAbortedResult(Node fallbackNode) {
+  private PathfinderResult createAbortedResult(
+      PathPosition start, PathPosition target, Node fallbackNode) {
     this.abortRequested = false;
-    return new PathfinderResultImpl(PathState.ABORTED, reconstructPath(fallbackNode));
+    return new PathfinderResultImpl(
+        PathState.ABORTED, reconstructPath(start, target, fallbackNode));
   }
 
   private PathfinderResult handlePathingException(
@@ -333,11 +337,12 @@ public abstract class AbstractPathfinder implements Pathfinder {
 
     if (depthReached >= pathfinderConfiguration.getMaxIterations()) {
       return new PathfinderResultImpl(
-          PathState.MAX_ITERATIONS_REACHED, reconstructPath(fallbackNode));
+          PathState.MAX_ITERATIONS_REACHED, reconstructPath(start, target, fallbackNode));
     }
 
     if (pathfinderConfiguration.isFallback()) {
-      return new PathfinderResultImpl(PathState.FALLBACK, reconstructPath(fallbackNode));
+      return new PathfinderResultImpl(
+          PathState.FALLBACK, reconstructPath(start, target, fallbackNode));
     }
 
     return new PathfinderResultImpl(
@@ -350,15 +355,12 @@ public abstract class AbstractPathfinder implements Pathfinder {
    * @param endNode The node from which to trace back.
    * @return The reconstructed {@link Path}.
    */
-  protected Path reconstructPath(Node endNode) {
+  protected Path reconstructPath(PathPosition start, PathPosition target, Node endNode) {
     if (endNode.getParent() == null && endNode.getDepth() == 0) {
-      return new PathImpl(
-          endNode.getStart(),
-          endNode.getTarget(),
-          Collections.singletonList(endNode.getPosition()));
+      return new PathImpl(start, target, Collections.singletonList(endNode.getPosition()));
     }
     List<PathPosition> pathPositions = tracePathPositionsFromNode(endNode);
-    return new PathImpl(endNode.getStart(), endNode.getTarget(), pathPositions);
+    return new PathImpl(start, target, pathPositions);
   }
 
   private List<PathPosition> tracePathPositionsFromNode(Node leafNode) {

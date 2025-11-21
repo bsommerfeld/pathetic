@@ -49,7 +49,7 @@ public class NodeEvaluationContextImpl implements NodeEvaluationContext {
 
   @Override
   public double getCurrentNodeHeuristicValue() {
-    return this.engineNode.getHeuristic().get();
+    return this.engineNode.getHeuristic();
   }
 
   @Override

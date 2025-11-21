@@ -1,18 +1,17 @@
 package de.bsommerfeld.pathetic.engine;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import de.bsommerfeld.pathetic.api.pathing.heuristic.HeuristicStrategies;
 import de.bsommerfeld.pathetic.api.pathing.heuristic.HeuristicWeights;
 import de.bsommerfeld.pathetic.api.pathing.heuristic.IHeuristicStrategy;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class NodeTest {
 
@@ -36,8 +35,6 @@ class NodeTest {
     @Test
     void testConstructor() {
         assertEquals(position, node.getPosition());
-        assertEquals(start, node.getStart());
-        assertEquals(target, node.getTarget());
         assertEquals(0, node.getDepth());
         assertNull(node.getParent());
     }
@@ -45,16 +42,6 @@ class NodeTest {
     @Test
     void testGetPosition() {
         assertEquals(position, node.getPosition());
-    }
-
-    @Test
-    void testGetStart() {
-        assertEquals(start, node.getStart());
-    }
-
-    @Test
-    void testGetTarget() {
-        assertEquals(target, node.getTarget());
     }
 
     @Test
@@ -68,8 +55,7 @@ class NodeTest {
 
     @Test
     void testGetHeuristic() {
-        assertNotNull(node.getHeuristic());
-        assertTrue(node.getHeuristic().get() > 0);
+        assertTrue(node.getHeuristic() > 0);
     }
 
     @Test
@@ -103,18 +89,18 @@ class NodeTest {
         node.setGCost(10.5);
 
         // F-cost = G-cost + H-cost
-        double expectedFCost = 10.5 + node.getHeuristic().get();
+        double expectedFCost = 10.5 + node.getHeuristic();
         assertEquals(expectedFCost, node.getFCost());
     }
 
     @Test
     void testIsTarget() {
         // Current node is not the target
-        assertFalse(node.isTarget());
+        assertFalse(node.isTarget(target));
 
         // Create a node at the target position
         Node targetNode = new Node(target, start, target, weights, strategy, 0);
-        assertTrue(targetNode.isTarget());
+        assertTrue(targetNode.isTarget(target));
     }
 
     @Test
@@ -165,7 +151,7 @@ class NodeTest {
 
         // If F-costs and heuristics are equal, compare by depth
         if (node1.getFCost() == node3.getFCost() &&
-                node1.getHeuristic().get() == node3.getHeuristic().get()) {
+                node1.getHeuristic() == node3.getHeuristic()) {
             assertTrue(node1.compareTo(node3) < 0);
         }
 
