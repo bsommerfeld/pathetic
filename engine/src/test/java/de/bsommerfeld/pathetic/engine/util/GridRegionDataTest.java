@@ -1,13 +1,12 @@
 package de.bsommerfeld.pathetic.engine.util;
 
-import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 import com.google.common.hash.BloomFilter;
 import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
-
-import java.util.Set;
+import it.unimi.dsi.fastutil.longs.LongSet;
+import org.junit.jupiter.api.Test;
 
 class GridRegionDataTest {
 
@@ -72,44 +71,50 @@ class GridRegionDataTest {
         assertTrue(bloomFilter.mightContain(pos2));
         assertFalse(bloomFilter.mightContain(pos3));
     }
-    
+
     @Test
     void testRegionalExaminedPositionsSet() {
         GridRegionData gridRegionData = new GridRegionData(1000, 0.01);
-        Set<PathPosition> positions = gridRegionData.getRegionalExaminedPositions();
-        
-        // Create some test positions
+
+        // CHANGE 1: Der Rückgabetyp ist jetzt LongSet (primitiv), nicht mehr Set<PathPosition>
+        LongSet positions = gridRegionData.getRegionalExaminedPositions();
+
         PathPosition pos1 = new PathPosition(1.5, 2.5, 3.5);
         PathPosition pos2 = new PathPosition(4.5, 5.5, 6.5);
-        
+
+        // CHANGE 2: Wir müssen die Positionen in longs umwandeln (packen),
+        // genau wie es die Engine jetzt tut.
+        long key1 = RegionKey.pack(pos1);
+        long key2 = RegionKey.pack(pos2);
+
         // Initially, the set should be empty
         assertTrue(positions.isEmpty());
-        assertFalse(positions.contains(pos1));
-        assertFalse(positions.contains(pos2));
-        
+        assertFalse(positions.contains(key1)); // Prüfe auf key, nicht objekt
+        assertFalse(positions.contains(key2));
+
         // Add positions to the set
-        positions.add(pos1);
-        
+        positions.add(key1); // Add key
+
         // Verify the set now contains the added position
         assertFalse(positions.isEmpty());
-        assertTrue(positions.contains(pos1));
-        assertFalse(positions.contains(pos2));
+        assertTrue(positions.contains(key1));
+        assertFalse(positions.contains(key2));
         assertEquals(1, positions.size());
-        
+
         // Add another position
-        positions.add(pos2);
-        
+        positions.add(key2);
+
         // Verify the set now contains both positions
-        assertTrue(positions.contains(pos1));
-        assertTrue(positions.contains(pos2));
+        assertTrue(positions.contains(key1));
+        assertTrue(positions.contains(key2));
         assertEquals(2, positions.size());
-        
+
         // Remove a position
-        positions.remove(pos1);
-        
+        positions.remove(key1);
+
         // Verify the position was removed
-        assertFalse(positions.contains(pos1));
-        assertTrue(positions.contains(pos2));
+        assertFalse(positions.contains(key1));
+        assertTrue(positions.contains(key2));
         assertEquals(1, positions.size());
     }
 }

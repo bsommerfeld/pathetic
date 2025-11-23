@@ -4,8 +4,8 @@ import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnel;
 import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 
 /**
  * The GridRegionData class represents the data associated with a grid region. This data includes a
@@ -26,11 +26,11 @@ public class GridRegionData {
    * positions that have been examined by the pathfinder to avoid examining the same position
    * multiple times.
    */
-  private final Set<PathPosition> regionalExaminedPositions;
+  private final LongSet regionalExaminedPositions;
 
   /**
    * Creates a new GridRegionData with the specified Bloom filter settings.
-   * 
+   *
    * @param bloomFilterSize The size of the Bloom filter
    * @param bloomFilterFpp The false positive probability of the Bloom filter
    */
@@ -42,12 +42,12 @@ public class GridRegionData {
                 .putInt(pathPosition.getFlooredZ());
 
     bloomFilter = BloomFilter.create(pathPositionFunnel, bloomFilterSize, bloomFilterFpp);
-    regionalExaminedPositions = ConcurrentHashMap.newKeySet();
+    this.regionalExaminedPositions = new LongOpenHashSet();
   }
 
   /**
    * Creates a new GridRegionData with Bloom filter settings from the provided configuration.
-   * 
+   *
    * @param configuration The pathfinder configuration containing Bloom filter settings
    */
   public GridRegionData(PathfinderConfiguration configuration) {
@@ -58,7 +58,7 @@ public class GridRegionData {
     return bloomFilter;
   }
 
-  public Set<PathPosition> getRegionalExaminedPositions() {
+  public LongSet getRegionalExaminedPositions() {
     return regionalExaminedPositions;
   }
 }

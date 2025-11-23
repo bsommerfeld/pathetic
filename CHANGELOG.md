@@ -7,6 +7,7 @@
 ### Changed
 
 - changed README
+- optimized core data structures for reduced GC pressure and cleaned up legacy code
 
 ### Fixed
 

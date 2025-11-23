@@ -11,7 +11,9 @@ import de.bsommerfeld.pathetic.api.wrapper.PathVector;
 import de.bsommerfeld.pathetic.engine.Node;
 import de.bsommerfeld.pathetic.engine.pathfinder.processing.NodeEvaluationContextImpl;
 import de.bsommerfeld.pathetic.engine.util.GridRegionData;
-import de.bsommerfeld.pathetic.engine.util.Tuple3;
+import de.bsommerfeld.pathetic.engine.util.RegionKey;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import java.util.HashMap;
 import java.util.Map;
 import org.jheaps.AddressableHeap;
@@ -78,8 +80,11 @@ public final class AStarPathfinder extends AbstractPathfinder {
 
       // Check if neighbor is in the closed set
       GridRegionData regionData = session.getOrCreateRegionData(neighborPos);
+
+      long packedPos = RegionKey.pack(neighborPos);
+
       if (regionData.getBloomFilter().mightContain(neighborPos)
-          && regionData.getRegionalExaminedPositions().contains(neighborPos)) {
+          && regionData.getRegionalExaminedPositions().contains(packedPos)) {
 
         /*
          * TODO 30.10.2025 bsommerfeld: At some point we might want to enable
@@ -216,7 +221,8 @@ public final class AStarPathfinder extends AbstractPathfinder {
 
     GridRegionData regionData = session.getOrCreateRegionData(position);
     regionData.getBloomFilter().put(position);
-    regionData.getRegionalExaminedPositions().add(position);
+
+    regionData.getRegionalExaminedPositions().add(RegionKey.pack(position));
   }
 
   @Override
@@ -240,20 +246,21 @@ public final class AStarPathfinder extends AbstractPathfinder {
    *     developers must synchronize access to shared resources.
    */
   private class PathfindingSession {
-    private final Map<Tuple3<Integer>, GridRegionData> visitedRegions = new HashMap<>();
+    private final Long2ObjectMap<GridRegionData> visitedRegions = new Long2ObjectOpenHashMap<>();
     private final Map<PathPosition, AddressableHeap.Handle<Double, Node>> openSetEntries =
         new HashMap<>();
 
     GridRegionData getOrCreateRegionData(PathPosition position) {
       int cellSize = pathfinderConfiguration.getGridCellSize();
-      Tuple3<Integer> gridKey =
-          new Tuple3<>(
-              Math.floorDiv(position.getFlooredX(), cellSize),
-              Math.floorDiv(position.getFlooredY(), cellSize),
-              Math.floorDiv(position.getFlooredZ(), cellSize));
+
+      int rX = Math.floorDiv(position.getFlooredX(), cellSize);
+      int rY = Math.floorDiv(position.getFlooredY(), cellSize);
+      int rZ = Math.floorDiv(position.getFlooredZ(), cellSize);
+
+      long regionKey = RegionKey.pack(rX, rY, rZ);
 
       return visitedRegions.computeIfAbsent(
-          gridKey, k -> new GridRegionData(pathfinderConfiguration));
+          regionKey, (long k) -> new GridRegionData(pathfinderConfiguration));
     }
   }
 }
