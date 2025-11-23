@@ -6,7 +6,7 @@
 
 ### Changed
 
-- changed README
+- Revamp README for better engagement – add humor, benchmarks, and real-world demos to combat stagnation
 - optimized core data structures for reduced GC pressure and cleaned up legacy code
 
 ### Fixed
