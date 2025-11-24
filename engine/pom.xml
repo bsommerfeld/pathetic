@@ -55,14 +55,47 @@
                         <filter>
                             <artifact>it.unimi.dsi:fastutil</artifact>
                             <includes>
+                                <include>it/unimi/dsi/fastutil/Hash*</include>
+                                <include>it/unimi/dsi/fastutil/HashCommon*</include>
+                                <include>it/unimi/dsi/fastutil/Function*</include>
+                                <include>it/unimi/dsi/fastutil/Arrays*</include>
+                                <include>it/unimi/dsi/fastutil/Swapper*</include>
+
                                 <include>it/unimi/dsi/fastutil/longs/Long2ObjectMap*</include>
                                 <include>it/unimi/dsi/fastutil/longs/Long2ObjectOpenHashMap*</include>
+                                <include>it/unimi/dsi/fastutil/longs/Long2ObjectFunction*</include>
+                                <include>it/unimi/dsi/fastutil/longs/AbstractLong2Object*</include>
+
+                                <include>it/unimi/dsi/fastutil/longs/Long2IntOpenHashMap*</include>
+                                <include>it/unimi/dsi/fastutil/longs/Long2IntMap*</include>
+                                <include>it/unimi/dsi/fastutil/longs/Long2IntFunction*</include>
+                                <include>it/unimi/dsi/fastutil/longs/AbstractLong2Int*</include>
+
                                 <include>it/unimi/dsi/fastutil/longs/LongOpenHashSet*</include>
                                 <include>it/unimi/dsi/fastutil/longs/LongSet*</include>
                                 <include>it/unimi/dsi/fastutil/longs/LongCollection*</include>
                                 <include>it/unimi/dsi/fastutil/longs/LongIterable*</include>
-                                <include>it/unimi/dsi/fastutil/Hash*</include>
-                                <include>it/unimi/dsi/fastutil/Function*</include>
+                                <include>it/unimi/dsi/fastutil/longs/LongIterator*</include>
+                                <include>it/unimi/dsi/fastutil/longs/LongSpliterator*</include>
+                                <include>it/unimi/dsi/fastutil/longs/AbstractLongSet*</include>
+                                <include>it/unimi/dsi/fastutil/longs/AbstractLongCollection*</include>
+                                <include>it/unimi/dsi/fastutil/longs/AbstractLongIterator*</include>
+
+                                <include>it/unimi/dsi/fastutil/objects/ObjectSet*</include>
+                                <include>it/unimi/dsi/fastutil/objects/ObjectCollection*</include>
+                                <include>it/unimi/dsi/fastutil/objects/ObjectIterable*</include>
+                                <include>it/unimi/dsi/fastutil/objects/ObjectIterator*</include>
+                                <include>it/unimi/dsi/fastutil/objects/ObjectSpliterator*</include>
+                                <include>it/unimi/dsi/fastutil/objects/AbstractObjectSet*</include>
+                                <include>it/unimi/dsi/fastutil/objects/AbstractObjectCollection*</include>
+                                <include>it/unimi/dsi/fastutil/objects/AbstractObjectIterator*</include>
+
+                                <include>it/unimi/dsi/fastutil/ints/IntCollection*</include>
+                                <include>it/unimi/dsi/fastutil/ints/IntIterable*</include>
+                                <include>it/unimi/dsi/fastutil/ints/IntIterator*</include>
+                                <include>it/unimi/dsi/fastutil/ints/IntSpliterator*</include>
+                                <include>it/unimi/dsi/fastutil/ints/AbstractIntCollection*</include>
+                                <include>it/unimi/dsi/fastutil/ints/AbstractIntIterator*</include>
                             </includes>
                         </filter>
                         <filter>
