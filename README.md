@@ -95,7 +95,7 @@ What changed?
 | Benchmark (10k nodes)      | Baseline                 | **~3× faster** | Your players noticed
 | Large Scale (50k nodes)    | Exponential degradation  | **Linearly stable** | The dragon never stood a chance
 
-Result: 10 000 concurrent pathfinds now allocate literally nothing and finish before you can blink.
+Result: 10 000 concurrent pathfinds now finish before you can blink.
 
 We kept the old FibonacciHeap code in a branch called `archaeology`.
 
