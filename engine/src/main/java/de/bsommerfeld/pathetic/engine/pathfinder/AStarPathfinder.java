@@ -9,15 +9,12 @@ import de.bsommerfeld.pathetic.api.pathing.processing.context.SearchContext;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.api.wrapper.PathVector;
 import de.bsommerfeld.pathetic.engine.Node;
+import de.bsommerfeld.pathetic.engine.pathfinder.heap.PrimitiveMinHeap;
 import de.bsommerfeld.pathetic.engine.pathfinder.processing.NodeEvaluationContextImpl;
 import de.bsommerfeld.pathetic.engine.util.GridRegionData;
 import de.bsommerfeld.pathetic.engine.util.RegionKey;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import java.util.HashMap;
-import java.util.Map;
-import org.jheaps.AddressableHeap;
-import org.jheaps.tree.FibonacciHeap;
 
 /**
  * An A* pathfinding algorithm that uses a heuristic to guide the search toward the target. It
@@ -44,6 +41,26 @@ public final class AStarPathfinder extends AbstractPathfinder {
   }
 
   @Override
+  protected void insertStartNode(Node node, double fCost, PrimitiveMinHeap openSet) {
+    PathfindingSession session = getSessionOrThrow();
+    long packedPos = RegionKey.pack(node.getPosition());
+
+    openSet.insertOrUpdate(packedPos, fCost);
+    session.openSetNodes.put(packedPos, node);
+  }
+
+  @Override
+  protected Node extractBestNode(PrimitiveMinHeap openSet) {
+    PathfindingSession session = getSessionOrThrow();
+
+    long packedPos = openSet.extractMin();
+    Node node = session.openSetNodes.get(packedPos);
+    session.openSetNodes.remove(packedPos);
+
+    return node;
+  }
+
+  @Override
   protected void initializeSearch() {
     currentSession.set(new PathfindingSession());
   }
@@ -63,26 +80,23 @@ public final class AStarPathfinder extends AbstractPathfinder {
       PathPosition start,
       PathPosition target,
       Node currentNode,
-      FibonacciHeap<Double, Node> openSet,
+      PrimitiveMinHeap openSet,
       SearchContext searchContext) {
 
     PathfindingSession session = getSessionOrThrow();
 
     for (PathVector offset : offsets) {
       PathPosition neighborPos = currentNode.getPosition().add(offset);
+      long packedPos = RegionKey.pack(neighborPos);
 
       // Check if neighbor is in the open set
-      AddressableHeap.Handle<Double, Node> handle = session.openSetEntries.get(neighborPos);
-      if (handle != null) {
-        updateExistingNode(handle, currentNode, searchContext);
-        continue;
+      if (openSet.contains(packedPos)) {
+        Node existing = session.openSetNodes.get(packedPos);
+        updateExistingNode(existing, packedPos, currentNode, searchContext, openSet);
       }
 
       // Check if neighbor is in the closed set
       GridRegionData regionData = session.getOrCreateRegionData(neighborPos);
-
-      long packedPos = RegionKey.pack(neighborPos);
-
       if (regionData.getBloomFilter().mightContain(neighborPos)
           && regionData.getRegionalExaminedPositions().contains(packedPos)) {
 
@@ -137,14 +151,18 @@ public final class AStarPathfinder extends AbstractPathfinder {
       double fCost = neighbor.getFCost();
       double heapKey = calculateHeapKey(neighbor, fCost);
 
-      AddressableHeap.Handle<Double, Node> newHandle = openSet.insert(heapKey, neighbor);
-      session.openSetEntries.put(neighborPos, newHandle);
+      openSet.insertOrUpdate(packedPos, heapKey);
+      session.openSetNodes.put(packedPos, neighbor);
     }
   }
 
   private void updateExistingNode(
-      AddressableHeap.Handle<Double, Node> handle, Node currentNode, SearchContext searchContext) {
-    Node existing = handle.getValue();
+      Node existing,
+      long packedPos,
+      Node currentNode,
+      SearchContext searchContext,
+      PrimitiveMinHeap openSet) {
+
     NodeEvaluationContext context =
         new NodeEvaluationContextImpl(
             searchContext, existing, currentNode, pathfinderConfiguration.getHeuristicStrategy());
@@ -161,13 +179,25 @@ public final class AStarPathfinder extends AbstractPathfinder {
     existing.setGCost(newG);
 
     double newF = existing.getFCost();
-    double oldKey = handle.getKey();
     double newKey = calculateHeapKey(existing, newF);
 
+    double oldKey = openSet.getCost(packedPos);
+
+    // We only call the heap once the key actually decreased
     if (newKey + Math.ulp(newKey) < oldKey) {
-      handle.decreaseKey(newKey);
-    } else if (Math.abs(newKey - oldKey) <= Math.ulp(newKey)) {
-      handle.decreaseKey(oldKey - Math.ulp(oldKey));
+      // O(log n)
+      openSet.insertOrUpdate(packedPos, newKey);
+
+    }
+    // edge-case handling
+    else if (Math.abs(newKey - oldKey) <= Math.ulp(newKey)) {
+      /*
+       * Sometimes a tiny nudging helps to maintain consistency,
+       * but usually insertOrUpdate catches that.
+       *
+       * Since our heap strictly checks <, we can force it here
+       */
+      openSet.insertOrUpdate(packedPos, oldKey - Math.ulp(oldKey));
     }
   }
 
@@ -217,12 +247,12 @@ public final class AStarPathfinder extends AbstractPathfinder {
     PathfindingSession session = getSessionOrThrow();
     PathPosition position = node.getPosition();
 
-    session.openSetEntries.remove(position);
+    long packedPos = RegionKey.pack(position);
+    session.openSetNodes.remove(packedPos);
 
     GridRegionData regionData = session.getOrCreateRegionData(position);
     regionData.getBloomFilter().put(position);
-
-    regionData.getRegionalExaminedPositions().add(RegionKey.pack(position));
+    regionData.getRegionalExaminedPositions().add(packedPos);
   }
 
   @Override
@@ -247,8 +277,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
    */
   private class PathfindingSession {
     private final Long2ObjectMap<GridRegionData> visitedRegions = new Long2ObjectOpenHashMap<>();
-    private final Map<PathPosition, AddressableHeap.Handle<Double, Node>> openSetEntries =
-        new HashMap<>();
+    private final Long2ObjectMap<Node> openSetNodes = new Long2ObjectOpenHashMap<>();
 
     GridRegionData getOrCreateRegionData(PathPosition position) {
       int cellSize = pathfinderConfiguration.getGridCellSize();

@@ -18,6 +18,7 @@ import de.bsommerfeld.pathetic.api.wrapper.Depth;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.api.wrapper.PathVector;
 import de.bsommerfeld.pathetic.engine.Node;
+import de.bsommerfeld.pathetic.engine.pathfinder.heap.PrimitiveMinHeap;
 import de.bsommerfeld.pathetic.engine.pathfinder.processing.NodeEvaluationContextImpl;
 import de.bsommerfeld.pathetic.engine.pathfinder.processing.SearchContextImpl;
 import de.bsommerfeld.pathetic.engine.result.PathImpl;
@@ -35,7 +36,6 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import org.jheaps.tree.FibonacciHeap;
 
 /**
  * Provides a skeletal implementation of the {@link Pathfinder} interface, defining common behavior
@@ -184,7 +184,8 @@ public abstract class AbstractPathfinder implements Pathfinder {
         }
       }
 
-      FibonacciHeap<Double, Node> openSet = new FibonacciHeap<>();
+      // TODO: bsommerfeld 24.11.2025: Magic number, we can turn this into a configurable later
+      PrimitiveMinHeap openSet = new PrimitiveMinHeap(1024);
 
       double startKey;
       try {
@@ -192,7 +193,8 @@ public abstract class AbstractPathfinder implements Pathfinder {
       } catch (Throwable t) {
         startKey = startNode.getFCost();
       }
-      openSet.insert(startKey, startNode);
+
+      insertStartNode(startNode, startKey, openSet);
 
       int currentDepth = 0;
       Node bestFallbackNode = startNode;
@@ -204,7 +206,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
           return createAbortedResult(start, target, bestFallbackNode);
         }
 
-        Node currentNode = openSet.deleteMin().getValue();
+        Node currentNode = extractBestNode(openSet);
         markNodeAsExpanded(currentNode);
 
         final int finalCurrentDepth = currentDepth;
@@ -374,6 +376,15 @@ public abstract class AbstractPathfinder implements Pathfinder {
     return path;
   }
 
+  /** Inserts the start node into the open set and updates any internal mapping. */
+  protected abstract void insertStartNode(Node node, double fCost, PrimitiveMinHeap openSet);
+
+  /**
+   * Extracts the node with the lowest cost from the open set and retrieves the corresponding Node
+   * object.
+   */
+  protected abstract Node extractBestNode(PrimitiveMinHeap openSet);
+
   /**
    * Prepares the algorithm-specific initial setup required before executing the pathfinding logic.
    * This method is designed to be overridden by subclasses to implement their respective
@@ -418,6 +429,6 @@ public abstract class AbstractPathfinder implements Pathfinder {
       PathPosition requestStart,
       PathPosition requestTarget,
       Node currentNode,
-      FibonacciHeap<Double, Node> openSet,
+      PrimitiveMinHeap openSet,
       SearchContext searchContext);
 }
