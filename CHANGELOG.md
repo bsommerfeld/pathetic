@@ -2,8 +2,8 @@
 
 ### Added
 
-- Clean Install Configuration
-- A specialized, array-backed binary heap tailored for A*. Replaces the object-heavy Fibonacci heap.
+- Clean Install IDE Configuration
+- A specialized, array-backed binary heap tailored for A*
 
 ### Changed
 
