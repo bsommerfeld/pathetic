@@ -5,13 +5,14 @@ import java.util.NoSuchElementException;
 
 /**
  * A highly optimized, array-backed binary min-heap for A* pathfinding.
+ *
  * <p>
- * Unlike {@link org.jheaps.tree.FibonacciHeap}, this implementation:
+ *
  * <ul>
- * <li>Guarantees <b>zero object allocations</b> during runtime (hot-path).</li>
- * <li>Uses primitive arrays for perfect CPU cache locality.</li>
- * <li>Supports O(log n) {@code decreaseKey} operations via an internal lookup map.</li>
- * <li>Automatically resizes when capacity is exceeded.</li>
+ *   <li>Guarantees <b>zero object allocations</b> during runtime (hot-path).
+ *   <li>Uses primitive arrays for perfect CPU cache locality.
+ *   <li>Supports O(log n) {@code decreaseKey} operations via an internal lookup map.
+ *   <li>Automatically resizes when capacity is exceeded.
  * </ul>
  */
 public class PrimitiveMinHeap {
@@ -19,13 +20,13 @@ public class PrimitiveMinHeap {
   // Maps packed-coordinate -> current index in the heap arrays.
   // Crucial for O(1) lookup to perform fast decreaseKey.
   private final Long2IntOpenHashMap nodeToIndexMap;
-  private long[] nodes;       // The packed coordinates (payload)
-  private double[] costs;     // The F-Costs (priority)
+  private long[] nodes; // The packed coordinates (payload)
+  private double[] costs; // The F-Costs (priority)
   private int size = 0;
 
   /**
-   * @param initialCapacity The initial size of the heap.
-   * Pro-tip: Set this to ~1.5x expected path length to avoid resizing.
+   * @param initialCapacity The initial size of the heap. Pro-tip: Set this to ~1.5x expected path
+   *     length to avoid resizing.
    */
   public PrimitiveMinHeap(int initialCapacity) {
     // 1-based indexing simplifies parent/child math (1 is root)
@@ -49,16 +50,14 @@ public class PrimitiveMinHeap {
     nodeToIndexMap.clear();
   }
 
-  /**
-   * Checks if a specific node (packed coordinate) is currently in the open set.
-   */
+  /** Checks if a specific node (packed coordinate) is currently in the open set. */
   public boolean contains(long packedNode) {
     return nodeToIndexMap.containsKey(packedNode);
   }
 
   /**
-   * Gets the current cost of a node in the heap.
-   * Useful to check if we found a cheaper path before calling insertOrUpdate.
+   * Gets the current cost of a node in the heap. Useful to check if we found a cheaper path before
+   * calling insertOrUpdate.
    *
    * @return The cost, or Double.MAX_VALUE if not present.
    */
@@ -72,7 +71,7 @@ public class PrimitiveMinHeap {
    * Inserts a new node or updates an existing one if the new cost is lower (decreaseKey).
    *
    * @param packedNode The coordinate packed as long.
-   * @param cost       The F-Cost (G + H).
+   * @param cost The F-Cost (G + H).
    */
   public void insertOrUpdate(long packedNode, double cost) {
     int existingIndex = nodeToIndexMap.get(packedNode);

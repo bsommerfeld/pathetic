@@ -23,7 +23,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
  * <p>This implementation uses:
  *
  * <ul>
- *   <li>A Fibonacci heap for the open set (priority queue).
+ *   <li>A primitive min-heap for the open set (priority queue).
  *   <li>Addressable heap handles for efficient G-cost updates (decrease-key).
  *   <li>A grid-based closed set with Bloom filters ({@link GridRegionData}) to quickly check
  *       expanded nodes.
@@ -72,7 +72,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
    * @param start The starting position of the pathfinding request.
    * @param target The target position of the pathfinding request.
    * @param currentNode The node being expanded.
-   * @param openSet The priority queue (Fibonacci heap) holding nodes to explore.
+   * @param openSet The priority queue holding nodes to explore.
    * @param searchContext The context for the current search.
    */
   @Override
@@ -127,7 +127,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
        * This block handles three main tasks:
        *  1. Figures out the transition cost (G) from the current node to the neighbor.
        *  2. Computes the total estimated cost (F = G + H) for prioritization.
-       *  3. Inserts the node into the open set (Fibonacci heap) with a small tie-breaker
+       *  3. Inserts the node into the open set with a small tie-breaker
        *     to make pathfinding smoother when multiple nodes have the same F-cost.
        *
        * What's the tie-breaker about?
