@@ -4,6 +4,7 @@
 
 - Clean Install IDE Configuration
 - A specialized, array-backed binary heap tailored for A*
+- Introduced overloaded getOffset(PathPosition) method in INeighborStrategy
 
 ### Changed
 

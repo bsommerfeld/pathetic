@@ -84,6 +84,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
       SearchContext searchContext) {
 
     PathfindingSession session = getSessionOrThrow();
+    Iterable<PathVector> offsets = neighborStrategy.getOffsets(currentNode.getPosition());
 
     for (PathVector offset : offsets) {
       PathPosition neighborPos = currentNode.getPosition().add(offset);

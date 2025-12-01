@@ -1,5 +1,6 @@
 package de.bsommerfeld.pathetic.engine.pathfinder;
 
+import de.bsommerfeld.pathetic.api.pathing.INeighborStrategy;
 import de.bsommerfeld.pathetic.api.pathing.Pathfinder;
 import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration;
 import de.bsommerfeld.pathetic.api.pathing.context.EnvironmentContext;
@@ -16,7 +17,6 @@ import de.bsommerfeld.pathetic.api.pathing.result.PathfinderResult;
 import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
 import de.bsommerfeld.pathetic.api.wrapper.Depth;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
-import de.bsommerfeld.pathetic.api.wrapper.PathVector;
 import de.bsommerfeld.pathetic.engine.Node;
 import de.bsommerfeld.pathetic.engine.pathfinder.heap.PrimitiveMinHeap;
 import de.bsommerfeld.pathetic.engine.pathfinder.processing.NodeEvaluationContextImpl;
@@ -63,7 +63,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
   protected final NavigationPointProvider navigationPointProvider;
   protected final List<NodeValidationProcessor> nodeValidationProcessors;
   protected final List<NodeCostProcessor> nodeCostProcessors;
-  protected final Iterable<PathVector> offsets;
+  protected final INeighborStrategy neighborStrategy;
 
   private final Set<PathfinderHook> pathfinderHooks = Collections.synchronizedSet(new HashSet<>());
 
@@ -80,7 +80,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
 
     this.nodeValidationProcessors = pathfinderConfiguration.getNodeValidationProcessors();
     this.nodeCostProcessors = pathfinderConfiguration.getNodeCostProcessors();
-    this.offsets = pathfinderConfiguration.getNeighborStrategy().getOffsets();
+    this.neighborStrategy = pathfinderConfiguration.getNeighborStrategy();
   }
 
   private static void shutdownExecutor() {
