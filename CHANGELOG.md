@@ -13,6 +13,8 @@
 - Switched internal Open Set implementation from `JHeaps` (Fibonacci) to `PrimitiveMinHeap`.
 - ~3x to 4.5x faster pathfinding in benchmarks due to improved CPU cache locality.
 - Achieved *true* zero-allocation operations within the Open Set (eliminated millions of `Node` wrapper and `Double` boxing objects).
+- Renamed NodeCostProcessor -> CostProcessor
+- Renamed NodeValidationProcessor -> ValidationProcessor
 
 ### Fixed
 

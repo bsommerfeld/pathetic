@@ -7,7 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration;
-import de.bsommerfeld.pathetic.api.pathing.processing.NodeValidationProcessor;
+import de.bsommerfeld.pathetic.api.pathing.processing.ValidationProcessor;
 import de.bsommerfeld.pathetic.api.pathing.result.Path;
 import de.bsommerfeld.pathetic.api.pathing.result.PathState;
 import de.bsommerfeld.pathetic.api.pathing.result.PathfinderResult;
@@ -37,7 +37,7 @@ class AStarPathfinderTest {
   private PathPosition target;
   private NavigationPoint traversablePoint;
   private NavigationPoint nonTraversablePoint;
-  private NodeValidationProcessor invalidNodeValidationProcessor;
+  private ValidationProcessor invalidValidationProcessor;
 
   @BeforeEach
   void setUp() {
@@ -52,7 +52,7 @@ class AStarPathfinderTest {
     when(nonTraversablePoint.isTraversable()).thenReturn(false);
 
     // Implement an always-failing validation processor
-    invalidNodeValidationProcessor = context -> false;
+    invalidValidationProcessor = context -> false;
 
     // Create configuration with mock provider
     configuration =
@@ -166,7 +166,7 @@ class AStarPathfinderTest {
         PathfinderConfiguration.builder()
             .provider(mockProvider)
             .maxIterations(1)
-            .nodeValidationProcessors(Collections.singletonList(invalidNodeValidationProcessor))
+            .nodeValidationProcessors(Collections.singletonList(invalidValidationProcessor))
             .async(false)
             .fallback(false)
             .build();
@@ -201,7 +201,7 @@ class AStarPathfinderTest {
             .provider(mockProvider)
             .maxIterations(1)
             .maxLength(50)
-            .nodeValidationProcessors(Collections.singletonList(invalidNodeValidationProcessor))
+            .nodeValidationProcessors(Collections.singletonList(invalidValidationProcessor))
             .async(false)
             .fallback(false)
             .build();
@@ -245,7 +245,7 @@ class AStarPathfinderTest {
 
   @Test
   void testFindPathBlocked() throws ExecutionException, InterruptedException, TimeoutException {
-    NodeValidationProcessor validationProcessor =
+    ValidationProcessor validationProcessor =
         context ->
             context
                 .getNavigationPointProvider()

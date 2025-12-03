@@ -2,8 +2,8 @@ package de.bsommerfeld.pathetic.engine.pathfinder;
 
 import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration;
 import de.bsommerfeld.pathetic.api.pathing.processing.Cost;
-import de.bsommerfeld.pathetic.api.pathing.processing.NodeCostProcessor;
-import de.bsommerfeld.pathetic.api.pathing.processing.NodeValidationProcessor;
+import de.bsommerfeld.pathetic.api.pathing.processing.CostProcessor;
+import de.bsommerfeld.pathetic.api.pathing.processing.ValidationProcessor;
 import de.bsommerfeld.pathetic.api.pathing.processing.context.NodeEvaluationContext;
 import de.bsommerfeld.pathetic.api.pathing.processing.context.SearchContext;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
@@ -214,10 +214,10 @@ public final class AStarPathfinder extends AbstractPathfinder {
   }
 
   private boolean isValidByCustomProcessors(NodeEvaluationContext context) {
-    if (nodeValidationProcessors == null || nodeValidationProcessors.isEmpty()) {
+    if (validationProcessors == null || validationProcessors.isEmpty()) {
       return true;
     }
-    for (NodeValidationProcessor validator : nodeValidationProcessors) {
+    for (ValidationProcessor validator : validationProcessors) {
       if (!validator.isValid(context)) {
         return false;
       }
@@ -229,8 +229,8 @@ public final class AStarPathfinder extends AbstractPathfinder {
     double baseCost = context.getBaseTransitionCost();
     double additionalCost = 0.0;
 
-    if (nodeCostProcessors != null && !nodeCostProcessors.isEmpty()) {
-      for (NodeCostProcessor processor : nodeCostProcessors) {
+    if (costProcessors != null && !costProcessors.isEmpty()) {
+      for (CostProcessor processor : costProcessors) {
         Cost contribution = processor.calculateCostContribution(context);
         additionalCost += (contribution != null) ? contribution.getValue() : Cost.ZERO.getValue();
       }

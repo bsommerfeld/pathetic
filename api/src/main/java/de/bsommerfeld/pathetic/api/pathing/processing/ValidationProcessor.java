@@ -9,7 +9,7 @@ import de.bsommerfeld.pathetic.api.pathing.processing.context.NodeEvaluationCont
  *
  * @see Processor
  */
-public interface NodeValidationProcessor extends Processor {
+public interface ValidationProcessor extends Processor {
   /**
    * Checks if the current node (PathPosition) (or the transition to it from the previous node) is
    * valid according to the logic of this validator.

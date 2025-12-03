@@ -9,7 +9,7 @@ import de.bsommerfeld.pathetic.api.pathing.processing.context.NodeEvaluationCont
  *
  * @see Processor
  */
-public interface NodeCostProcessor extends Processor {
+public interface CostProcessor extends Processor {
   /**
    * Calculates the cost contribution of this processor for the transition to the current node
    * (PathPosition).

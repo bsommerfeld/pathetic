@@ -5,8 +5,8 @@ import de.bsommerfeld.pathetic.api.pathing.NeighborStrategies;
 import de.bsommerfeld.pathetic.api.pathing.heuristic.HeuristicStrategies;
 import de.bsommerfeld.pathetic.api.pathing.heuristic.HeuristicWeights;
 import de.bsommerfeld.pathetic.api.pathing.heuristic.IHeuristicStrategy;
-import de.bsommerfeld.pathetic.api.pathing.processing.NodeCostProcessor;
-import de.bsommerfeld.pathetic.api.pathing.processing.NodeValidationProcessor;
+import de.bsommerfeld.pathetic.api.pathing.processing.CostProcessor;
+import de.bsommerfeld.pathetic.api.pathing.processing.ValidationProcessor;
 import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
 import java.util.Collections;
 import java.util.List;
@@ -65,16 +65,16 @@ public class PathfinderConfiguration {
   private final HeuristicWeights heuristicWeights;
 
   /**
-   * A list of {@link NodeValidationProcessor}s to be used in the pathfinding pipeline. May be null
-   * or empty if no validators are configured.
+   * A list of {@link ValidationProcessor}s to be used in the pathfinding pipeline. May be null or
+   * empty if no validators are configured.
    */
-  private final List<NodeValidationProcessor> nodeValidationProcessors;
+  private final List<ValidationProcessor> validationProcessors;
 
   /**
-   * A list of {@link NodeCostProcessor}s to be used in the pathfinding pipeline. May be null or
-   * empty if no calculators are configured.
+   * A list of {@link CostProcessor}s to be used in the pathfinding pipeline. May be null or empty
+   * if no calculators are configured.
    */
-  private final List<NodeCostProcessor> nodeCostProcessors;
+  private final List<CostProcessor> costProcessors;
 
   /**
    * The strategy that defines the set of vectors used to find neighbor nodes.
@@ -123,8 +123,8 @@ public class PathfinderConfiguration {
       boolean fallback,
       NavigationPointProvider provider,
       HeuristicWeights heuristicWeights,
-      List<NodeValidationProcessor> nodeValidationProcessors,
-      List<NodeCostProcessor> nodeCostProcessors,
+      List<ValidationProcessor> validationProcessors,
+      List<CostProcessor> costProcessors,
       INeighborStrategy neighborStrategy,
       int gridCellSize,
       int bloomFilterSize,
@@ -136,8 +136,8 @@ public class PathfinderConfiguration {
     this.fallback = fallback;
     this.provider = provider;
     this.heuristicWeights = heuristicWeights;
-    this.nodeValidationProcessors = Collections.unmodifiableList(nodeValidationProcessors);
-    this.nodeCostProcessors = Collections.unmodifiableList(nodeCostProcessors);
+    this.validationProcessors = Collections.unmodifiableList(validationProcessors);
+    this.costProcessors = Collections.unmodifiableList(costProcessors);
     this.neighborStrategy = neighborStrategy;
     this.gridCellSize = gridCellSize;
     this.bloomFilterSize = bloomFilterSize;
@@ -163,8 +163,8 @@ public class PathfinderConfiguration {
         .fallback(pathfinderConfiguration.fallback)
         .provider(pathfinderConfiguration.provider)
         .heuristicWeights(pathfinderConfiguration.heuristicWeights)
-        .nodeValidationProcessors(pathfinderConfiguration.nodeValidationProcessors)
-        .nodeCostProcessors(pathfinderConfiguration.nodeCostProcessors)
+        .nodeValidationProcessors(pathfinderConfiguration.validationProcessors)
+        .nodeCostProcessors(pathfinderConfiguration.costProcessors)
         .neighborStrategy(pathfinderConfiguration.neighborStrategy)
         .gridCellSize(pathfinderConfiguration.gridCellSize)
         .bloomFilterSize(pathfinderConfiguration.bloomFilterSize)
@@ -201,12 +201,12 @@ public class PathfinderConfiguration {
     return this.heuristicWeights;
   }
 
-  public List<NodeCostProcessor> getNodeCostProcessors() {
-    return nodeCostProcessors;
+  public List<CostProcessor> getNodeCostProcessors() {
+    return costProcessors;
   }
 
-  public List<NodeValidationProcessor> getNodeValidationProcessors() {
-    return nodeValidationProcessors;
+  public List<ValidationProcessor> getNodeValidationProcessors() {
+    return validationProcessors;
   }
 
   public INeighborStrategy getNeighborStrategy() {
@@ -245,9 +245,9 @@ public class PathfinderConfiguration {
         + ", heuristicWeights="
         + heuristicWeights
         + ", nodeValidationProcessors="
-        + nodeValidationProcessors
+        + validationProcessors
         + ", nodeCostProcessors="
-        + nodeCostProcessors
+        + costProcessors
         + ", neighborStrategy="
         + neighborStrategy
         + ", gridCellSize="
@@ -275,8 +275,8 @@ public class PathfinderConfiguration {
         && Double.compare(that.bloomFilterFpp, bloomFilterFpp) == 0
         && Objects.equals(provider, that.provider)
         && Objects.equals(heuristicWeights, that.heuristicWeights)
-        && Objects.equals(nodeValidationProcessors, that.nodeValidationProcessors)
-        && Objects.equals(nodeCostProcessors, that.nodeCostProcessors)
+        && Objects.equals(validationProcessors, that.validationProcessors)
+        && Objects.equals(costProcessors, that.costProcessors)
         && Objects.equals(neighborStrategy, that.neighborStrategy)
         && heuristicStrategy == that.heuristicStrategy;
   }
@@ -290,8 +290,8 @@ public class PathfinderConfiguration {
         fallback,
         provider,
         heuristicWeights,
-        nodeValidationProcessors,
-        nodeCostProcessors,
+        validationProcessors,
+        costProcessors,
         neighborStrategy,
         gridCellSize,
         bloomFilterSize,
@@ -306,8 +306,8 @@ public class PathfinderConfiguration {
     private boolean fallback = true;
     private NavigationPointProvider provider = (position, environmentContext) -> () -> true;
     private HeuristicWeights heuristicWeights = HeuristicWeights.DEFAULT_WEIGHTS;
-    private List<NodeValidationProcessor> nodeValidationProcessors = Collections.emptyList();
-    private List<NodeCostProcessor> nodeCostProcessors = Collections.emptyList();
+    private List<ValidationProcessor> validationProcessors = Collections.emptyList();
+    private List<CostProcessor> costProcessors = Collections.emptyList();
     private INeighborStrategy neighborStrategy = NeighborStrategies.VERTICAL_AND_HORIZONTAL;
     private int gridCellSize = 12;
     private int bloomFilterSize = 1000;
@@ -350,14 +350,14 @@ public class PathfinderConfiguration {
     }
 
     public PathfinderConfiguration.PathfinderConfigurationBuilder nodeValidationProcessors(
-        List<NodeValidationProcessor> nodeValidationProcessors) {
-      this.nodeValidationProcessors = Objects.requireNonNull(nodeValidationProcessors);
+        List<ValidationProcessor> validationProcessors) {
+      this.validationProcessors = Objects.requireNonNull(validationProcessors);
       return this;
     }
 
     public PathfinderConfiguration.PathfinderConfigurationBuilder nodeCostProcessors(
-        List<NodeCostProcessor> nodeCostProcessors) {
-      this.nodeCostProcessors = Objects.requireNonNull(nodeCostProcessors);
+        List<CostProcessor> costProcessors) {
+      this.costProcessors = Objects.requireNonNull(costProcessors);
       return this;
     }
 
@@ -398,8 +398,8 @@ public class PathfinderConfiguration {
           this.fallback,
           this.provider,
           this.heuristicWeights,
-          this.nodeValidationProcessors,
-          this.nodeCostProcessors,
+          this.validationProcessors,
+          this.costProcessors,
           this.neighborStrategy,
           this.gridCellSize,
           this.bloomFilterSize,

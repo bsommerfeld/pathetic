@@ -6,9 +6,9 @@ import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration
 import de.bsommerfeld.pathetic.api.pathing.context.EnvironmentContext;
 import de.bsommerfeld.pathetic.api.pathing.hook.PathfinderHook;
 import de.bsommerfeld.pathetic.api.pathing.hook.PathfindingContext;
-import de.bsommerfeld.pathetic.api.pathing.processing.NodeCostProcessor;
-import de.bsommerfeld.pathetic.api.pathing.processing.NodeValidationProcessor;
+import de.bsommerfeld.pathetic.api.pathing.processing.CostProcessor;
 import de.bsommerfeld.pathetic.api.pathing.processing.Processor;
+import de.bsommerfeld.pathetic.api.pathing.processing.ValidationProcessor;
 import de.bsommerfeld.pathetic.api.pathing.processing.context.NodeEvaluationContext;
 import de.bsommerfeld.pathetic.api.pathing.processing.context.SearchContext;
 import de.bsommerfeld.pathetic.api.pathing.result.Path;
@@ -61,8 +61,8 @@ public abstract class AbstractPathfinder implements Pathfinder {
 
   protected final PathfinderConfiguration pathfinderConfiguration;
   protected final NavigationPointProvider navigationPointProvider;
-  protected final List<NodeValidationProcessor> nodeValidationProcessors;
-  protected final List<NodeCostProcessor> nodeCostProcessors;
+  protected final List<ValidationProcessor> validationProcessors;
+  protected final List<CostProcessor> costProcessors;
   protected final INeighborStrategy neighborStrategy;
 
   private final Set<PathfinderHook> pathfinderHooks = Collections.synchronizedSet(new HashSet<>());
@@ -78,8 +78,8 @@ public abstract class AbstractPathfinder implements Pathfinder {
             pathfinderConfiguration.getProvider(),
             "NavigationPointProvider from configuration has to be set.");
 
-    this.nodeValidationProcessors = pathfinderConfiguration.getNodeValidationProcessors();
-    this.nodeCostProcessors = pathfinderConfiguration.getNodeCostProcessors();
+    this.validationProcessors = pathfinderConfiguration.getNodeValidationProcessors();
+    this.costProcessors = pathfinderConfiguration.getNodeCostProcessors();
     this.neighborStrategy = pathfinderConfiguration.getNeighborStrategy();
   }
 
@@ -173,9 +173,9 @@ public abstract class AbstractPathfinder implements Pathfinder {
           new NodeEvaluationContextImpl(
               searchContext, startNode, null, pathfinderConfiguration.getHeuristicStrategy());
 
-      if (this.nodeValidationProcessors != null && !this.nodeValidationProcessors.isEmpty()) {
+      if (this.validationProcessors != null && !this.validationProcessors.isEmpty()) {
         final boolean isStartNodeInvalid =
-            this.nodeValidationProcessors.stream()
+            this.validationProcessors.stream()
                 .anyMatch(validator -> !validator.isValid(startNodeContext));
 
         if (isStartNodeInvalid) {
@@ -275,10 +275,9 @@ public abstract class AbstractPathfinder implements Pathfinder {
    */
   private List<Processor> getProcessors() {
     List<Processor> processors = new ArrayList<>();
-    if (nodeValidationProcessors != null && !nodeValidationProcessors.isEmpty())
-      processors.addAll(nodeValidationProcessors);
-    if (nodeCostProcessors != null && !nodeCostProcessors.isEmpty())
-      processors.addAll(nodeCostProcessors);
+    if (validationProcessors != null && !validationProcessors.isEmpty())
+      processors.addAll(validationProcessors);
+    if (costProcessors != null && !costProcessors.isEmpty()) processors.addAll(costProcessors);
     return processors;
   }
 
