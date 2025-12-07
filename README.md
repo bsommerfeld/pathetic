@@ -1,37 +1,35 @@
+# Pathetic
 
-# Pathetic 🥀
-
-**The pathfinding library that's too good for this pathetic world.**
+**A high-performance pathfinding library for Java.**
 
 [![Mentioned in Awesome Java](https://awesome.re/mentioned-badge.svg)](https://github.com/akullpp/awesome-java)
 [![Maven Central](https://img.shields.io/maven-central/v/de.bsommerfeld.pathetic/api.svg?label=Maven%20Central)](https://central.sonatype.com/search?q=de.bsommerfeld.pathetic)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/bsommerfeld/pathetic/build.yml?branch=production)](https://github.com/bsommerfeld/pathetic/actions)
 [![License](https://img.shields.io/github/license/bsommerfeld/pathetic)](https://github.com/bsommerfeld/pathetic/blob/main/LICENSE)
 
-> “I used to use library X… then I tried Pathetic and suddenly my server stopped crying.” <br>
+> "I used to use library X… then I tried Pathetic and suddenly my server stopped struggling." <br>
 > — every future user, probably
 
-### Listen up, peasants
+### Why Pathetic?
 
-**It exists for one simple reason:** The rest of the Java pathfinding world collectively shits itself above a few hundred concurrent requests.
+**Built to handle scale:** Most Java pathfinding libraries struggle with a few hundred concurrent requests. Pathetic was designed from the ground up for high-throughput, low-latency pathfinding.
 
-| Scenario                 | Pathetic                | The "competition"            | Your tears                    |
+| Scenario                 | Pathetic                | Typical alternatives         | Notes                         |
 | ------------------------ | ----------------------- | ---------------------------- | ----------------------------- |
-| 10k concurrent paths     | ~7 ms                   | ~300 ms +                    | Priceless                     |
-| One 20k distance path    | ~60 ms                  | Minutes, timeout, or suicide | We measured twice             |
-| CPU when the world burns | <2% on 16 cores         | 20–100% or instant OOM       | Eco-mode                      |
-| Memory                   | Spark shows a flat line | Hundreds of MB of GC tears   | Spark thinks nothing happened |
+| 10k concurrent paths     | ~7 ms                   | ~300 ms +                    | Measured on real workloads    |
+| One 20k distance path    | ~60 ms                  | Minutes or timeout           | Consistently reproducible     |
+| CPU under heavy load     | <2% on 16 cores         | 20–100% or OOM               | Efficient resource usage      |
+| Memory                   | Spark shows a flat line | Hundreds of MB of GC churn   | Minimal garbage collection    |
 
 
 ![ezgif-425417d69c8935bb](https://github.com/user-attachments/assets/74a14831-4ca5-4090-a569-b24aa6be06b6)
 ![ezgif-47d8f87ff2b608e9](https://github.com/user-attachments/assets/69ca0f04-4add-485e-837e-a0a82b63a003)
 
 All demos from a real Paper server. <br>
-Minecraft is a pathfinding hell — Pathetic just walked in, pissed on Hades' leg, and asked for a lighter.
+Minecraft presents challenging pathfinding scenarios — Pathetic handles them with ease.
 
-> Most libraries need minutes or give up entirely on paths longer than 1000 positions.  
-> Pathetic does 20 000 in the time you need to blink twice.  
-> You're welcome.
+> Most libraries need minutes or give up entirely on paths longer than 1000 positions.
+> Pathetic completes 20,000-node paths in the time it takes to blink.
 ### Drop-in and watch the magic
 
 ```xml
@@ -62,53 +60,49 @@ pf.findPath(start, goal, context).thenAccept(result -> {
 });
 ```
 
-### Features that hurt other libraries' feelings
+### Key Features
 
-- **Hand-rolled primitive binary min-heap that makes FibonacciHeap look like a participation trophy**  
-  → Zero allocations, perfect cache locality, O(log n) decrease-key that’s faster in practice than every “amortized O(1)” heap in the Java ecosystem.  
-  → Two contiguous primitive arrays + fastutil Long2IntOpenHashMap. Your CPU prefetcher just sent us a thank-you note.
-- **Bloomfilter first-line-of-defense** → closed-set lookups go from "please wait"(O(n)) to "already done"(O(1))
-- **Composite Heuristics from Hell™** – Manhattan + Octile + real perpendicular deviation + height penalty, all weighted, all running in parallel. Choose linear (accurate as fuck) or squared (2–3× faster, still consistent). One heuristic? Adorable.
-- **Perpendicular tie-breaking** → paths so straight your NPCs look like they're cheating
-- **Processor pipeline** → walking, swimming, flying, restricted areas - just drop a lambda, peasant 
-- **Pure Java 8+** → works on your grandma's server and still murders modern rigs
-- **100 % async & concurrent** → because blocking the main thread is for libraries that hate their users
-- **[X: 26 bit] [Z: 26 bit] [Y: 12 bit]** → One primitive long. No more millions of BlockPos objects crying for GC. Supports coordinates up to ±33,000,000. Zero allocations, zero tears.
-- **We use LongOpenHashSet.** That means ~6 bytes per closed node instead of 64+ bytes of boxed Java sadness. At 500k nodes, that’s 30-40 MB of saved heap that the "competition" just hands straight to the Garbage Collector.
+- **Custom primitive binary min-heap optimized for A\***
+  Zero allocations, perfect cache locality, O(log n) decrease-key that outperforms typical "amortized O(1)" heaps in practice.
+  Two contiguous primitive arrays + fastutil Long2IntOpenHashMap for optimal CPU cache utilization.
+- **Bloom filter first-line-of-defense** — closed-set lookups go from O(n) to O(1)
+- **Composite heuristics** — Manhattan + Octile + perpendicular deviation + height penalty, all weighted. Choose linear (highly accurate) or squared (2–3× faster, still consistent).
+- **Perpendicular tie-breaking** — produces naturally straight paths
+- **Processor pipeline** — walking, swimming, flying, restricted areas - simply provide a lambda
+- **Pure Java 8+** — compatible with legacy and modern environments alike
+- **100% async & concurrent** — never blocks your main thread
+- **Packed coordinates: [X: 26 bit] [Z: 26 bit] [Y: 12 bit]** — One primitive long per position instead of object allocations. Supports coordinates up to ±33,000,000.
+- **LongOpenHashSet for closed nodes** — ~6 bytes per node instead of 64+ bytes with boxed objects. At 500k nodes, that's 30-40 MB of heap saved.
 
-### Yeah but how is it actually this fast?
+### How is it this fast?
 
-We used to use jheaps FibonacciHeap like all the other “serious” libraries.  
-It was fine.  
-It was fast enough.  
-It was also allocating objects like a crypto miner on Christmas.
+We originally used jheaps FibonacciHeap like many other libraries. It worked, but it allocated objects heavily during pathfinding operations.
 
-So we took it out back and replaced it with a hand-rolled, array-backed, zero-allocation primitive binary heap.
+We replaced it with a custom array-backed, zero-allocation primitive binary heap.
 
-What changed?
+The results:
 
-| Metric                     | Old FibonacciHeap       | New PrimitiveMinHeap               | Your server now
-|----------------------------|--------------------------|------------------------------------|-------------------
-| Allocations per run        | Objects everywhere       | **0** (Zero. Zilch. Nada.)         | GC went on vacation
-| Cache efficiency           | Pointer chasing hell     | Contiguous array bliss             | CPU utilization dropped 50 %
-| Benchmark (1k nodes)       | Baseline                 | **~4.5× faster** | Teleportation enabled
-| Benchmark (10k nodes)      | Baseline                 | **~3× faster** | Your players noticed
-| Large Scale (50k nodes)    | Exponential degradation  | **Linearly stable** | The dragon never stood a chance
+| Metric                     | Old FibonacciHeap        | New PrimitiveMinHeap               | Impact                       |
+|----------------------------|--------------------------|------------------------------------|-----------------------------|
+| Allocations per run        | Many objects             | **0**                              | Minimal GC pressure         |
+| Cache efficiency           | Pointer chasing          | Contiguous arrays                  | ~50% CPU reduction          |
+| Benchmark (1k nodes)       | Baseline                 | **~4.5× faster**                   | Noticeable improvement      |
+| Benchmark (10k nodes)      | Baseline                 | **~3× faster**                     | Significant at scale        |
+| Large Scale (50k nodes)    | Exponential degradation  | **Linearly stable**                | Handles large worlds        |
 
-Result: 10 000 concurrent pathfinds now finish before you can blink.
+Result: 10,000 concurrent pathfinds complete in milliseconds.
 
-We kept the old FibonacciHeap code in a branch called `archaeology`.
+The old FibonacciHeap code is preserved in a branch called `archaeology`.
 
-### We could’ve called it HyperQuantumPathUltra Enterprise God Mode Edition™
+### Why "Pathetic"?
 
-We called it Pathetic instead. <br>
-Because that’s what every other library became the moment we released this.
+We could have called it something like "HyperQuantumPathUltra Enterprise Edition" — but we went with Pathetic instead. Sometimes the best names are the unexpected ones.
 
-### Hang out with us
+### Community & Resources
 
-[Wiki](https://github.com/bsommerfeld/pathetic/wiki) – for mortals who still read docs <br>
-[Discord](https://discord.gg/zGx9BSzKfJ) – come cry or worship <br>
-Issues, PRs, death threats → right here: https://github.com/bsommerfeld/pathetic/issues
+- [Wiki](https://github.com/bsommerfeld/pathetic/wiki) — documentation and guides
+- [Discord](https://discord.gg/zGx9BSzKfJ) — community discussion and support
+- [Issues & PRs](https://github.com/bsommerfeld/pathetic/issues) — bug reports, feature requests, and contributions welcome
 
-**Powered by JetBrains** (they saw the name and still sponsored us – legends recognize legends ❤️) <br>
+**Powered by JetBrains** — Thank you for supporting open source!
 [![JetBrains logo.](https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg)](https://jb.gg/OpenSource)
