@@ -114,7 +114,17 @@ public class PathfinderConfiguration {
    */
   private final double bloomFilterFpp;
 
+  /** The strategy used to calculate the heuristic cost (H-cost) for each node. */
   private final IHeuristicStrategy heuristicStrategy;
+
+  /**
+   * Controls whether the pathfinder re-evaluates nodes already in the closed set. If enabled, it
+   * allows updating the path to a closed node if a lower G-cost is found. Necessary for optimality
+   * with non-monotonic heuristics or complex cost functions, but impacts performance.
+   *
+   * <p>Default: false
+   */
+  private final boolean reopenClosedNodes;
 
   private PathfinderConfiguration(
       int maxIterations,
@@ -129,7 +139,8 @@ public class PathfinderConfiguration {
       int gridCellSize,
       int bloomFilterSize,
       double bloomFilterFpp,
-      IHeuristicStrategy heuristicStrategy) {
+      IHeuristicStrategy heuristicStrategy,
+      boolean reopenClosedNodes) {
     this.maxIterations = maxIterations;
     this.maxLength = maxLength;
     this.async = async;
@@ -143,6 +154,7 @@ public class PathfinderConfiguration {
     this.bloomFilterSize = bloomFilterSize;
     this.bloomFilterFpp = bloomFilterFpp;
     this.heuristicStrategy = heuristicStrategy;
+    this.reopenClosedNodes = reopenClosedNodes;
   }
 
   /**
@@ -170,6 +182,7 @@ public class PathfinderConfiguration {
         .bloomFilterSize(pathfinderConfiguration.bloomFilterSize)
         .bloomFilterFpp(pathfinderConfiguration.bloomFilterFpp)
         .heuristicStrategy(pathfinderConfiguration.heuristicStrategy)
+        .reopenClosedNodes(pathfinderConfiguration.reopenClosedNodes)
         .build();
   }
 
@@ -229,6 +242,10 @@ public class PathfinderConfiguration {
     return heuristicStrategy;
   }
 
+  public boolean shouldReopenClosedNodes() {
+    return reopenClosedNodes;
+  }
+
   @Override
   public String toString() {
     return "PathfinderConfiguration{"
@@ -258,6 +275,8 @@ public class PathfinderConfiguration {
         + bloomFilterFpp
         + ", heuristicMode="
         + heuristicStrategy
+        + ", reopenClosedNodes="
+        + reopenClosedNodes
         + '}';
   }
 
@@ -273,6 +292,7 @@ public class PathfinderConfiguration {
         && gridCellSize == that.gridCellSize
         && bloomFilterSize == that.bloomFilterSize
         && Double.compare(that.bloomFilterFpp, bloomFilterFpp) == 0
+        && reopenClosedNodes == that.reopenClosedNodes
         && Objects.equals(provider, that.provider)
         && Objects.equals(heuristicWeights, that.heuristicWeights)
         && Objects.equals(validationProcessors, that.validationProcessors)
@@ -296,7 +316,8 @@ public class PathfinderConfiguration {
         gridCellSize,
         bloomFilterSize,
         bloomFilterFpp,
-        heuristicStrategy);
+        heuristicStrategy,
+        reopenClosedNodes);
   }
 
   public static class PathfinderConfigurationBuilder {
@@ -313,6 +334,7 @@ public class PathfinderConfiguration {
     private int bloomFilterSize = 1000;
     private double bloomFilterFpp = 0.01;
     private IHeuristicStrategy heuristicStrategy = HeuristicStrategies.LINEAR;
+    private boolean reopenClosedNodes = false;
 
     PathfinderConfigurationBuilder() {}
 
@@ -390,6 +412,12 @@ public class PathfinderConfiguration {
       return this;
     }
 
+    public PathfinderConfiguration.PathfinderConfigurationBuilder reopenClosedNodes(
+        boolean reopenClosedNodes) {
+      this.reopenClosedNodes = reopenClosedNodes;
+      return this;
+    }
+
     public PathfinderConfiguration build() {
       return new PathfinderConfiguration(
           this.maxIterations,
@@ -404,7 +432,8 @@ public class PathfinderConfiguration {
           this.gridCellSize,
           this.bloomFilterSize,
           this.bloomFilterFpp,
-          this.heuristicStrategy);
+          this.heuristicStrategy,
+          this.reopenClosedNodes);
     }
   }
 }

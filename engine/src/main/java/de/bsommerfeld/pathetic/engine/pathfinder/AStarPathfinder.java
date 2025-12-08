@@ -13,6 +13,8 @@ import de.bsommerfeld.pathetic.engine.pathfinder.heap.PrimitiveMinHeap;
 import de.bsommerfeld.pathetic.engine.pathfinder.processing.NodeEvaluationContextImpl;
 import de.bsommerfeld.pathetic.engine.util.GridRegionData;
 import de.bsommerfeld.pathetic.engine.util.RegionKey;
+import it.unimi.dsi.fastutil.longs.Long2DoubleMap;
+import it.unimi.dsi.fastutil.longs.Long2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
@@ -94,6 +96,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
       if (openSet.contains(packedPos)) {
         Node existing = session.openSetNodes.get(packedPos);
         updateExistingNode(existing, packedPos, currentNode, searchContext, openSet);
+        continue;
       }
 
       // Check if neighbor is in the closed set
@@ -102,12 +105,52 @@ public final class AStarPathfinder extends AbstractPathfinder {
           && regionData.getRegionalExaminedPositions().contains(packedPos)) {
 
         /*
-         * TODO 30.10.2025 bsommerfeld: At some point we might want to enable
-         *  reopening nodes from the closed set. This would be the point to achieve this.
-         *  In order to implement this, past me suggests implementing a new config value.
+         * This block handles the edge case where we find a path to a node,
+         * that has already been fully processed (is in the closed set).
+         *
+         * Normally (with consistent heuristics), the first time,
+         * we close a node, we have found the shortest path to it.
+         *
+         * However, if the heuristic is inconsistent (or weights change dynamically),
+         * we might find a "shorter" path later.
+         *
+         * Since this functionality can have a performance impact (in comparison to the rest of the Pathfinder),
+         * we hide this behind a configuration flag, so the user can decide whether this should be active.
          */
 
-        continue; // Skip if already expanded (assumes consistent heuristic)
+        boolean shouldReopen = false;
+        if (pathfinderConfiguration.shouldReopenClosedNodes()) {
+          double oldCost = session.closedSetGCosts.get(packedPos);
+
+          /*
+           * We have to create a temp node here to calculate the costs.
+           * That's sadly necessary, since CostProcessors need the context.
+           * But since this only happens with closed nodes, the allocations stay in line.
+           */
+          Node tempNeighbor = createNeighborNode(neighborPos, start, target, currentNode);
+          NodeEvaluationContext context =
+              new NodeEvaluationContextImpl(
+                  searchContext,
+                  tempNeighbor,
+                  currentNode,
+                  pathfinderConfiguration.getHeuristicStrategy());
+
+          double newGCost = calculateGCost(context);
+
+          // Is this path significantly better?
+          if (Double.isNaN(oldCost) || newGCost + Math.ulp(newGCost) < oldCost) {
+            // Update the value for future comparison
+            session.closedSetGCosts.put(packedPos, newGCost);
+
+            // And mark this node for reopening
+            shouldReopen = true;
+          }
+        }
+
+        if (!shouldReopen) continue;
+
+        // Once we got here, the node will be processed as "new" node
+        // and with that effectively reopened.
       }
 
       // Process as a new node
@@ -251,6 +294,9 @@ public final class AStarPathfinder extends AbstractPathfinder {
     long packedPos = RegionKey.pack(position);
     session.openSetNodes.remove(packedPos);
 
+    if (pathfinderConfiguration.shouldReopenClosedNodes())
+      session.closedSetGCosts.put(packedPos, node.getGCost());
+
     GridRegionData regionData = session.getOrCreateRegionData(position);
     regionData.getBloomFilter().put(position);
     regionData.getRegionalExaminedPositions().add(packedPos);
@@ -279,6 +325,12 @@ public final class AStarPathfinder extends AbstractPathfinder {
   private class PathfindingSession {
     private final Long2ObjectMap<GridRegionData> visitedRegions = new Long2ObjectOpenHashMap<>();
     private final Long2ObjectMap<Node> openSetNodes = new Long2ObjectOpenHashMap<>();
+
+    private final Long2DoubleMap closedSetGCosts = new Long2DoubleOpenHashMap();
+
+    PathfindingSession() {
+      this.closedSetGCosts.defaultReturnValue(Double.NaN);
+    }
 
     GridRegionData getOrCreateRegionData(PathPosition position) {
       int cellSize = pathfinderConfiguration.getGridCellSize();

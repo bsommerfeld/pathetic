@@ -5,6 +5,7 @@
 - Clean Install IDE Configuration
 - A specialized, array-backed binary heap tailored for A*
 - Introduced overloaded getOffset(PathPosition) method in INeighborStrategy
+- Implemented support for reopening Closed Set nodes to handle inconsistent heuristics (configurable via `reopenClosedNodes`).
 
 ### Changed
 
@@ -19,6 +20,7 @@
 ### Fixed
 
 - removed legacy lazy computing of hcost
+- Fixed subtle yet crucial a control flow bug where updates to nodes in the Open Set were ignored, ensuring the optimal path is always prioritized.
 
 ### Removed
 
