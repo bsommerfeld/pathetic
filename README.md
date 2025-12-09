@@ -78,7 +78,7 @@ pf.findPath(start, goal, context).thenAccept(result -> {
 
 ### Yeah but how is it actually this fast?
 
-We used to use jheaps FibonacciHeap like all the other “serious” libraries.  
+We used to use FibonacciHeaps like all the other “serious” libraries.  
 It was fine.  
 It was fast enough.  
 It was also allocating objects like a crypto miner on Christmas.
