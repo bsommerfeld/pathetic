@@ -104,6 +104,11 @@ We kept the old FibonacciHeap code in a branch called `archaeology`.
 We called it Pathetic instead. <br>
 Because that’s what every other library became the moment we released this.
 
+Some say "this README reads like they belong in a hospital." <br>
+**And you're goddamn right.** <br>
+
+---
+
 ### Hang out with us
 
 [Wiki](https://github.com/bsommerfeld/pathetic/wiki) – for mortals who still read docs <br>
