@@ -9,7 +9,7 @@ import java.util.Map;
 /**
  * Provides context for the evaluation of a single node (PathPosition) during a pathfinding search.
  */
-public interface NodeEvaluationContext {
+public interface EvaluationContext {
   /**
    * Returns the PathPosition currently being evaluated. This is the potential next step in the
    * path.

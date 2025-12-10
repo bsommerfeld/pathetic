@@ -1,13 +1,13 @@
 package de.bsommerfeld.pathetic.engine.pathfinder.processing;
 
 import de.bsommerfeld.pathetic.api.pathing.heuristic.IHeuristicStrategy;
-import de.bsommerfeld.pathetic.api.pathing.processing.context.NodeEvaluationContext;
+import de.bsommerfeld.pathetic.api.pathing.processing.context.EvaluationContext;
 import de.bsommerfeld.pathetic.api.pathing.processing.context.SearchContext;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.engine.Node;
 import java.util.Objects;
 
-public class NodeEvaluationContextImpl implements NodeEvaluationContext {
+public class EvaluationContextImpl implements EvaluationContext {
 
   private final SearchContext searchContext;
   private final Node engineNode;
@@ -21,7 +21,7 @@ public class NodeEvaluationContextImpl implements NodeEvaluationContext {
    * @param engineNode The current node being evaluated
    * @param parentEngineNode The parent node (can be null for the start node)
    */
-  public NodeEvaluationContextImpl(
+  public EvaluationContextImpl(
       SearchContext searchContext,
       Node engineNode,
       Node parentEngineNode,

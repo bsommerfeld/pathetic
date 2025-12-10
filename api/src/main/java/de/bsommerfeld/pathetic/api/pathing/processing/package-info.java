@@ -23,7 +23,7 @@
  * information for the current search ({@link
  * de.bsommerfeld.pathetic.api.pathing.processing.context.SearchContext}) and the specific node
  * being evaluated ({@link
- * de.bsommerfeld.pathetic.api.pathing.processing.context.NodeEvaluationContext}).
+ * de.bsommerfeld.pathetic.api.pathing.processing.context.EvaluationContext}).
  *
  * <p>Users can configure a list of validators and cost calculators via the {@link
  * de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration}. The engine will

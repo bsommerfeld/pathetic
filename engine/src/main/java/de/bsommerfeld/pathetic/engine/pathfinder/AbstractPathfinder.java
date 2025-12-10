@@ -9,7 +9,7 @@ import de.bsommerfeld.pathetic.api.pathing.hook.PathfindingContext;
 import de.bsommerfeld.pathetic.api.pathing.processing.CostProcessor;
 import de.bsommerfeld.pathetic.api.pathing.processing.Processor;
 import de.bsommerfeld.pathetic.api.pathing.processing.ValidationProcessor;
-import de.bsommerfeld.pathetic.api.pathing.processing.context.NodeEvaluationContext;
+import de.bsommerfeld.pathetic.api.pathing.processing.context.EvaluationContext;
 import de.bsommerfeld.pathetic.api.pathing.processing.context.SearchContext;
 import de.bsommerfeld.pathetic.api.pathing.result.Path;
 import de.bsommerfeld.pathetic.api.pathing.result.PathState;
@@ -19,7 +19,7 @@ import de.bsommerfeld.pathetic.api.wrapper.Depth;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.engine.Node;
 import de.bsommerfeld.pathetic.engine.pathfinder.heap.PrimitiveMinHeap;
-import de.bsommerfeld.pathetic.engine.pathfinder.processing.NodeEvaluationContextImpl;
+import de.bsommerfeld.pathetic.engine.pathfinder.processing.EvaluationContextImpl;
 import de.bsommerfeld.pathetic.engine.pathfinder.processing.SearchContextImpl;
 import de.bsommerfeld.pathetic.engine.result.PathImpl;
 import de.bsommerfeld.pathetic.engine.result.PathfinderResultImpl;
@@ -169,8 +169,8 @@ public abstract class AbstractPathfinder implements Pathfinder {
 
       Node startNode = createStartNode(start, target);
 
-      final NodeEvaluationContext startNodeContext =
-          new NodeEvaluationContextImpl(
+      final EvaluationContext startNodeContext =
+          new EvaluationContextImpl(
               searchContext, startNode, null, pathfinderConfiguration.getHeuristicStrategy());
 
       if (this.validationProcessors != null && !this.validationProcessors.isEmpty()) {

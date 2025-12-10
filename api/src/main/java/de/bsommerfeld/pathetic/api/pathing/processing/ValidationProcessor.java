@@ -1,6 +1,6 @@
 package de.bsommerfeld.pathetic.api.pathing.processing;
 
-import de.bsommerfeld.pathetic.api.pathing.processing.context.NodeEvaluationContext;
+import de.bsommerfeld.pathetic.api.pathing.processing.context.EvaluationContext;
 
 /**
  * A processor that validates whether a node (PathPosition) or the transition to it is permissible
@@ -17,5 +17,5 @@ public interface ValidationProcessor extends Processor {
    * @param context The evaluation context for the current node.
    * @return {@code true} if the node/transition is considered valid, {@code false} otherwise.
    */
-  boolean isValid(NodeEvaluationContext context);
+  boolean isValid(EvaluationContext context);
 }

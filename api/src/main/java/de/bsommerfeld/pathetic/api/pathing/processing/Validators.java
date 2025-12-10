@@ -1,6 +1,6 @@
 package de.bsommerfeld.pathetic.api.pathing.processing;
 
-import de.bsommerfeld.pathetic.api.pathing.processing.context.NodeEvaluationContext;
+import de.bsommerfeld.pathetic.api.pathing.processing.context.EvaluationContext;
 import de.bsommerfeld.pathetic.api.pathing.processing.context.SearchContext; // Assuming this exists
 import java.util.ArrayList;
 import java.util.Collections;
@@ -202,7 +202,7 @@ public final class Validators {
     }
 
     @Override
-    public boolean isValid(NodeEvaluationContext context) {
+    public boolean isValid(EvaluationContext context) {
       for (ValidationProcessor child : children) {
         if (!child.isValid(context)) {
           return false;
@@ -222,7 +222,7 @@ public final class Validators {
     }
 
     @Override
-    public boolean isValid(NodeEvaluationContext context) {
+    public boolean isValid(EvaluationContext context) {
       if (children.isEmpty()) {
         return false;
       }
@@ -245,7 +245,7 @@ public final class Validators {
     }
 
     @Override
-    public boolean isValid(NodeEvaluationContext context) {
+    public boolean isValid(EvaluationContext context) {
       for (ValidationProcessor child : children) {
         if (child.isValid(context)) {
           return false;
@@ -270,7 +270,7 @@ public final class Validators {
     }
 
     @Override
-    public boolean isValid(NodeEvaluationContext context) {
+    public boolean isValid(EvaluationContext context) {
       return !child.isValid(context);
     }
 
@@ -286,7 +286,7 @@ public final class Validators {
     private AlwaysTrueValidator() {}
 
     @Override
-    public boolean isValid(NodeEvaluationContext context) {
+    public boolean isValid(EvaluationContext context) {
       return true;
     }
   }
@@ -297,7 +297,7 @@ public final class Validators {
     private AlwaysFalseValidator() {}
 
     @Override
-    public boolean isValid(NodeEvaluationContext context) {
+    public boolean isValid(EvaluationContext context) {
       return false;
     }
   }

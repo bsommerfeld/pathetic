@@ -1,6 +1,6 @@
 package de.bsommerfeld.pathetic.api.pathing.processing;
 
-import de.bsommerfeld.pathetic.api.pathing.processing.context.NodeEvaluationContext;
+import de.bsommerfeld.pathetic.api.pathing.processing.context.EvaluationContext;
 
 /**
  * A processor that calculates a specific cost contribution for traversing to a node (PathPosition).
@@ -18,5 +18,5 @@ public interface CostProcessor extends Processor {
    * @return A {@link Cost} object representing the cost contribution. This value will be added to
    *     other costs for this transition.
    */
-  Cost calculateCostContribution(NodeEvaluationContext context);
+  Cost calculateCostContribution(EvaluationContext context);
 }

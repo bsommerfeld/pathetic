@@ -4,13 +4,13 @@ import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration
 import de.bsommerfeld.pathetic.api.pathing.processing.Cost;
 import de.bsommerfeld.pathetic.api.pathing.processing.CostProcessor;
 import de.bsommerfeld.pathetic.api.pathing.processing.ValidationProcessor;
-import de.bsommerfeld.pathetic.api.pathing.processing.context.NodeEvaluationContext;
+import de.bsommerfeld.pathetic.api.pathing.processing.context.EvaluationContext;
 import de.bsommerfeld.pathetic.api.pathing.processing.context.SearchContext;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.api.wrapper.PathVector;
 import de.bsommerfeld.pathetic.engine.Node;
 import de.bsommerfeld.pathetic.engine.pathfinder.heap.PrimitiveMinHeap;
-import de.bsommerfeld.pathetic.engine.pathfinder.processing.NodeEvaluationContextImpl;
+import de.bsommerfeld.pathetic.engine.pathfinder.processing.EvaluationContextImpl;
 import de.bsommerfeld.pathetic.engine.util.GridRegionData;
 import de.bsommerfeld.pathetic.engine.util.RegionKey;
 import it.unimi.dsi.fastutil.longs.Long2DoubleMap;
@@ -128,8 +128,8 @@ public final class AStarPathfinder extends AbstractPathfinder {
            * But since this only happens with closed nodes, the allocations stay in line.
            */
           Node tempNeighbor = createNeighborNode(neighborPos, start, target, currentNode);
-          NodeEvaluationContext context =
-              new NodeEvaluationContextImpl(
+          EvaluationContext context =
+              new EvaluationContextImpl(
                   searchContext,
                   tempNeighbor,
                   currentNode,
@@ -156,8 +156,8 @@ public final class AStarPathfinder extends AbstractPathfinder {
       // Process as a new node
       Node neighbor = createNeighborNode(neighborPos, start, target, currentNode);
       neighbor.setParent(currentNode);
-      NodeEvaluationContext context =
-          new NodeEvaluationContextImpl(
+      EvaluationContext context =
+          new EvaluationContextImpl(
               searchContext, neighbor, currentNode, pathfinderConfiguration.getHeuristicStrategy());
 
       if (!isValidByCustomProcessors(context)) {
@@ -207,8 +207,8 @@ public final class AStarPathfinder extends AbstractPathfinder {
       SearchContext searchContext,
       PrimitiveMinHeap openSet) {
 
-    NodeEvaluationContext context =
-        new NodeEvaluationContextImpl(
+    EvaluationContext context =
+        new EvaluationContextImpl(
             searchContext, existing, currentNode, pathfinderConfiguration.getHeuristicStrategy());
 
     double newG = calculateGCost(context);
@@ -256,7 +256,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
         parent.getDepth() + 1);
   }
 
-  private boolean isValidByCustomProcessors(NodeEvaluationContext context) {
+  private boolean isValidByCustomProcessors(EvaluationContext context) {
     if (validationProcessors == null || validationProcessors.isEmpty()) {
       return true;
     }
@@ -268,7 +268,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
     return true;
   }
 
-  private double calculateGCost(NodeEvaluationContext context) {
+  private double calculateGCost(EvaluationContext context) {
     double baseCost = context.getBaseTransitionCost();
     double additionalCost = 0.0;
 

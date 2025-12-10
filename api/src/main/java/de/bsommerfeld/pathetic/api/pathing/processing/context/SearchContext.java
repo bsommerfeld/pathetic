@@ -10,8 +10,7 @@ import java.util.Map;
 /**
  * Provides context for an entire pathfinding search operation. This context is typically created
  * once per search request and passed to processor lifecycle methods (e.g., {@link
- * Processor#initializeSearch(SearchContext)}) and is accessible via the {@link
- * NodeEvaluationContext}.
+ * Processor#initializeSearch(SearchContext)}) and is accessible via the {@link EvaluationContext}.
  */
 public interface SearchContext {
   /**

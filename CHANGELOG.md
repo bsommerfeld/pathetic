@@ -16,6 +16,7 @@
 - Achieved *true* zero-allocation operations within the Open Set (eliminated millions of `Node` wrapper and `Double` boxing objects).
 - Renamed NodeCostProcessor -> CostProcessor
 - Renamed NodeValidationProcessor -> ValidationProcessor
+- Renamed NodeEvaluationContext -> EvaluationContext
 
 ### Fixed
 
