@@ -11,7 +11,9 @@
     </parent>
 
     <name>Pathetic-API</name>
-    <description></description>
+    <description>Public API and contracts for the Pathetic pathfinding library. Defines the interfaces for pathfinding
+        requests, configurations, and results.
+    </description>
     <artifactId>api</artifactId>
     <version>${revision}</version>
     <licenses>

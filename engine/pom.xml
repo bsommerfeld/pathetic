@@ -10,7 +10,9 @@
     </parent>
 
     <name>Pathetic-Engine</name>
-    <description></description>
+    <description>High-performance implementation of the Pathetic pathfinding library. Features an optimized A*
+        algorithm, primitive heaps, and zero-allocation strategies for maximum speed and efficiency.
+    </description>
     <artifactId>engine</artifactId>
     <version>${revision}</version>
 
