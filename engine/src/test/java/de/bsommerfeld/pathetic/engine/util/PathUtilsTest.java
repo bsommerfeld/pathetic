@@ -9,13 +9,11 @@ import de.bsommerfeld.pathetic.engine.result.PathImpl;
 import de.bsommerfeld.pathetic.engine.result.PathUtils;
 import java.util.Arrays;
 import java.util.List;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 class PathUtilsTest {
 
   @Test
-  @DisplayName("interpolate: correctly inserts points (robust against fast-sqrt errors)")
   void testInterpolate() {
     PathPosition start = new PathPosition(0, 0, 0);
     PathPosition end = new PathPosition(10, 0, 0);
