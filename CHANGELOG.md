@@ -27,4 +27,4 @@
 - Several before deprecated Methods (see 5.4.0)
 - Tuple3 + Tests
 - ComputingCache + Tests
-- `org.jheaps` (bloated object-based heaps are no longer needed)
+- `org.jheaps` dependency
