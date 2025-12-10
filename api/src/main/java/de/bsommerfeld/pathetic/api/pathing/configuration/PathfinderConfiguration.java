@@ -123,6 +123,8 @@ public class PathfinderConfiguration {
    * with non-monotonic heuristics or complex cost functions, but impacts performance.
    *
    * <p>Default: false
+   *
+   * @since 6.0.0
    */
   private final boolean reopenClosedNodes;
 

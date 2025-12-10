@@ -14,6 +14,8 @@ import java.util.NoSuchElementException;
  *   <li>Supports O(log n) {@code decreaseKey} operations via an internal lookup map.
  *   <li>Automatically resizes when capacity is exceeded.
  * </ul>
+ *
+ * @since 6.0.0
  */
 public class PrimitiveMinHeap {
 
