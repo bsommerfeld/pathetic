@@ -2,7 +2,9 @@
 
 ### Added
 
-- Clean Install IDE Configuration
+- Update Dependencies Maven Configuration
+- Run Tests Maven Configuration
+- Build Jar Maven Configuration
 - A specialized, array-backed binary heap tailored for A*
 - Introduced overloaded getOffset(PathPosition) method in INeighborStrategy
 - Implemented support for reopening Closed Set nodes to handle inconsistent heuristics (configurable via `reopenClosedNodes`).

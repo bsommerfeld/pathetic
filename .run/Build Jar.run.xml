@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Clean Install -U" type="MavenRunConfiguration" factoryName="Maven">
+  <configuration default="false" name="Build Jar" type="MavenRunConfiguration" factoryName="Maven">
     <MavenSettings>
       <option name="myGeneralSettings" />
       <option name="myRunnerSettings" />
@@ -12,8 +12,7 @@
           <option name="goals">
             <list>
               <option value="clean" />
-              <option value="install" />
-              <option value="-Dgpg.skip=true" />
+              <option value="package" />
             </list>
           </option>
           <option name="multimoduleDir" />
@@ -25,7 +24,7 @@
             <list />
           </option>
           <option name="resolveToWorkspace" value="false" />
-          <option name="workingDirPath" value="$PROJECT_DIR$" />
+          <option name="workingDirPath" value="$PROJECT_DIR$/engine" />
         </MavenRunnerParameters>
       </option>
     </MavenSettings>
