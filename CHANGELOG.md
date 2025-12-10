@@ -11,7 +11,7 @@
 
 - Revamp README for better engagement – add humor, benchmarks, and real-world demos to combat stagnation
 - optimized core data structures for reduced GC pressure and cleaned up legacy code
-- Switched internal Open Set implementation from `JHeaps` (Fibonacci) to `PrimitiveMinHeap`.
+- Switched internal Open Set implementation from Fibonacci to `PrimitiveMinHeap`.
 - ~3x to 4.5x faster pathfinding in benchmarks due to improved CPU cache locality.
 - Achieved *true* zero-allocation operations within the Open Set (eliminated millions of `Node` wrapper and `Double` boxing objects).
 - Renamed NodeCostProcessor -> CostProcessor
