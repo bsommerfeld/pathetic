@@ -15,7 +15,7 @@ import java.util.NoSuchElementException;
  *   <li>Automatically resizes when capacity is exceeded.
  * </ul>
  *
- * @since 6.0.0
+ * @since 5.4.1
  */
 public class PrimitiveMinHeap {
 

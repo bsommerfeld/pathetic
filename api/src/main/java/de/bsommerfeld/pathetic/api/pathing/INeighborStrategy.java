@@ -22,7 +22,7 @@ public interface INeighborStrategy {
    *
    * @param currentPosition The position for which to get neighbors.
    * @return An iterable of PathVectors.
-   * @since 6.0.0
+   * @since 5.4.1
    */
   default Iterable<PathVector> getOffsets(PathPosition currentPosition) {
     return getOffsets();

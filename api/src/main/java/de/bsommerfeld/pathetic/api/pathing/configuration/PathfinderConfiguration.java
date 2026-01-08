@@ -124,7 +124,7 @@ public class PathfinderConfiguration {
    *
    * <p>Default: false
    *
-   * @since 6.0.0
+   * @since 5.4.1
    */
   private final boolean reopenClosedNodes;
 
