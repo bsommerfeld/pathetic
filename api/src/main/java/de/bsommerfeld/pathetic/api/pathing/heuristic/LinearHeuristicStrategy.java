@@ -21,7 +21,7 @@ import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
  *
  * <p>Ideal for 3D grid-based environments with diagonal movement and path-straightness penalties.
  *
- * @apiNote This heuristic strategy operates on floored coordinates to ensure consistent and
+ * @api.Note This heuristic strategy operates on floored coordinates to ensure consistent and
  *     predictable pathfinding behavior in grid-based environments. The floored coordinates
  *     represent the discrete grid cell positions that nodes occupy, which is essential for
  *     maintaining the admissibility and consistency of heuristic calculations in traditional

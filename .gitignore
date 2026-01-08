@@ -3,3 +3,7 @@ target/
 *.iml
 dependency-reduced-pom.xml
 /javadoc/
+.flattened-pom.xml
+.DS_Store
+/docs/
+.vscode/

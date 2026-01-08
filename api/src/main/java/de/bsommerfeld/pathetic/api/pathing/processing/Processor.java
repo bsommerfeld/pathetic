@@ -6,7 +6,7 @@ import de.bsommerfeld.pathetic.api.pathing.processing.context.SearchContext;
  * Base interface for pathfinding processors. It defines lifecycle methods that can be implemented
  * by concrete processors to initialize or finalize resources or states related to a path search.
  *
- * @apiNote Processors must be thread-safe.
+ * @api.Note Processors must be thread-safe.
  */
 public interface Processor { // PathPosition is implied globally for pathetic
   /**
