@@ -1,4 +1,3 @@
-de.bsommerfeld.pathetic.api.annotation
 de.bsommerfeld.pathetic.api.factory
 de.bsommerfeld.pathetic.api.pathing
 de.bsommerfeld.pathetic.api.pathing.calc
@@ -15,6 +14,7 @@ de.bsommerfeld.pathetic.api.wrapper
 de.bsommerfeld.pathetic.engine
 de.bsommerfeld.pathetic.engine.factory
 de.bsommerfeld.pathetic.engine.pathfinder
+de.bsommerfeld.pathetic.engine.pathfinder.heap
 de.bsommerfeld.pathetic.engine.pathfinder.processing
 de.bsommerfeld.pathetic.engine.result
 de.bsommerfeld.pathetic.engine.util
