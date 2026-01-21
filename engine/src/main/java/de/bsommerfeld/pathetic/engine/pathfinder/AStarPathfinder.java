@@ -11,12 +11,8 @@ import de.bsommerfeld.pathetic.api.wrapper.PathVector;
 import de.bsommerfeld.pathetic.engine.Node;
 import de.bsommerfeld.pathetic.engine.pathfinder.heap.PrimitiveMinHeap;
 import de.bsommerfeld.pathetic.engine.pathfinder.processing.EvaluationContextImpl;
-import de.bsommerfeld.pathetic.engine.util.GridRegionData;
+import de.bsommerfeld.pathetic.engine.pathfinder.spatial.SpatialData;
 import de.bsommerfeld.pathetic.engine.util.RegionKey;
-import it.unimi.dsi.fastutil.longs.Long2DoubleMap;
-import it.unimi.dsi.fastutil.longs.Long2DoubleOpenHashMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
 /**
  * An A* pathfinding algorithm that uses a heuristic to guide the search toward the target. It
@@ -27,8 +23,8 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
  * <ul>
  *   <li>A primitive min-heap for the open set (priority queue).
  *   <li>Addressable heap handles for efficient G-cost updates (decrease-key).
- *   <li>A grid-based closed set with Bloom filters ({@link GridRegionData}) to quickly check
- *       expanded nodes.
+ *   <li>A spatial closed set with Bloom filters ({@link SpatialData}) to quickly check expanded
+ *       nodes.
  * </ul>
  *
  * <p>Thread-safety: Each pathfinding operation gets its own {@link PathfindingSession}, ensuring
@@ -64,7 +60,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
 
   @Override
   protected void initializeSearch() {
-    currentSession.set(new PathfindingSession());
+    currentSession.set(new PathfindingSession(pathfinderConfiguration));
   }
 
   /**
@@ -100,9 +96,8 @@ public final class AStarPathfinder extends AbstractPathfinder {
       }
 
       // Check if neighbor is in the closed set
-      GridRegionData regionData = session.getOrCreateRegionData(neighborPos);
-      if (regionData.getBloomFilter().mightContain(neighborPos)
-          && regionData.getRegionalExaminedPositions().contains(packedPos)) {
+      SpatialData regionData = session.getOrCreateSpatialData(neighborPos);
+      if (regionData.flod(neighborPos)) {
 
         /*
          * This block handles the edge case where we find a path to a node,
@@ -231,7 +226,6 @@ public final class AStarPathfinder extends AbstractPathfinder {
     if (newKey + Math.ulp(newKey) < oldKey) {
       // O(log n)
       openSet.insertOrUpdate(packedPos, newKey);
-
     }
     // edge-case handling
     else if (Math.abs(newKey - oldKey) <= Math.ulp(newKey)) {
@@ -297,9 +291,8 @@ public final class AStarPathfinder extends AbstractPathfinder {
     if (pathfinderConfiguration.shouldReopenClosedNodes())
       session.closedSetGCosts.put(packedPos, node.getGCost());
 
-    GridRegionData regionData = session.getOrCreateRegionData(position);
-    regionData.getBloomFilter().put(position);
-    regionData.getRegionalExaminedPositions().add(packedPos);
+    SpatialData regionData = session.getOrCreateSpatialData(position);
+    regionData.register(position);
   }
 
   @Override
@@ -314,35 +307,5 @@ public final class AStarPathfinder extends AbstractPathfinder {
           "Pathfinding session not initialized. Call initializeSearch() first.");
     }
     return session;
-  }
-
-  /**
-   * Manages state for a single pathfinding operation, ensuring thread-safety via isolation.
-   *
-   * @apiNote This class is not thread-safe and is used within a ThreadLocal. If used elsewhere,
-   *     developers must synchronize access to shared resources.
-   */
-  private class PathfindingSession {
-    private final Long2ObjectMap<GridRegionData> visitedRegions = new Long2ObjectOpenHashMap<>();
-    private final Long2ObjectMap<Node> openSetNodes = new Long2ObjectOpenHashMap<>();
-
-    private final Long2DoubleMap closedSetGCosts = new Long2DoubleOpenHashMap();
-
-    PathfindingSession() {
-      this.closedSetGCosts.defaultReturnValue(Double.NaN);
-    }
-
-    GridRegionData getOrCreateRegionData(PathPosition position) {
-      int cellSize = pathfinderConfiguration.getGridCellSize();
-
-      int rX = Math.floorDiv(position.getFlooredX(), cellSize);
-      int rY = Math.floorDiv(position.getFlooredY(), cellSize);
-      int rZ = Math.floorDiv(position.getFlooredZ(), cellSize);
-
-      long regionKey = RegionKey.pack(rX, rY, rZ);
-
-      return visitedRegions.computeIfAbsent(
-          regionKey, (long k) -> new GridRegionData(pathfinderConfiguration));
-    }
   }
 }
