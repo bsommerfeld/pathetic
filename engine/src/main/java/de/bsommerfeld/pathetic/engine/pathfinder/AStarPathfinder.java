@@ -96,8 +96,8 @@ public final class AStarPathfinder extends AbstractPathfinder {
       }
 
       // Check if neighbor is in the closed set
-      SpatialData regionData = session.getOrCreateSpatialData(neighborPos);
-      if (regionData.flod(neighborPos)) {
+      SpatialData spatialData = session.getOrCreateSpatialData(neighborPos);
+      if (spatialData.flod(neighborPos)) {
 
         /*
          * This block handles the edge case where we find a path to a node,
@@ -291,8 +291,8 @@ public final class AStarPathfinder extends AbstractPathfinder {
     if (pathfinderConfiguration.shouldReopenClosedNodes())
       session.closedSetGCosts.put(packedPos, node.getGCost());
 
-    SpatialData regionData = session.getOrCreateSpatialData(position);
-    regionData.register(position);
+    SpatialData spatialData = session.getOrCreateSpatialData(position);
+    spatialData.register(position);
   }
 
   @Override
