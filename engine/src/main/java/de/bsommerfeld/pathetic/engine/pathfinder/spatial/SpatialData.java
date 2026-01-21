@@ -1,18 +1,19 @@
-package de.bsommerfeld.pathetic.engine.util;
+package de.bsommerfeld.pathetic.engine.pathfinder.spatial;
 
 import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnel;
 import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
+import de.bsommerfeld.pathetic.engine.util.RegionKey;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 
 /**
- * The GridRegionData class represents the data associated with a grid region. This data includes a
+ * The SpatialData class represents the data associated with a grid region. This data includes a
  * Bloom filter used to quickly check if a position is within the region and a set of positions that
  * have been examined by the pathfinder.
  */
-public class GridRegionData {
+public class SpatialData {
 
   /**
    * The Bloom filter used to store the positions of the region. This filter is used to quickly
@@ -29,19 +30,19 @@ public class GridRegionData {
   private final LongSet regionalExaminedPositions;
 
   /**
-   * Creates a new GridRegionData with the specified Bloom filter settings.
+   * Creates a new SpatialData with the specified Bloom filter settings.
    *
    * @param bloomFilterSize The size of the Bloom filter
    * @param bloomFilterFpp The false positive probability of the Bloom filter
    */
-  public GridRegionData(int bloomFilterSize, double bloomFilterFpp) {
+  public SpatialData(int bloomFilterSize, double bloomFilterFpp) {
     Funnel<PathPosition> pathPositionFunnel =
         (pathPosition, into) ->
             into.putInt(pathPosition.getFlooredX())
                 .putInt(pathPosition.getFlooredY())
                 .putInt(pathPosition.getFlooredZ());
 
-    bloomFilter = BloomFilter.create(pathPositionFunnel, bloomFilterSize, bloomFilterFpp);
+    this.bloomFilter = BloomFilter.create(pathPositionFunnel, bloomFilterSize, bloomFilterFpp);
     this.regionalExaminedPositions = new LongOpenHashSet();
   }
 
@@ -50,15 +51,29 @@ public class GridRegionData {
    *
    * @param configuration The pathfinder configuration containing Bloom filter settings
    */
-  public GridRegionData(PathfinderConfiguration configuration) {
+  public SpatialData(PathfinderConfiguration configuration) {
     this(configuration.getBloomFilterSize(), configuration.getBloomFilterFpp());
   }
 
-  public BloomFilter<PathPosition> getBloomFilter() {
-    return bloomFilter;
+  /**
+   * Registers a given path position by adding it to the Bloom filter and marking it as examined
+   * within the regional positions set.
+   *
+   * @param pathPosition The position in the path to be registered. It represents a specific
+   *     location within the grid region.
+   */
+  public void register(PathPosition pathPosition) {
+    bloomFilter.put(pathPosition);
+    regionalExaminedPositions.add(RegionKey.pack(pathPosition));
   }
 
-  public LongSet getRegionalExaminedPositions() {
-    return regionalExaminedPositions;
+  /**
+   * First Line of Defence. This method first checks the bloom filter if it might contain the
+   * provided {@param pathPosition}. If true, it performs an expensive containment check on the
+   * examined positions.
+   */
+  public boolean flod(PathPosition pathPosition) {
+    return bloomFilter.mightContain(pathPosition)
+        && regionalExaminedPositions.contains(RegionKey.pack(pathPosition));
   }
 }
