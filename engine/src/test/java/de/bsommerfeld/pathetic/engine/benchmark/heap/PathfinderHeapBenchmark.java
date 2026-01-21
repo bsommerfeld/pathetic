@@ -82,8 +82,7 @@ public class PathfinderHeapBenchmark {
   public void benchQuaternaryMinHeap(Blackhole bh) {
     QuaternaryPrimitiveMinHeap heap = new QuaternaryPrimitiveMinHeap(operations);
     for (int i = 0; i < operations; i++) {
-      double cost = costs[i];
-      heap.insertOrUpdate(i, cost);
+      heap.insertOrUpdate(packedNodes[i], costs[i]);
       if (i % 5 == 0) {
         bh.consume(heap.extractMin());
       }
