@@ -12,7 +12,7 @@ import java.util.Random;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class PrimitiveMinHeapTest {
+public class PrimitiveMinHeapTest {
 
   private PrimitiveMinHeap heap;
 
@@ -175,11 +175,11 @@ class PrimitiveMinHeapTest {
   }
 
   // Helper class for comparison with PriorityQueue (Java 8 replacement for record)
-  private static class NodeWrapper {
+  public static class NodeWrapper {
     final long id;
     final double cost;
 
-    NodeWrapper(long id, double cost) {
+    public NodeWrapper(long id, double cost) {
       this.id = id;
       this.cost = cost;
     }
