@@ -231,5 +231,11 @@
             <version>1.37</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.jheaps</groupId>
+            <artifactId>jheaps</artifactId>
+            <version>0.14</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 </project>
