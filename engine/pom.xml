@@ -90,6 +90,10 @@
                                 <include>it/unimi/dsi/fastutil/longs/Long2ObjectOpenHashMap*</include>
                                 <include>it/unimi/dsi/fastutil/longs/Long2ObjectFunction*</include>
                                 <include>it/unimi/dsi/fastutil/longs/AbstractLong2Object*</include>
+                                
+                                <include>it/unimi/dsi/fastutil/longs/Long2DoubleMap*</include>
+                                <include>it/unimi/dsi/fastutil/longs/Long2DoubleOpenHashMap*</include>
+                                <include>it/unimi/dsi/fastutil/longs/AbstractLong2Double*</include>
 
                                 <include>it/unimi/dsi/fastutil/longs/Long2IntOpenHashMap*</include>
                                 <include>it/unimi/dsi/fastutil/longs/Long2IntMap*</include>
