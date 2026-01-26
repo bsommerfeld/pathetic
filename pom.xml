@@ -50,6 +50,7 @@
     </properties>
 
     <modules>
+        <module>.integration-tests</module>
         <module>api</module>
         <module>engine</module>
     </modules>
