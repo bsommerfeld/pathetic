@@ -1,7 +1,6 @@
 package de.bsommerfeld.pathetic.engine.pathfinder.heap;
 
-import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
-import java.util.NoSuchElementException;
+import java.util.Arrays;
 
 /**
  * A quaternary (4-ary) min-heap implementation optimized for pathfinding algorithms.
@@ -11,36 +10,36 @@ import java.util.NoSuchElementException;
  * have up to 4 children, which reduces the height of the tree compared to a binary heap, resulting
  * in fewer comparisons during sift operations.
  *
- * <p>The heap maintains two parallel arrays and a HashMap:
+ * <p>The heap maintains three parallel arrays:
  *
  * <ul>
- *   <li>{@code heap}: stores packed node coordinates (long) in heap order
+ *   <li>{@code heap}: stores node IDs in heap order
  *   <li>{@code costs}: stores the corresponding costs for each node
- *   <li>{@code nodeToIndexMap}: provides O(1) lookup from packed coordinate to heap position
+ *   <li>{@code idToPos}: provides O(1) lookup from node ID to heap position
  * </ul>
  *
  * <p>This implementation supports efficient decrease-key operations through the {@link
  * #insertOrUpdate(long, double)} method, which is essential for pathfinding algorithms like A* and
- * Dijkstra's algorithm. The heap automatically resizes when capacity is exceeded.
+ * Dijkstra's algorithm.
  *
  * @since 5.4.2
  */
 public class QuaternaryPrimitiveMinHeap {
 
-  /** Initial capacity of the heap arrays. */
+  /** Initial capacity for the heap when no capacity is specified. */
   private static final int INITIAL_CAPACITY = 1024;
 
-  /** Array storing packed node coordinates in heap order. */
+  /** Array storing node IDs in heap order. */
   private long[] heap;
 
   /** Array storing the cost associated with each node in the heap. */
   private double[] costs;
 
   /**
-   * Index mapping from packed coordinate to position in the heap. A value of -1 indicates the node
-   * is not in the heap.
+   * Index mapping from node ID to position in the heap. A value of -1 indicates the node is not in
+   * the heap.
    */
-  private final Long2IntOpenHashMap nodeToIndexMap;
+  private int[] idToPos;
 
   /** Current number of elements in the heap. */
   private int size = 0;
@@ -57,68 +56,15 @@ public class QuaternaryPrimitiveMinHeap {
   /**
    * Constructs a new quaternary min-heap with the specified initial capacity.
    *
-   * @param initialCapacity the initial size of the heap arrays
-   * @since 5.4.2
+   * @param initialCapacity the initial capacity for the heap
+   * @since 5.4.1
    */
   public QuaternaryPrimitiveMinHeap(int initialCapacity) {
     this.heap = new long[initialCapacity];
     this.costs = new double[initialCapacity];
-    this.nodeToIndexMap = new Long2IntOpenHashMap(initialCapacity);
-    this.nodeToIndexMap.defaultReturnValue(-1);
-  }
-
-  /**
-   * Returns whether the heap is empty.
-   *
-   * @return true if the heap contains no elements
-   * @since 5.4.2
-   */
-  public boolean isEmpty() {
-    return size == 0;
-  }
-
-  /**
-   * Returns the number of elements in the heap.
-   *
-   * @return the size of the heap
-   * @since 5.4.2
-   */
-  public int size() {
-    return size;
-  }
-
-  /**
-   * Removes all elements from the heap.
-   *
-   * @since 5.4.2
-   */
-  public void clear() {
-    size = 0;
-    nodeToIndexMap.clear();
-  }
-
-  /**
-   * Checks if a specific node (packed coordinate) is currently in the heap.
-   *
-   * @param packedNode the packed coordinate to check
-   * @return true if the node is in the heap
-   * @since 5.4.2
-   */
-  public boolean contains(long packedNode) {
-    return nodeToIndexMap.containsKey(packedNode);
-  }
-
-  /**
-   * Gets the current cost of a node in the heap.
-   *
-   * @param packedNode the packed coordinate
-   * @return the cost, or Double.MAX_VALUE if not present
-   * @since 5.4.2
-   */
-  public double getCost(long packedNode) {
-    int index = nodeToIndexMap.get(packedNode);
-    if (index == -1) return Double.MAX_VALUE;
-    return costs[index];
+    this.idToPos = new int[initialCapacity];
+    // Initialize all positions to -1 to indicate nodes are not in the heap
+    Arrays.fill(idToPos, -1);
   }
 
   /**
@@ -128,12 +74,14 @@ public class QuaternaryPrimitiveMinHeap {
    * already exists and the new cost is lower, the node's cost is updated (decrease-key operation).
    * If the new cost is higher or equal, no operation is performed.
    *
-   * @param packedNode the packed coordinate of the node
+   * @param nodeId the unique identifier of the node
    * @param cost the cost associated with the node
-   * @since 5.4.2
+   * @since 5.4.1
    */
-  public void insertOrUpdate(long packedNode, double cost) {
-    int pos = nodeToIndexMap.get(packedNode);
+  public void insertOrUpdate(long nodeId, double cost) {
+    int nodeIdInt = (int) nodeId;
+    ensureNodeIdCapacity(nodeIdInt);
+    int pos = idToPos[nodeIdInt];
     if (pos != -1) {
       // Node is already in the heap
       if (cost < costs[pos]) {
@@ -144,12 +92,46 @@ public class QuaternaryPrimitiveMinHeap {
       // If new cost is higher or equal, we ignore the update
     } else {
       // Node is not in the heap, insert it at the end
-      ensureCapacity();
+      ensureHeapCapacity();
       costs[size] = cost;
-      heap[size] = packedNode;
-      nodeToIndexMap.put(packedNode, size);
+      heap[size] = nodeId;
+      idToPos[nodeIdInt] = size;
       siftUp(size++);
     }
+  }
+
+  /**
+   * Ensures that the idToPos array has sufficient capacity for the given node ID.
+   *
+   * @param nodeId the node ID that needs to be accommodated
+   */
+  private void ensureNodeIdCapacity(int nodeId) {
+    if (nodeId >= idToPos.length) {
+      int newCapacity = Math.max(nodeId + 1, idToPos.length * 2);
+      int[] newIdToPos = new int[newCapacity];
+      Arrays.fill(newIdToPos, -1);
+      System.arraycopy(idToPos, 0, newIdToPos, 0, idToPos.length);
+      idToPos = newIdToPos;
+    }
+  }
+
+  /** Ensures that the heap and costs arrays have sufficient capacity for adding a new element. */
+  private void ensureHeapCapacity() {
+    if (size >= heap.length) {
+      int newCapacity = Math.max(heap.length * 2, 16);
+      heap = Arrays.copyOf(heap, newCapacity);
+      costs = Arrays.copyOf(costs, newCapacity);
+    }
+  }
+
+  /**
+   * Checks if the heap is empty.
+   *
+   * @return true if the heap contains no elements, false otherwise
+   * @since 5.4.2
+   */
+  public boolean isEmpty() {
+    return size == 0;
   }
 
   /**
@@ -158,48 +140,22 @@ public class QuaternaryPrimitiveMinHeap {
    * <p>This operation takes O(log n) time due to the sift-down operation needed to restore the heap
    * property after removing the root element.
    *
-   * @return the packed coordinate of the node with the minimum cost
-   * @throws NoSuchElementException if the heap is empty
-   * @since 5.4.2
+   * @return the ID of the node with the minimum cost
+   * @since 5.4.1
    */
   public long extractMin() {
-    if (size == 0) throw new NoSuchElementException();
-
-    long minNode = heap[0];
+    long minId = heap[0];
     // Mark the extracted node as no longer in the heap
-    nodeToIndexMap.remove(minNode);
+    idToPos[(int) minId] = -1;
     size--;
-
     if (size > 0) {
       // Move the last element to the root and restore heap property
-      long lastNode = heap[size];
-      double lastCost = costs[size];
-      heap[0] = lastNode;
-      costs[0] = lastCost;
-      nodeToIndexMap.put(lastNode, 0);
+      heap[0] = heap[size];
+      costs[0] = costs[size];
+      idToPos[(int) heap[0]] = 0;
       siftDown(0);
     }
-    return minNode;
-  }
-
-  /**
-   * Ensures that the heap has sufficient capacity. Doubles the capacity if needed.
-   *
-   * @since 5.4.2
-   */
-  private void ensureCapacity() {
-    if (size >= heap.length) {
-      int newCapacity = heap.length * 2;
-      long[] newHeap = new long[newCapacity];
-      double[] newCosts = new double[newCapacity];
-
-      System.arraycopy(heap, 0, newHeap, 0, heap.length);
-      System.arraycopy(costs, 0, newCosts, 0, costs.length);
-
-      this.heap = newHeap;
-      this.costs = newCosts;
-      // HashMap handles its own resizing automatically
-    }
+    return minId;
   }
 
   /**
@@ -215,25 +171,24 @@ public class QuaternaryPrimitiveMinHeap {
    * @param index the starting position of the node to sift up
    */
   private void siftUp(int index) {
-    long nodeToMove = heap[index];
-    double costToMove = costs[index];
-
+    long id = heap[index];
+    double cost = costs[index];
     while (index > 0) {
       // Calculate parent index using unsigned right shift: (index - 1) / 4
       int parent = (index - 1) >>> 2;
       // If heap property is satisfied, we're done
-      if (costToMove >= costs[parent]) break;
+      if (cost >= costs[parent]) break;
 
       // Move parent down
       heap[index] = heap[parent];
       costs[index] = costs[parent];
-      nodeToIndexMap.put(heap[index], index);
+      idToPos[(int) heap[index]] = index;
       index = parent;
     }
     // Place the node in its final position
-    heap[index] = nodeToMove;
-    costs[index] = costToMove;
-    nodeToIndexMap.put(nodeToMove, index);
+    heap[index] = id;
+    costs[index] = cost;
+    idToPos[(int) id] = index;
   }
 
   /**
@@ -250,9 +205,8 @@ public class QuaternaryPrimitiveMinHeap {
    * @param index the starting position of the node to sift down
    */
   private void siftDown(int index) {
-    long nodeToMove = heap[index];
-    double costToMove = costs[index];
-
+    long id = heap[index];
+    double cost = costs[index];
     while (true) {
       // Calculate index of first child: 4 * index + 1
       int firstChild = (index << 2) + 1;
@@ -273,17 +227,17 @@ public class QuaternaryPrimitiveMinHeap {
       }
 
       // If heap property is satisfied, we're done
-      if (costToMove <= minCost) break;
+      if (cost <= minCost) break;
 
       // Move the minimum child up
       heap[index] = heap[minChild];
       costs[index] = minCost;
-      nodeToIndexMap.put(heap[index], index);
+      idToPos[(int) heap[index]] = index;
       index = minChild;
     }
     // Place the node in its final position
-    heap[index] = nodeToMove;
-    costs[index] = costToMove;
-    nodeToIndexMap.put(nodeToMove, index);
+    heap[index] = id;
+    costs[index] = cost;
+    idToPos[(int) id] = index;
   }
 }

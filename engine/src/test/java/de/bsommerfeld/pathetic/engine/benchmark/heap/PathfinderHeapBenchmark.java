@@ -26,7 +26,7 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 @Fork(1)
 public class PathfinderHeapBenchmark {
 
-  @Param({"1000", "10000"})
+  @Param({"1000", "10000", "100000"})
   private int operations;
 
   private long[] packedNodes;
@@ -60,10 +60,19 @@ public class PathfinderHeapBenchmark {
     isUpdate = new boolean[operations];
     baritoneNodes = new PathNode[operations];
 
+    // Create a smaller pool of unique nodes to allow realistic updates
+    int uniqueNodes = operations / 2;
+
     for (int i = 0; i < operations; i++) {
-      packedNodes[i] = random.nextLong();
+      // Reuse node IDs to enable updates (30% of the time reference existing nodes)
+      int nodeId = random.nextInt(uniqueNodes);
+      packedNodes[i] = nodeId;
       costs[i] = random.nextDouble() * 100;
       isUpdate[i] = random.nextDouble() < 0.3;
+    }
+
+    // Create PathNode instances for Baritone (one per unique ID)
+    for (int i = 0; i < uniqueNodes; i++) {
       baritoneNodes[i] = new PathNode(i, 0, 0);
     }
   }
@@ -74,16 +83,16 @@ public class PathfinderHeapBenchmark {
     PrimitiveMinHeap heap = new PrimitiveMinHeap(operations);
     for (int i = 0; i < operations; i++) {
       heap.insertOrUpdate(packedNodes[i], costs[i]);
-      if (i % 5 == 0) bh.consume(heap.extractMin());
+      if (i % 5 == 0 && !heap.isEmpty()) bh.consume(heap.extractMin());
     }
   }
 
   @Benchmark
-  public void benchQuaternaryMinHeap(Blackhole bh) {
+  public void benchQuaternaryPrimitiveMinHeap(Blackhole bh) {
     QuaternaryPrimitiveMinHeap heap = new QuaternaryPrimitiveMinHeap(operations);
     for (int i = 0; i < operations; i++) {
       heap.insertOrUpdate(packedNodes[i], costs[i]);
-      if (i % 5 == 0) {
+      if (i % 5 == 0 && !heap.isEmpty()) {
         bh.consume(heap.extractMin());
       }
     }
@@ -93,12 +102,13 @@ public class PathfinderHeapBenchmark {
   public void benchBaritoneHeap(Blackhole bh) {
     BinaryHeapOpenSet heap = new BinaryHeapOpenSet(operations);
     for (int i = 0; i < operations; i++) {
-      PathNode node = baritoneNodes[i];
+      int nodeId = (int) packedNodes[i];
+      PathNode node = baritoneNodes[nodeId];
       node.combinedCost = costs[i];
-      if (node.heapPosition == -1) {
-        heap.insert(node);
-      } else {
+      if (node.heapPosition != -1) {
         heap.update(node);
+      } else {
+        heap.insert(node);
       }
       if (i % 5 == 0 && !heap.isEmpty()) bh.consume(heap.removeLowest());
     }
@@ -112,15 +122,16 @@ public class PathfinderHeapBenchmark {
     for (int i = 0; i < operations; i++) {
       long node = packedNodes[i];
       double cost = costs[i];
-      if (isUpdate[i] && handles.containsKey(node)) {
+      if (handles.containsKey(node)) {
         try {
           handles.get(node).decreaseKey(cost);
         } catch (IllegalArgumentException ignored) {
+          // Cost is not lower, treat as no-op like insertOrUpdate does
         }
       } else {
         handles.put(node, heap.insert(cost, node));
       }
-      if (i % 5 == 0) bh.consume(heap.deleteMin());
+      if (i % 5 == 0 && !heap.isEmpty()) bh.consume(heap.deleteMin());
     }
   }
 
@@ -132,7 +143,7 @@ public class PathfinderHeapBenchmark {
     for (int i = 0; i < operations; i++) {
       long node = packedNodes[i];
       double cost = costs[i];
-      if (isUpdate[i] && map.containsKey(node)) {
+      if (map.containsKey(node)) {
         NodeWrapper old = map.get(node);
         pq.remove(old);
         NodeWrapper next = new NodeWrapper(node, cost);
@@ -143,7 +154,7 @@ public class PathfinderHeapBenchmark {
         pq.add(next);
         map.put(node, next);
       }
-      if (i % 5 == 0) bh.consume(pq.poll());
+      if (i % 5 == 0 && !pq.isEmpty()) bh.consume(pq.poll());
     }
   }
 
