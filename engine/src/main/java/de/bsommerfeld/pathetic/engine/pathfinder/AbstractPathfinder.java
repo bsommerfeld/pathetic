@@ -248,6 +248,8 @@ public abstract class AbstractPathfinder implements Pathfinder {
         try {
           processor.finalizeSearch(searchContext);
         } catch (Exception e) {
+          // We do not want to interrupt the cleanup process, so we literally "catch" them into a
+          // List to display them
           finalizeErrors.add(e);
         }
       }
