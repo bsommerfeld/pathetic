@@ -236,9 +236,10 @@ public abstract class AbstractPathfinder implements Pathfinder {
       return determinePostLoopResult(currentDepth, start, target, bestFallbackNode);
     } catch (Exception e) {
       if (pathfinderConfiguration.isAsync()) {
-        throw e; // Re-throw in async mode to be handled by exceptionally
+        throw ErrorLogger.logFatalErrorWithStacktrace(
+            "Pathfinding algorithm failed",
+            e); // Re-throw in async mode to be handled by exceptionally
       }
-      ErrorLogger.logFatalErrorWithStacktrace("Pathfinding algorithm failed", e);
       return new PathfinderResultImpl(
           PathState.FAILED, new PathImpl(start, target, EMPTY_PATH_POSITIONS));
     } finally {
