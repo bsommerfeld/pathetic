@@ -11,7 +11,6 @@ public class PathPosition implements Cloneable {
   private double x;
   private double y;
   private double z;
-
   /**
    * Constructs a {@code PathPosition} with the specified coordinates.
    *
@@ -23,6 +22,18 @@ public class PathPosition implements Cloneable {
     this.x = x;
     this.y = y;
     this.z = z;
+  }
+
+  /**
+   * Creates a new {@code PathPosition} instance with the specified coordinates.
+   *
+   * @param x The x-coordinate of the position.
+   * @param y The y-coordinate of the position.
+   * @param z The z-coordinate of the position.
+   * @return A new {@code PathPosition} instance.
+   */
+  public static PathPosition of(double x, double y, double z) {
+    return new PathPosition(x, y, z);
   }
 
   /**

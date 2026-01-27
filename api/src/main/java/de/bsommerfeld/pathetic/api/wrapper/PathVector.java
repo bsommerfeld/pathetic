@@ -27,6 +27,18 @@ public class PathVector implements Cloneable {
   }
 
   /**
+   * Creates a new {@code PathVector} instance with the specified components.
+   *
+   * @param x The x-component of the vector.
+   * @param y The y-component of the vector.
+   * @param z The z-component of the vector.
+   * @return A new {@code PathVector} instance.
+   */
+  public static PathVector of(double x, double y, double z) {
+    return new PathVector(x, y, z);
+  }
+
+  /**
    * Computes the distance between a point and a line segment.
    *
    * @param A The point represented as a {@code PathVector}.
