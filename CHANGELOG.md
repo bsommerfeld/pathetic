@@ -3,6 +3,7 @@
 ### Added
 
 - introduced `.of(double, double, double)` factory methods for PathVector and PathPosition
+- introduced `Depth#value()`
 
 ### Changed
 
@@ -11,4 +12,6 @@
 ### Fixed
 
 ### Removed
+
+- deprecated `Depth#getValue()`
 

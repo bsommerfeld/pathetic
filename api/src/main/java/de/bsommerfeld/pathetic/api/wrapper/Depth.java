@@ -12,6 +12,12 @@ public class Depth {
     this.value = value;
   }
 
+  /**
+   * Creates a new {@code Depth} instance with the specified value.
+   *
+   * @param value The initial depth value.
+   * @return A new {@code Depth} instance.
+   */
   public static Depth of(int value) {
     return new Depth(value);
   }
@@ -21,7 +27,23 @@ public class Depth {
     value++;
   }
 
+  /**
+   * Returns the current depth value.
+   *
+   * @deprecated {@link #value()}
+   * @return The current depth value.
+   */
+  @Deprecated
   public int getValue() {
+    return this.value;
+  }
+
+  /**
+   * Returns the current depth value.
+   *
+   * @return The current depth value.
+   */
+  public int value() {
     return this.value;
   }
 
