@@ -36,9 +36,20 @@ public final class Cost {
    * Returns the numerical cost value.
    *
    * @return The cost value.
+   * @deprecated Use {@link #value()} instead.
    */
+  @Deprecated
   public double getValue() {
     return value;
+  }
+
+  /**
+   * Returns the numerical cost value.
+   *
+   * @return The cost value.
+   */
+  public double value() {
+    return this.value;
   }
 
   @Override

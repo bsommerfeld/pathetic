@@ -4,6 +4,7 @@
 
 - introduced `.of(double, double, double)` factory methods for PathVector and PathPosition
 - introduced `Depth#value()`
+- introduced `Cost#value()`
 
 ### Changed
 
@@ -15,4 +16,5 @@
 
 - deprecated `Depth#getValue()`
 - deprecated `Pathfinder#abort()`
+- deprecated `Cost#getValue()`
 
