@@ -2,8 +2,8 @@ package de.bsommerfeld.pathetic.engine.benchmark.heap;
 
 import de.bsommerfeld.pathetic.engine.benchmark.heap.baritone.BinaryHeapOpenSet;
 import de.bsommerfeld.pathetic.engine.benchmark.heap.baritone.PathNode;
-import de.bsommerfeld.pathetic.engine.pathfinder.heap.PrimitiveMinHeap;
-import de.bsommerfeld.pathetic.engine.pathfinder.heap.QuaternaryPrimitiveMinHeap;
+import de.bsommerfeld.pathetic.engine.pathfinder.heap.impl.PrimitiveMinHeap;
+import de.bsommerfeld.pathetic.engine.pathfinder.heap.impl.QuaternaryPrimitiveMinHeap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.PriorityQueue;

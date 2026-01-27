@@ -1,4 +1,8 @@
-package de.bsommerfeld.pathetic.engine.pathfinder.heap;
+package de.bsommerfeld.pathetic.engine.pathfinder.heap.impl;
+
+import de.bsommerfeld.pathetic.engine.pathfinder.heap.MinHeap;
+import de.bsommerfeld.pathetic.engine.pathfinder.heap.Resizable;
+import de.bsommerfeld.pathetic.engine.pathfinder.heap.Siftable;
 
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import java.util.NoSuchElementException;
@@ -6,18 +10,24 @@ import java.util.NoSuchElementException;
 /**
  * A highly optimized, array-backed binary min-heap for A* pathfinding.
  *
- * <p>
+ * <p>This implementation provides {@link MinHeap} contract with additional optimizations:
  *
  * <ul>
  *   <li>Guarantees <b>zero object allocations</b> during runtime (hot-path).
  *   <li>Uses primitive arrays for perfect CPU cache locality.
  *   <li>Supports O(log n) {@code decreaseKey} operations via an internal lookup map.
- *   <li>Automatically resizes when capacity is exceeded.
+ *   <li>Automatically resizes when capacity is exceeded (see {@link Resizable}).
+ *   <li>Uses 1-based indexing internally for efficient parent/child calculations.
  * </ul>
  *
+ * <p>Implements {@link Siftable} for heap property maintenance through sift operations.
+ *
  * @since 5.4.1
+ * @see MinHeap
+ * @see Siftable
+ * @see Resizable
  */
-public class PrimitiveMinHeap {
+public class PrimitiveMinHeap implements MinHeap, Siftable, Resizable {
 
   // Maps packed-coordinate -> current index in the heap arrays.
   // Crucial for O(1) lookup to perform fast decreaseKey.
@@ -39,42 +49,35 @@ public class PrimitiveMinHeap {
     this.nodeToIndexMap.defaultReturnValue(-1); // -1 indicates "not in heap"
   }
 
+  @Override
   public boolean isEmpty() {
     return size == 0;
   }
 
+  @Override
   public int size() {
     return size;
   }
 
+  @Override
   public void clear() {
     size = 0;
     nodeToIndexMap.clear();
   }
 
-  /** Checks if a specific node (packed coordinate) is currently in the open set. */
+  @Override
   public boolean contains(long packedNode) {
     return nodeToIndexMap.containsKey(packedNode);
   }
 
-  /**
-   * Gets the current cost of a node in the heap. Useful to check if we found a cheaper path before
-   * calling insertOrUpdate.
-   *
-   * @return The cost, or Double.MAX_VALUE if not present.
-   */
+  @Override
   public double getCost(long packedNode) {
     int index = nodeToIndexMap.get(packedNode);
     if (index == -1) return Double.MAX_VALUE;
     return costs[index];
   }
 
-  /**
-   * Inserts a new node or updates an existing one if the new cost is lower (decreaseKey).
-   *
-   * @param packedNode The coordinate packed as long.
-   * @param cost The F-Cost (G + H).
-   */
+  @Override
   public void insertOrUpdate(long packedNode, double cost) {
     int existingIndex = nodeToIndexMap.get(packedNode);
 
@@ -96,11 +99,7 @@ public class PrimitiveMinHeap {
     }
   }
 
-  /**
-   * Removes and returns the node with the lowest cost (root of the heap).
-   *
-   * @return The packed coordinate of the best node.
-   */
+  @Override
   public long extractMin() {
     if (size == 0) throw new NoSuchElementException();
 
@@ -127,7 +126,13 @@ public class PrimitiveMinHeap {
     return minNode;
   }
 
-  private void ensureCapacity() {
+  @Override
+  public int capacity() {
+    return nodes.length - 1; // -1 because we use 1-based indexing
+  }
+
+  @Override
+  public void ensureCapacity() {
     // Check if we hit the limit (index == length - 1)
     if (size >= nodes.length - 1) {
       int newCap = nodes.length * 2;
@@ -144,7 +149,8 @@ public class PrimitiveMinHeap {
     }
   }
 
-  private void siftUp(int index) {
+  @Override
+  public void siftUp(int index) {
     int current = index;
     long nodeToMove = nodes[current];
     double costToMove = costs[current];
@@ -172,7 +178,8 @@ public class PrimitiveMinHeap {
     nodeToIndexMap.put(nodeToMove, current);
   }
 
-  private void siftDown(int index) {
+  @Override
+  public void siftDown(int index) {
     int current = index;
     long nodeToMove = nodes[current];
     double costToMove = costs[current];

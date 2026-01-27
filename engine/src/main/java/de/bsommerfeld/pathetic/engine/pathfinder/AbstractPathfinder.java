@@ -18,7 +18,8 @@ import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
 import de.bsommerfeld.pathetic.api.wrapper.Depth;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.engine.Node;
-import de.bsommerfeld.pathetic.engine.pathfinder.heap.PrimitiveMinHeap;
+import de.bsommerfeld.pathetic.engine.pathfinder.heap.MinHeap;
+import de.bsommerfeld.pathetic.engine.pathfinder.heap.impl.PrimitiveMinHeap;
 import de.bsommerfeld.pathetic.engine.pathfinder.processing.EvaluationContextImpl;
 import de.bsommerfeld.pathetic.engine.pathfinder.processing.SearchContextImpl;
 import de.bsommerfeld.pathetic.engine.result.PathImpl;
@@ -50,7 +51,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
 
   protected static final Set<PathPosition> EMPTY_PATH_POSITIONS =
       Collections.unmodifiableSet(new LinkedHashSet<>(0));
-
+  private static final int INITIAL_CAPACITY = 1024;
   private static final double TIE_BREAKER_WEIGHT = 1e-6;
   private static final ExecutorService PATHING_EXECUTOR_SERVICE =
       Executors.newWorkStealingPool(Math.max(1, Runtime.getRuntime().availableProcessors() / 2));
@@ -184,8 +185,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
         }
       }
 
-      // TODO: bsommerfeld 24.11.2025: Magic number, we can turn this into a configurable later
-      PrimitiveMinHeap openSet = new PrimitiveMinHeap(1024);
+      MinHeap openSet = new PrimitiveMinHeap(INITIAL_CAPACITY);
 
       double startKey;
       try {
@@ -380,13 +380,13 @@ public abstract class AbstractPathfinder implements Pathfinder {
   }
 
   /** Inserts the start node into the open set and updates any internal mapping. */
-  protected abstract void insertStartNode(Node node, double fCost, PrimitiveMinHeap openSet);
+  protected abstract void insertStartNode(Node node, double fCost, MinHeap openSet);
 
   /**
    * Extracts the node with the lowest cost from the open set and retrieves the corresponding Node
    * object.
    */
-  protected abstract Node extractBestNode(PrimitiveMinHeap openSet);
+  protected abstract Node extractBestNode(MinHeap openSet);
 
   /**
    * Prepares the algorithm-specific initial setup required before executing the pathfinding logic.
@@ -432,6 +432,6 @@ public abstract class AbstractPathfinder implements Pathfinder {
       PathPosition requestStart,
       PathPosition requestTarget,
       Node currentNode,
-      PrimitiveMinHeap openSet,
+      MinHeap openSet,
       SearchContext searchContext);
 }

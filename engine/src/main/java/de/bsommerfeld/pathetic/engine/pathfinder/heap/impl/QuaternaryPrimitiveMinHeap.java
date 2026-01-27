@@ -1,14 +1,16 @@
-package de.bsommerfeld.pathetic.engine.pathfinder.heap;
+package de.bsommerfeld.pathetic.engine.pathfinder.heap.impl;
 
+import de.bsommerfeld.pathetic.engine.pathfinder.heap.MinHeap;
+import de.bsommerfeld.pathetic.engine.pathfinder.heap.Resizable;
+import de.bsommerfeld.pathetic.engine.pathfinder.heap.Siftable;
 import java.util.Arrays;
 
 /**
  * A quaternary (4-ary) min-heap implementation optimized for pathfinding algorithms.
  *
- * <p>This heap uses primitive arrays for memory efficiency and cache locality, making it
- * particularly suitable for performance-critical pathfinding operations. Each node in the heap can
- * have up to 4 children, which reduces the height of the tree compared to a binary heap, resulting
- * in fewer comparisons during sift operations.
+ * <p>This implementation provides {@link MinHeap} contract using a quaternary tree structure. Each
+ * node in the heap can have up to 4 children, which reduces the height of the tree compared to a
+ * binary heap, resulting in fewer comparisons during sift operations.
  *
  * <p>The heap maintains three parallel arrays:
  *
@@ -18,13 +20,16 @@ import java.util.Arrays;
  *   <li>{@code idToPos}: provides O(1) lookup from node ID to heap position
  * </ul>
  *
- * <p>This implementation supports efficient decrease-key operations through the {@link
- * #insertOrUpdate(long, double)} method, which is essential for pathfinding algorithms like A* and
- * Dijkstra's algorithm.
+ * <p>This implementation uses 0-based indexing and automatically resizes when capacity is exceeded
+ * (see {@link Resizable}). Implements {@link Siftable} for heap property maintenance through sift
+ * operations with quaternary parent/child relationships.
  *
  * @since 5.4.2
+ * @see MinHeap
+ * @see Siftable
+ * @see Resizable
  */
-public class QuaternaryPrimitiveMinHeap {
+public class QuaternaryPrimitiveMinHeap implements MinHeap, Siftable, Resizable {
 
   /** Initial capacity for the heap when no capacity is specified. */
   private static final int INITIAL_CAPACITY = 1024;
@@ -67,17 +72,7 @@ public class QuaternaryPrimitiveMinHeap {
     Arrays.fill(idToPos, -1);
   }
 
-  /**
-   * Inserts a new node or updates an existing node's cost in the heap.
-   *
-   * <p>If the node is not currently in the heap, it is inserted with the given cost. If the node
-   * already exists and the new cost is lower, the node's cost is updated (decrease-key operation).
-   * If the new cost is higher or equal, no operation is performed.
-   *
-   * @param nodeId the unique identifier of the node
-   * @param cost the cost associated with the node
-   * @since 5.4.1
-   */
+  @Override
   public void insertOrUpdate(long nodeId, double cost) {
     int nodeIdInt = (int) nodeId;
     ensureNodeIdCapacity(nodeIdInt);
@@ -115,6 +110,16 @@ public class QuaternaryPrimitiveMinHeap {
     }
   }
 
+  @Override
+  public int capacity() {
+    return heap.length;
+  }
+
+  @Override
+  public void ensureCapacity() {
+    ensureHeapCapacity();
+  }
+
   /** Ensures that the heap and costs arrays have sufficient capacity for adding a new element. */
   private void ensureHeapCapacity() {
     if (size >= heap.length) {
@@ -124,25 +129,43 @@ public class QuaternaryPrimitiveMinHeap {
     }
   }
 
+  @Override
+  public int size() {
+    return size;
+  }
+
+  @Override
+  public void clear() {
+    size = 0;
+    Arrays.fill(idToPos, -1);
+  }
+
+  @Override
+  public boolean contains(long nodeId) {
+    int nodeIdInt = (int) nodeId;
+    return nodeIdInt < idToPos.length && idToPos[nodeIdInt] != -1;
+  }
+
+  @Override
+  public double getCost(long nodeId) {
+    int nodeIdInt = (int) nodeId;
+    if (nodeIdInt >= idToPos.length) return Double.MAX_VALUE;
+    int pos = idToPos[nodeIdInt];
+    return pos == -1 ? Double.MAX_VALUE : costs[pos];
+  }
+
   /**
    * Checks if the heap is empty.
    *
    * @return true if the heap contains no elements, false otherwise
    * @since 5.4.2
    */
+  @Override
   public boolean isEmpty() {
     return size == 0;
   }
 
-  /**
-   * Removes and returns the node with the minimum cost from the heap.
-   *
-   * <p>This operation takes O(log n) time due to the sift-down operation needed to restore the heap
-   * property after removing the root element.
-   *
-   * @return the ID of the node with the minimum cost
-   * @since 5.4.1
-   */
+  @Override
   public long extractMin() {
     long minId = heap[0];
     // Mark the extracted node as no longer in the heap
@@ -170,7 +193,8 @@ public class QuaternaryPrimitiveMinHeap {
    *
    * @param index the starting position of the node to sift up
    */
-  private void siftUp(int index) {
+  @Override
+  public void siftUp(int index) {
     long id = heap[index];
     double cost = costs[index];
     while (index > 0) {
@@ -204,7 +228,8 @@ public class QuaternaryPrimitiveMinHeap {
    *
    * @param index the starting position of the node to sift down
    */
-  private void siftDown(int index) {
+  @Override
+  public void siftDown(int index) {
     long id = heap[index];
     double cost = costs[index];
     while (true) {

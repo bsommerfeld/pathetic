@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import de.bsommerfeld.pathetic.engine.pathfinder.heap.impl.PrimitiveMinHeap;
 import java.util.Comparator;
 import java.util.NoSuchElementException;
 import java.util.PriorityQueue;
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 public class PrimitiveMinHeapTest {
 
-  private PrimitiveMinHeap heap;
+  private MinHeap heap;
 
   @BeforeEach
   void setUp() {

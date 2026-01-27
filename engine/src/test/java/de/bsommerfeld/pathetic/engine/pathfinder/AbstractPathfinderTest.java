@@ -16,6 +16,8 @@ import de.bsommerfeld.pathetic.api.provider.NavigationPoint;
 import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.engine.Node;
+import de.bsommerfeld.pathetic.engine.pathfinder.heap.MinHeap;
+import de.bsommerfeld.pathetic.engine.util.RegionKey;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,9 +29,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import de.bsommerfeld.pathetic.engine.pathfinder.heap.PrimitiveMinHeap;
-import de.bsommerfeld.pathetic.engine.util.RegionKey;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -169,14 +168,14 @@ class AbstractPathfinderTest {
     // --- NEUE ABSTRAKTE METHODEN IMPLEMENTIEREN ---
 
     @Override
-    protected void insertStartNode(Node node, double fCost, PrimitiveMinHeap openSet) {
+    protected void insertStartNode(Node node, double fCost, MinHeap openSet) {
       long packedPos = RegionKey.pack(node.getPosition());
       openSet.insertOrUpdate(packedPos, fCost);
       testNodeMap.put(packedPos, node);
     }
 
     @Override
-    protected Node extractBestNode(PrimitiveMinHeap openSet) {
+    protected Node extractBestNode(MinHeap openSet) {
       long packedPos = openSet.extractMin();
       Node node = testNodeMap.get(packedPos);
       testNodeMap.remove(packedPos);
@@ -200,7 +199,7 @@ class AbstractPathfinderTest {
         PathPosition requestStart,
         PathPosition requestTarget,
         Node currentNode,
-        PrimitiveMinHeap openSet, // Typ angepasst!
+        MinHeap openSet, // Typ angepasst!
         SearchContext searchContext) {
 
       if (abortImmediately) {

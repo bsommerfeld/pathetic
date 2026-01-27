@@ -9,7 +9,7 @@ import de.bsommerfeld.pathetic.api.pathing.processing.context.SearchContext;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.api.wrapper.PathVector;
 import de.bsommerfeld.pathetic.engine.Node;
-import de.bsommerfeld.pathetic.engine.pathfinder.heap.PrimitiveMinHeap;
+import de.bsommerfeld.pathetic.engine.pathfinder.heap.MinHeap;
 import de.bsommerfeld.pathetic.engine.pathfinder.processing.EvaluationContextImpl;
 import de.bsommerfeld.pathetic.engine.pathfinder.spatial.SpatialData;
 import de.bsommerfeld.pathetic.engine.util.RegionKey;
@@ -39,7 +39,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
   }
 
   @Override
-  protected void insertStartNode(Node node, double fCost, PrimitiveMinHeap openSet) {
+  protected void insertStartNode(Node node, double fCost, MinHeap openSet) {
     PathfindingSession session = getSessionOrThrow();
     long packedPos = RegionKey.pack(node.getPosition());
 
@@ -48,7 +48,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
   }
 
   @Override
-  protected Node extractBestNode(PrimitiveMinHeap openSet) {
+  protected Node extractBestNode(MinHeap openSet) {
     PathfindingSession session = getSessionOrThrow();
 
     long packedPos = openSet.extractMin();
@@ -78,7 +78,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
       PathPosition start,
       PathPosition target,
       Node currentNode,
-      PrimitiveMinHeap openSet,
+      MinHeap openSet,
       SearchContext searchContext) {
 
     PathfindingSession session = getSessionOrThrow();
@@ -200,7 +200,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
       long packedPos,
       Node currentNode,
       SearchContext searchContext,
-      PrimitiveMinHeap openSet) {
+      MinHeap openSet) {
 
     EvaluationContext context =
         new EvaluationContextImpl(
