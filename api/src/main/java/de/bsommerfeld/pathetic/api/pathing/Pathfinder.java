@@ -48,7 +48,10 @@ public interface Pathfinder {
    * de.bsommerfeld.pathetic.api.pathing.result.PathState#ABORTED} as soon as possible.
    *
    * @see de.bsommerfeld.pathetic.api.pathing.result.PathState#ABORTED
+   * @deprecated This method might change/be removed in future versions. The current state of this
+   *     method is not as intended, and a per-search approach is planned to replace this soon.
    */
+  @Deprecated
   void abort();
 
   /**

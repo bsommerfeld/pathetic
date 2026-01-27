@@ -14,4 +14,5 @@
 ### Removed
 
 - deprecated `Depth#getValue()`
+- deprecated `Pathfinder#abort()`
 
