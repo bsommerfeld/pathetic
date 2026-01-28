@@ -46,7 +46,7 @@ jobs:
 
       - name: Update Release with Changelog
         if: always()
-        uses: bsommerfeld/release-changelog@0.1
+        uses: bsommerfeld/release-changelog@v0.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           prepend-text: |
