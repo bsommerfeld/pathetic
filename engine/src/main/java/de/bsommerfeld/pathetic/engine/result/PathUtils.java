@@ -19,7 +19,11 @@ import java.util.Deque;
  * @see Path
  * @see PathPosition
  * @since 5.3.3
+ * @deprecated Pathetic's future focus will rely heavily on finding paths, not modifying or
+ *     post-processing them. This class is maintained for backward compatibility until a dedicated
+ *     post-processing module is available.
  */
+@Deprecated
 public final class PathUtils {
 
   /** Private constructor to prevent instantiation. This is a utility class. */

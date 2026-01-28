@@ -20,4 +20,5 @@
 - deprecated `Cost#getValue()`
 - ErrorLogger has been removed
 - tinylog dependencies have been removed
+- deprecated PathUtils
 
