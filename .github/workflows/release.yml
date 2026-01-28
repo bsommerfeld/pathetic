@@ -51,5 +51,3 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           prepend-text: |
             ${{ steps.badges.outputs.build-badge }} ${{ steps.badges.outputs.test-badge }}
-
-            ## Release ${{ github.ref_name }}
