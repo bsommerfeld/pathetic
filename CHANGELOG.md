@@ -9,6 +9,7 @@
 ### Changed
 
 - introduced `MinHeap`, `Resizable`, `Siftable` interfaces to abstract the heap implementations
+- extracted release workflow into [own repository](https://github.com/bsommerfeld/release-changelog)
 
 ### Fixed
 
