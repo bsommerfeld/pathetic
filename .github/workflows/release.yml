@@ -17,7 +17,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 #
+          fetch-depth: 0
 
       - name: Set up JDK
         uses: actions/setup-java@v4
@@ -30,20 +30,9 @@ jobs:
         id: build_test
         run: mvn clean install -U -Dgpg.skip=true
 
-      - name: Create Draft GitHub Release
-        id: create_release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: Release ${{ github.ref_name }}
-          body: "Release notes are being generated..." # Platzhalter-Text
-          draft: true
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Prepare Release Notes File
-        id: prep_notes
+      - name: Prepare Build Status Badges
+        id: badges
         run: |
-          # Build/Test Status auswerten
           if [ "${{ steps.build_test.outcome }}" = "success" ]; then
             BUILD_BADGE="![Build Success](https://img.shields.io/badge/Build-Success-brightgreen)"
             TEST_BADGE="![Tests Succeeded](https://img.shields.io/badge/Tests-Succeeded-brightgreen)"
@@ -52,79 +41,15 @@ jobs:
             TEST_BADGE="![Tests Failed](https://img.shields.io/badge/Tests-Failed-red)"
           fi
 
-          CHANGELOG_CONTENT=$(cat CHANGELOG.md 2>/dev/null || echo "*Kein Changelog für dieses Release gefunden.*")
-          
-          # Schreibe den finalen Body in eine lokale Datei
-          echo -e "${BUILD_BADGE} ${TEST_BADGE}\n\n${CHANGELOG_CONTENT}" > release_notes.md
-          
-          echo "Release notes file created:"
-          cat release_notes.md
+          echo "build-badge=${BUILD_BADGE}" >> $GITHUB_OUTPUT
+          echo "test-badge=${TEST_BADGE}" >> $GITHUB_OUTPUT
 
-      - name: Update Release with Final Notes and Publish
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Aktualisiere den Release Body aus der vorbereiteten Datei
-          gh release edit ${{ github.ref_name }} --notes-file release_notes.md
-          echo "Release notes updated."
-
-          # Wenn der Build erfolgreich war, veröffentliche den Draft
-          if [ "${{ steps.build_test.outcome }}" = "success" ]; then
-            echo "Publishing release..."
-            gh release edit ${{ github.ref_name }} --draft=false
-            echo "Release has been published."
-          else
-            echo "Build failed. Release will remain a draft."
-          fi
-
-      - name: Attach CHANGELOG.md as Release Asset
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if [ -f "CHANGELOG.md" ]; then
-            gh release upload "${{ github.ref_name }}" CHANGELOG.md --clobber
-            echo "CHANGELOG.md has been attached to release."
-          fi
-
-      - name: Clear and Commit CHANGELOG.md for next release
-        # 'if: always()' sorgt dafür, dass dieser Schritt immer läuft,
-        # damit das Changelog auch bei einem Build-Fehler zurückgesetzt wird.
+      - name: Update Release with Changelog
         if: always()
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config user.name "GitHub Actions Bot"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          TARGET_BRANCH="${{ github.event.repository.default_branch }}"
-          if [ -z "$TARGET_BRANCH" ]; then
-            echo "Warnung: Default-Branch konnte nicht automatisch bestimmt werden. Verwende 'main' als Fallback."
-            TARGET_BRANCH="main" 
-          fi
-          echo "Zielbranch für das Leeren des Changelogs: ${TARGET_BRANCH}"
-          
-          CURRENT_GIT_STATE=$(git rev-parse --abbrev-ref HEAD)
-          if [[ "${CURRENT_GIT_STATE}" == "HEAD" ]]; then 
-            echo "Im Detached HEAD Zustand. Checke Branch ${TARGET_BRANCH} aus."
-            git checkout "${TARGET_BRANCH}"
-          fi
-          
-          echo "Aktualisiere lokalen Branch ${TARGET_BRANCH}..."
-          git pull origin "${TARGET_BRANCH}" --ff-only
-          
-          CHANGELOG_FILE_TO_CLEAR="CHANGELOG.md"
-          if [ -f "${CHANGELOG_FILE_TO_CLEAR}" ]; then
-            echo -e "## Changelog\n\n### Added\n\n### Changed\n\n### Fixed\n\n### Removed\n" > "${CHANGELOG_FILE_TO_CLEAR}"
-            echo "CHANGELOG.md wurde mit dem Template für das nächste Release überschrieben."
-          
-            git add "${CHANGELOG_FILE_TO_CLEAR}"
-            if ! git diff --staged --quiet; then
-              git commit -m "chore: Reset ${CHANGELOG_FILE_TO_CLEAR} for next release [skip ci]"
-              git push origin "${TARGET_BRANCH}"
-              echo "${CHANGELOG_FILE_TO_CLEAR} wurde geleert und die Änderung gepusht auf Branch ${TARGET_BRANCH}."
-            else
-              echo "${CHANGELOG_FILE_TO_CLEAR} wurde nicht geändert (war bereits im Template-Zustand)."
-            fi
-          else
-            echo "FEHLER: ${CHANGELOG_FILE_TO_CLEAR} nicht gefunden, kann nicht geleert/zurückgesetzt werden."
-          fi
+        uses: bsommerfeld/release-changelog@0.1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          prepend-text: |
+            ${{ steps.badges.outputs.build-badge }} ${{ steps.badges.outputs.test-badge }}
+
+            ## Release ${{ github.ref_name }}
