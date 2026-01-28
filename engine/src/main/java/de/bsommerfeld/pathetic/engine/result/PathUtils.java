@@ -4,7 +4,6 @@ import de.bsommerfeld.pathetic.api.pathing.result.Path;
 import de.bsommerfeld.pathetic.api.util.NumberUtils;
 import de.bsommerfeld.pathetic.api.util.ParameterizedSupplier;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
-import de.bsommerfeld.pathetic.engine.util.ErrorLogger;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
@@ -259,7 +258,7 @@ public final class PathUtils {
   /** Validates that epsilon is in the range (0.0, 1.0]. */
   private static void validateEpsilon(double epsilon) {
     if (epsilon <= 0.0 || epsilon > 1.0) {
-      throw ErrorLogger.logFatalError("Epsilon must be in (0.0, 1.0]");
+      throw new IllegalArgumentException("Epsilon must be in (0.0, 1.0]");
     }
   }
 }

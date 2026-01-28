@@ -24,7 +24,6 @@ import de.bsommerfeld.pathetic.engine.pathfinder.processing.EvaluationContextImp
 import de.bsommerfeld.pathetic.engine.pathfinder.processing.SearchContextImpl;
 import de.bsommerfeld.pathetic.engine.result.PathImpl;
 import de.bsommerfeld.pathetic.engine.result.PathfinderResultImpl;
-import de.bsommerfeld.pathetic.engine.util.ErrorLogger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -236,9 +235,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
       return determinePostLoopResult(currentDepth, start, target, bestFallbackNode);
     } catch (Exception e) {
       if (pathfinderConfiguration.isAsync()) {
-        throw ErrorLogger.logFatalErrorWithStacktrace(
-            "Pathfinding algorithm failed",
-            e); // Re-throw in async mode to be handled by exceptionally
+        throw e; // rethrow for exceptionally(..) handling
       }
       return new PathfinderResultImpl(
           PathState.FAILED, new PathImpl(start, target, EMPTY_PATH_POSITIONS));
@@ -253,9 +250,11 @@ public abstract class AbstractPathfinder implements Pathfinder {
           finalizeErrors.add(e);
         }
       }
+
       if (!finalizeErrors.isEmpty()) {
-        ErrorLogger.logFatalError("Errors during processor finalization: " + finalizeErrors, null);
+        System.out.println("Errors during processor finalization: " + finalizeErrors);
       }
+
       performAlgorithmCleanup();
     }
   }
@@ -296,7 +295,6 @@ public abstract class AbstractPathfinder implements Pathfinder {
 
   private PathfinderResult handlePathingException(
       PathPosition originalStart, PathPosition originalTarget, Throwable throwable) {
-    ErrorLogger.logFatalError("Pathfinding execution failed (async or wrapped sync)", throwable);
     return new PathfinderResultImpl(
         PathState.FAILED, new PathImpl(originalStart, originalTarget, EMPTY_PATH_POSITIONS));
   }

@@ -1,6 +1,5 @@
 package de.bsommerfeld.pathetic.engine;
 
-import de.bsommerfeld.pathetic.engine.util.ErrorLogger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -23,7 +22,7 @@ public class Pathetic {
 
       engineVersion = properties.getProperty("engine.version");
     } catch (IOException e) {
-      throw ErrorLogger.logFatalError("Error loading engine version", e);
+      throw new IllegalStateException("Error loading engine version", e);
     }
   }
 

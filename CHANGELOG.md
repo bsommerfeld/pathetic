@@ -18,4 +18,6 @@
 - deprecated `Depth#getValue()`
 - deprecated `Pathfinder#abort()`
 - deprecated `Cost#getValue()`
+- ErrorLogger has been removed
+- tinylog dependencies have been removed
 
