@@ -21,4 +21,4 @@
 - ErrorLogger has been removed
 - tinylog dependencies have been removed
 - deprecated PathUtils
-
+- removed outdated jitpack.yml
