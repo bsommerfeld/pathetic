@@ -23,8 +23,10 @@
 | Memory                   | Spark shows a flat line | Hundreds of MB of GC tears   | Spark thinks nothing happened |
 
 
-![ezgif-425417d69c8935bb](https://github.com/user-attachments/assets/74a14831-4ca5-4090-a569-b24aa6be06b6)
-![ezgif-47d8f87ff2b608e9](https://github.com/user-attachments/assets/69ca0f04-4add-485e-837e-a0a82b63a003)
+<div align="left">
+    <img src="https://github.com/user-attachments/assets/74a14831-4ca5-4090-a569-b24aa6be06b6" width="800" alt="Showcase">
+    <img src="https://github.com/user-attachments/assets/69ca0f04-4add-485e-837e-a0a82b63a003" width="800" alt="Showcase">
+</div>
 
 All demos from a real Paper server. <br>
 Minecraft is a pathfinding hell — Pathetic just walked in, pissed on Hades' leg, and asked for a lighter.
@@ -32,6 +34,9 @@ Minecraft is a pathfinding hell — Pathetic just walked in, pissed on Hades' le
 > Most libraries need minutes or give up entirely on paths longer than 1000 positions.  
 > Pathetic does 20 000 in the time you need to blink twice.  
 > You're welcome.
+
+---
+
 ### Drop-in and watch the magic
 
 ```xml
@@ -39,19 +44,19 @@ Minecraft is a pathfinding hell — Pathetic just walked in, pissed on Hades' le
     <dependency>
         <groupId>de.bsommerfeld.pathetic</groupId>
         <artifactId>engine</artifactId>
-        <version>LATEST</version>
+        <version>5.4.2</version>
     </dependency>
     <dependency>
         <groupId>de.bsommerfeld.pathetic</groupId>
         <artifactId>api</artifactId>
-        <version>LATEST</version>
+        <version>5.4.2</version>
     </dependency>
 </dependencies>
 ```
 
 ```kotlin
-implementation("de.bsommerfeld.pathetic:engine:LATEST")
-implementation("de.bsommerfeld.pathetic:api:LATEST")
+implementation("de.bsommerfeld.pathetic:engine:5.4.2")
+implementation("de.bsommerfeld.pathetic:api:5.4.2")
 ```
 
 ```java
@@ -98,6 +103,25 @@ What changed?
 Result: 10 000 concurrent pathfinds now finish before you can blink.
 
 We kept the old FibonacciHeap code in a branch called `archaeology`.
+
+---
+
+### Your hardware is just a sub 🥀
+
+<div align="left">
+    <img src="https://github.com/user-attachments/assets/5f49f4bf-6683-44e4-9851-d09557d443ea" width="800" alt="Benchmark Showcase">
+</div>
+<br>
+
+**Now Doom isn't the only thing that runs everywhere.**
+
+We didn’t build this library to just "run." We trained Pathetic to subjugate your hardware, make your RAM cry, and then politely ask: *"Another round?"*
+
+While other pathfinding libraries beg for more heap, more cores, and more mercy, while being sorry for being a *bad* pathfinder, Pathetic puts a belt around your scheduler and whispers: "You’re going to sit still and swallow 20,000 nodes in ~60ms — and you’re going to thank me for it."
+
+Pathetic doesn’t ask your hardware for permission. Your hardware needs permission from Pathetic to send a heartbeat. Welcome to the food chain.
+
+**Safe-word?** `OutOfMemoryError` — but you’ll never reach it.
 
 ### We could’ve called it HyperQuantumPathUltra Enterprise God Mode Edition™
 
