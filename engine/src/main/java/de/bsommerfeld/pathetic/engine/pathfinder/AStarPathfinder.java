@@ -220,7 +220,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
     double newF = existing.getFCost();
     double newKey = calculateHeapKey(existing, newF);
 
-    double oldKey = openSet.getCost(packedPos);
+    double oldKey = openSet.cost(packedPos);
 
     // We only call the heap once the key actually decreased
     if (newKey + Math.ulp(newKey) < oldKey) {

@@ -41,7 +41,7 @@ public interface MinHeap {
    * @param nodeId the node identifier
    * @return the cost associated with the node, or Double.MAX_VALUE if not present
    */
-  double getCost(long nodeId);
+  double cost(long nodeId);
 
   /**
    * Inserts a new node or updates an existing node's cost in the heap.

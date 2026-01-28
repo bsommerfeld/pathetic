@@ -147,7 +147,7 @@ public class QuaternaryPrimitiveMinHeap implements MinHeap, Siftable, Resizable 
   }
 
   @Override
-  public double getCost(long nodeId) {
+  public double cost(long nodeId) {
     int nodeIdInt = (int) nodeId;
     if (nodeIdInt >= idToPos.length) return Double.MAX_VALUE;
     int pos = idToPos[nodeIdInt];

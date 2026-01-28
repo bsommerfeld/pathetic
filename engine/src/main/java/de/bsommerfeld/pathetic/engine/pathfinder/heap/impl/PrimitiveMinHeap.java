@@ -3,7 +3,6 @@ package de.bsommerfeld.pathetic.engine.pathfinder.heap.impl;
 import de.bsommerfeld.pathetic.engine.pathfinder.heap.MinHeap;
 import de.bsommerfeld.pathetic.engine.pathfinder.heap.Resizable;
 import de.bsommerfeld.pathetic.engine.pathfinder.heap.Siftable;
-
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import java.util.NoSuchElementException;
 
@@ -71,7 +70,7 @@ public class PrimitiveMinHeap implements MinHeap, Siftable, Resizable {
   }
 
   @Override
-  public double getCost(long packedNode) {
+  public double cost(long packedNode) {
     int index = nodeToIndexMap.get(packedNode);
     if (index == -1) return Double.MAX_VALUE;
     return costs[index];

@@ -47,13 +47,13 @@ public class PrimitiveMinHeapTest {
     heap.insertOrUpdate(2L, 200.0);
 
     // B is more expensive, so A comes first
-    assertEquals(100.0, heap.getCost(1L));
+    assertEquals(100.0, heap.cost(1L));
 
     // Update B to 50 (cheaper than A)
     heap.insertOrUpdate(2L, 50.0);
 
     // Now B must come first
-    assertEquals(50.0, heap.getCost(2L));
+    assertEquals(50.0, heap.cost(2L));
     assertEquals(2L, heap.extractMin());
     assertEquals(1L, heap.extractMin());
   }
@@ -65,7 +65,7 @@ public class PrimitiveMinHeapTest {
     // Attempt to increase cost (should be ignored in Dijkstra/A*)
     heap.insertOrUpdate(1L, 150.0);
 
-    assertEquals(100.0, heap.getCost(1L));
+    assertEquals(100.0, heap.cost(1L));
   }
 
   @Test
