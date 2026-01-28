@@ -1,5 +1,7 @@
 ## Changelog
 
+5.4.3 is a cleanup release, focusing on code organization and deprecating outdated features.
+
 ### Added
 
 - introduced `.of(double, double, double)` factory methods for PathVector and PathPosition
