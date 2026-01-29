@@ -222,29 +222,17 @@ public abstract class AbstractPathfinder implements Pathfinder {
       }
 
       return determinePostLoopResult(currentDepth, start, target, bestFallbackNode);
-    } catch (Exception e) {
-      if (pathfinderConfiguration.isAsync()) {
-        throw e; // rethrow for exceptionally(..) handling
-      }
-      return new PathfinderResultImpl(
-          PathState.FAILED, new PathImpl(start, target, EMPTY_PATH_POSITIONS));
+
     } finally {
-      List<Throwable> finalizeErrors = new ArrayList<>();
       for (Processor processor : processors) {
         try {
           processor.finalizeSearch(searchContext);
+          performAlgorithmCleanup();
         } catch (Exception e) {
-          // We do not want to interrupt the cleanup process, so we literally "catch" them into a
-          // List to display them
-          finalizeErrors.add(e);
+          System.err.println(
+              "An exception occurred during pathfinding finalization: " + e.getMessage());
         }
       }
-
-      if (!finalizeErrors.isEmpty()) {
-        System.out.println("Errors during processor finalization: " + finalizeErrors);
-      }
-
-      performAlgorithmCleanup();
     }
   }
 

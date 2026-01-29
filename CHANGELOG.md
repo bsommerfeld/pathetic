@@ -26,6 +26,8 @@ pathfindingSearch.ifPresent(result -> System.out.println("A path is present"))
 pathfindingSearch.abort(); // This is per search now!
 ```
 
+- simplified exception handling in AbstractPathfinder
+
 ### Fixed
 
 ### Removed
