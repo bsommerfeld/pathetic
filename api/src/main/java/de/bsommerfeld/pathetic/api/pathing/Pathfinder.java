@@ -15,9 +15,10 @@ public interface Pathfinder {
   /**
    * Tries to find a Path between the two {@link PathPosition}s.
    *
-   * @return An {@link CompletionStage} that will contain a {@link PathfinderResult}.
+   * @return A {@link PathfindingSearch} instance that can be used to configure and retrieve the
+   *     result of the pathfinding operation.
    */
-  default CompletionStage<PathfinderResult> findPath(PathPosition start, PathPosition target) {
+  default PathfindingSearch findPath(PathPosition start, PathPosition target) {
     return findPath(start, target, null);
   }
 
@@ -29,30 +30,10 @@ public interface Pathfinder {
    * @param target The target position for pathfinding.
    * @param context The environment context that provides additional information for the pathfinding
    *     operation. This parameter can be null if no specific context is required.
-   * @return A {@link CompletionStage} containing the {@link PathfinderResult} of the pathfinding
-   *     operation, indicating the outcome and the resulting path.
+   * @return A {@link PathfindingSearch} instance that can be used to configure and retrieve the
+   *     result of the pathfinding operation.
    */
-  CompletionStage<PathfinderResult> findPath(
-      PathPosition start, PathPosition target, EnvironmentContext context);
-
-  /**
-   * Requests all currently running pathfinding operations of this pathfinder instance to abort. The
-   * abortion is cooperative and might not be immediate.
-   *
-   * <p><strong>Scope of Abortion:</strong> This method affects all pathfinding operations that are
-   * currently being executed by this specific pathfinder instance. If you need to abort individual
-   * operations independently, consider using separate pathfinder instances for each operation.
-   *
-   * <p><strong>Cooperative Abortion:</strong> The actual termination depends on the pathfinding
-   * algorithm's main loop checking the abort flag. The operation will complete with {@link
-   * de.bsommerfeld.pathetic.api.pathing.result.PathState#ABORTED} as soon as possible.
-   *
-   * @see de.bsommerfeld.pathetic.api.pathing.result.PathState#ABORTED
-   * @deprecated This method might change/be removed in future versions. The current state of this
-   *     method is not as intended, and a per-search approach is planned to replace this soon.
-   */
-  @Deprecated
-  void abort();
+  PathfindingSearch findPath(PathPosition start, PathPosition target, EnvironmentContext context);
 
   /**
    * Registers a {@link PathfinderHook} that will be called on every step of the pathfinding

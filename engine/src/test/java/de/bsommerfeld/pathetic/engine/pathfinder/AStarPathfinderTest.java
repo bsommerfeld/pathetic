@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import de.bsommerfeld.pathetic.api.pathing.INeighborStrategy;
+import de.bsommerfeld.pathetic.api.pathing.PathfindingSearch;
 import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration;
 import de.bsommerfeld.pathetic.api.pathing.heuristic.HeuristicContext;
 import de.bsommerfeld.pathetic.api.pathing.heuristic.IHeuristicStrategy;
@@ -22,12 +23,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -156,7 +156,11 @@ class AStarPathfinderTest {
             .build();
 
     AStarPathfinder pf = new AStarPathfinder(config);
-    PathfinderResult result = pf.findPath(start, target).toCompletableFuture().get();
+
+    PathfindingSearch search = pf.findPath(start, target);
+    AtomicReference<PathfinderResult> resultRef = new AtomicReference<>();
+    search.ifPresent(resultRef::set);
+    PathfinderResult result = resultRef.get();
 
     assertEquals(PathState.FOUND, result.getPathState());
 
@@ -231,7 +235,10 @@ class AStarPathfinderTest {
             .build();
 
     AStarPathfinder pf = new AStarPathfinder(config);
-    PathfinderResult result = pf.findPath(start, target).toCompletableFuture().get();
+    PathfindingSearch search = pf.findPath(start, target);
+    AtomicReference<PathfinderResult> resultRef = new AtomicReference<>();
+    search.ifPresent(resultRef::set);
+    PathfinderResult result = resultRef.get();
 
     assertEquals(PathState.FOUND, result.getPathState());
 
@@ -250,7 +257,7 @@ class AStarPathfinderTest {
   // --- STANDARD TESTS ---
 
   @Test
-  void testDecreaseKeyOnlyOnLowerF() throws Exception {
+  void testDecreaseKeyOnlyOnLowerF() {
     when(mockProvider.getNavigationPoint(any(PathPosition.class), any()))
         .thenReturn(traversablePoint);
 
@@ -264,16 +271,21 @@ class AStarPathfinderTest {
             .build();
 
     AStarPathfinder pf = new AStarPathfinder(cfg);
-    PathfinderResult res =
-        pf.findPath(start, target).toCompletableFuture().get(2, TimeUnit.SECONDS);
+    PathfindingSearch search = pf.findPath(start, target);
+    AtomicReference<PathfinderResult> resultRef = new AtomicReference<>();
+    search.ifPresent(resultRef::set);
+    PathfinderResult result = resultRef.get();
 
-    assertNotNull(res);
-    assertTrue(res.successful());
+    assertNotNull(result);
+    assertTrue(result.successful());
 
-    PathfinderResult res2 =
-        pf.findPath(start, target).toCompletableFuture().get(2, TimeUnit.SECONDS);
-    assertNotNull(res2);
-    assertEquals(res.getPath().length(), res2.getPath().length());
+    PathfindingSearch search2 = pf.findPath(start, target);
+    AtomicReference<PathfinderResult> resultRef2 = new AtomicReference<>();
+    search2.ifPresent(resultRef2::set);
+    PathfinderResult result2 = resultRef2.get();
+
+    assertNotNull(result2);
+    assertEquals(result.getPath().length(), result2.getPath().length());
   }
 
   @Test
@@ -291,39 +303,40 @@ class AStarPathfinderTest {
         .thenReturn(traversablePoint);
 
     ExecutorService executor = Executors.newFixedThreadPool(4);
-    List<CompletableFuture<PathfinderResult>> futures = new ArrayList<>();
     for (int i = 0; i < 4; i++) {
-      futures.add(
-          CompletableFuture.supplyAsync(
-              () -> {
-                try {
-                  return pf.findPath(start, target).toCompletableFuture().get(2, TimeUnit.SECONDS);
-                } catch (Exception e) {
-                  throw new RuntimeException(e);
-                }
-              },
-              executor));
+      CompletableFuture.runAsync(
+          () -> {
+            try {
+              PathfindingSearch search = pf.findPath(start, target);
+              search.ifPresent(
+                  result -> {
+                    assertNotNull(result);
+                    assertEquals(PathState.FOUND, result.getPathState());
+                  });
+            } catch (Exception e) {
+              throw new RuntimeException(e);
+            }
+          },
+          executor);
     }
 
-    for (CompletableFuture<PathfinderResult> future : futures) {
-      PathfinderResult result = future.get(3, TimeUnit.SECONDS);
-      assertNotNull(result);
-      assertEquals(PathState.FOUND, result.getPathState());
-    }
     executor.shutdown();
   }
 
   @Test
-  void testSameStartAndTarget() throws Exception {
-    PathfinderResult result =
-        pathfinder.findPath(start, start).toCompletableFuture().get(1, TimeUnit.SECONDS);
+  void testSameStartAndTarget() {
+    PathPosition position = PathPosition.of(1, 2, 3);
+    PathfindingSearch search = pathfinder.findPath(position, position);
+    AtomicReference<PathfinderResult> resultRef = new AtomicReference<>();
+    search.ifPresent(resultRef::set);
+    PathfinderResult result = resultRef.get();
     assertNotNull(result);
     assertEquals(PathState.FOUND, result.getPathState());
     assertEquals(1, result.getPath().length(), "Path should have exactly one position.");
   }
 
   @Test
-  void testNoBloomMightContainBeforePutRequired() throws Exception {
+  void testNoBloomMightContainBeforePutRequired() {
     when(mockProvider.getNavigationPoint(any(PathPosition.class), any()))
         .thenAnswer(
             inv -> {
@@ -341,12 +354,14 @@ class AStarPathfinderTest {
             .build();
 
     AStarPathfinder pf = new AStarPathfinder(cfg);
-    PathfinderResult res =
-        pf.findPath(start, target).toCompletableFuture().get(2, TimeUnit.SECONDS);
+    PathfindingSearch search = pf.findPath(start, target);
+    AtomicReference<PathfinderResult> resultRef = new AtomicReference<>();
+    search.orElse(resultRef::set);
+    PathfinderResult result = resultRef.get();
 
-    assertNotNull(res);
-    assertTrue(res.hasFailed());
-    assertEquals(PathState.FAILED, res.getPathState());
+    assertNotNull(result);
+    assertTrue(result.hasFailed());
+    assertEquals(PathState.FAILED, result.getPathState());
   }
 
   @Test
@@ -369,28 +384,33 @@ class AStarPathfinderTest {
             .build();
 
     AStarPathfinder pf = new AStarPathfinder(cfg);
-    PathfinderResult res =
-        pf.findPath(start, target).toCompletableFuture().get(2, TimeUnit.SECONDS);
+    PathfindingSearch search = pf.findPath(start, target);
+    AtomicReference<PathfinderResult> resultRef = new AtomicReference<>();
+    search.orElse(resultRef::set);
+    PathfinderResult result = resultRef.get();
 
-    assertNotNull(res);
-    assertTrue(res.hasFailed());
-    assertEquals(PathState.FAILED, res.getPathState());
+    assertNotNull(result);
+    assertTrue(result.hasFailed());
+    assertEquals(PathState.FAILED, result.getPathState());
   }
 
   @Test
-  void testFindPathSuccessful() throws ExecutionException, InterruptedException, TimeoutException {
+  void testFindPathSuccessful() {
     when(mockProvider.getNavigationPoint(any(PathPosition.class), any()))
         .thenReturn(traversablePoint);
-    CompletionStage<PathfinderResult> resultStage = pathfinder.findPath(start, target);
-    PathfinderResult result = resultStage.toCompletableFuture().get(1, TimeUnit.SECONDS);
 
+    AtomicReference<PathfinderResult> resultRef = new AtomicReference<>();
+    PathfindingSearch search = pathfinder.findPath(start, target);
+    search.ifPresent(resultRef::set);
+
+    PathfinderResult result = resultRef.get();
     assertNotNull(result);
     assertEquals(PathState.FOUND, result.getPathState());
     assertTrue(result.getPath().length() > 0);
   }
 
   @Test
-  void testFindPathBlocked() throws ExecutionException, InterruptedException, TimeoutException {
+  void testFindPathBlocked() {
     PathfinderConfiguration noFallbackConfig =
         PathfinderConfiguration.builder()
             .provider(mockProvider)
@@ -409,15 +429,17 @@ class AStarPathfinderTest {
               return pos.equals(start) ? traversablePoint : nonTraversablePoint;
             });
 
-    PathfinderResult result =
-        noFallbackPathfinder.findPath(start, target).toCompletableFuture().get(1, TimeUnit.SECONDS);
+    PathfindingSearch search = noFallbackPathfinder.findPath(start, target);
+    AtomicReference<PathfinderResult> resultRef = new AtomicReference<>();
+    search.orElse(resultRef::set);
+    PathfinderResult result = resultRef.get();
 
     assertNotNull(result);
     assertEquals(PathState.FAILED, result.getPathState());
   }
 
   @Test
-  void testTieBreakerPrefersLowerHeuristic() throws Exception {
+  void testTieBreakerPrefersLowerHeuristic() {
     PathfinderConfiguration config =
         PathfinderConfiguration.builder()
             .provider(mockProvider)
@@ -433,8 +455,11 @@ class AStarPathfinderTest {
     when(mockProvider.getNavigationPoint(any(PathPosition.class), any()))
         .thenReturn(traversablePoint);
 
-    PathfinderResult result =
-        pf.findPath(start, target).toCompletableFuture().get(2, TimeUnit.SECONDS);
+    PathfindingSearch search = pf.findPath(start, target);
+    AtomicReference<PathfinderResult> resultRef = new AtomicReference<>();
+    search.ifPresent(resultRef::set);
+    PathfinderResult result = resultRef.get();
+
     assertNotNull(result);
     assertEquals(PathState.FOUND, result.getPathState());
 
@@ -464,8 +489,11 @@ class AStarPathfinderTest {
     when(mockProvider.getNavigationPoint(any(PathPosition.class), any()))
         .thenReturn(traversablePoint);
 
-    PathfinderResult result =
-        pf.findPath(start, target).toCompletableFuture().get(2, TimeUnit.SECONDS);
+    PathfindingSearch search = pf.findPath(start, target);
+    AtomicReference<PathfinderResult> resultRef = new AtomicReference<>();
+    search.ifPresent(resultRef::set);
+    PathfinderResult result = resultRef.get();
+
     assertNotNull(result);
     assertEquals(PathState.FOUND, result.getPathState());
     assertTrue(result.getPath().length() > 1000, "Path length should reflect large distance");
@@ -486,16 +514,17 @@ class AStarPathfinderTest {
     when(mockProvider.getNavigationPoint(any(PathPosition.class), any()))
         .thenReturn(traversablePoint);
 
-    CompletionStage<PathfinderResult> resultStage = pf.findPath(start, target);
-    PathfinderResult result = resultStage.toCompletableFuture().get(1, TimeUnit.SECONDS);
+    PathfindingSearch search = pf.findPath(start, target);
+    AtomicReference<PathfinderResult> resultRef = new AtomicReference<>();
+    search.orElse(resultRef::set);
+    PathfinderResult result = resultRef.get();
 
     assertNotNull(result);
     assertEquals(PathState.MAX_ITERATIONS_REACHED, result.getPathState());
   }
 
   @Test
-  void testFindPathMaxLengthReached()
-      throws ExecutionException, InterruptedException, TimeoutException {
+  void testFindPathMaxLengthReached() {
     PathfinderConfiguration lowLengthConfig =
         PathfinderConfiguration.builder()
             .provider(mockProvider)
@@ -508,15 +537,17 @@ class AStarPathfinderTest {
     when(mockProvider.getNavigationPoint(any(PathPosition.class), any()))
         .thenReturn(traversablePoint);
 
-    CompletionStage<PathfinderResult> resultStage = pf.findPath(start, target);
-    PathfinderResult result = resultStage.toCompletableFuture().get(1, TimeUnit.SECONDS);
+    PathfindingSearch search = pf.findPath(start, target);
+    AtomicReference<PathfinderResult> resultRef = new AtomicReference<>();
+    search.orElse(resultRef::set);
+    PathfinderResult result = resultRef.get();
 
     assertNotNull(result);
     assertEquals(PathState.LENGTH_LIMITED, result.getPathState());
   }
 
   @Test
-  void testFindPathAsync() throws ExecutionException, InterruptedException, TimeoutException {
+  void testFindPathAsync() {
     PathfinderConfiguration asyncConfig =
         PathfinderConfiguration.builder()
             .provider(mockProvider)
@@ -529,10 +560,11 @@ class AStarPathfinderTest {
     when(mockProvider.getNavigationPoint(any(PathPosition.class), any()))
         .thenReturn(traversablePoint);
 
-    CompletionStage<PathfinderResult> resultStage = pf.findPath(start, target);
-    PathfinderResult result = resultStage.toCompletableFuture().get(1, TimeUnit.SECONDS);
-
-    assertNotNull(result);
-    assertEquals(PathState.FOUND, result.getPathState());
+    PathfindingSearch search = pf.findPath(start, target);
+    search.ifPresent(
+        result -> {
+          assertNotNull(result);
+          assertEquals(PathState.FOUND, result.getPathState());
+        });
   }
 }

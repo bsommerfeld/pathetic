@@ -6,11 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import de.bsommerfeld.pathetic.api.pathing.PathfindingSearch;
 import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration;
 import de.bsommerfeld.pathetic.api.pathing.context.EnvironmentContext;
 import de.bsommerfeld.pathetic.api.pathing.hook.PathfinderHook;
 import de.bsommerfeld.pathetic.api.pathing.processing.context.SearchContext;
-import de.bsommerfeld.pathetic.api.pathing.result.PathState;
 import de.bsommerfeld.pathetic.api.pathing.result.PathfinderResult;
 import de.bsommerfeld.pathetic.api.provider.NavigationPoint;
 import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
@@ -24,11 +24,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -60,21 +57,22 @@ class AbstractPathfinderTest {
   }
 
   @Test
-  void testFindPathWithNullContext()
-      throws ExecutionException, InterruptedException, TimeoutException {
+  void testFindPathWithNullContext() {
     NavigationPoint mockNavigationPoint = Mockito.mock(NavigationPoint.class);
     when(mockNavigationPoint.isTraversable()).thenReturn(true);
     when(mockProvider.getNavigationPoint(any(PathPosition.class), any()))
         .thenReturn(mockNavigationPoint);
 
-    CompletionStage<PathfinderResult> resultStage = pathfinder.findPath(start, target);
+    PathfindingSearch search = pathfinder.findPath(start, target);
+    AtomicReference<PathfinderResult> resultRef = new AtomicReference<>();
+    search.ifPresent(resultRef::set);
+    PathfinderResult result = resultRef.get();
 
-    PathfinderResult result = resultStage.toCompletableFuture().get(1, TimeUnit.SECONDS);
     assertNotNull(result);
   }
 
   @Test
-  void testFindPathWithContext() throws ExecutionException, InterruptedException, TimeoutException {
+  void testFindPathWithContext() {
     NavigationPoint mockNavigationPoint = Mockito.mock(NavigationPoint.class);
     when(mockNavigationPoint.isTraversable()).thenReturn(true);
     when(mockProvider.getNavigationPoint(any(PathPosition.class), any()))
@@ -82,42 +80,16 @@ class AbstractPathfinderTest {
 
     EnvironmentContext mockContext = Mockito.mock(EnvironmentContext.class);
 
-    CompletionStage<PathfinderResult> resultStage = pathfinder.findPath(start, target, mockContext);
+    PathfindingSearch search = pathfinder.findPath(start, target, mockContext);
+    AtomicReference<PathfinderResult> resultRef = new AtomicReference<>();
+    search.ifPresent(resultRef::set);
+    PathfinderResult result = resultRef.get();
 
-    PathfinderResult result = resultStage.toCompletableFuture().get(1, TimeUnit.SECONDS);
     assertNotNull(result);
   }
 
   @Test
-  void testAbort() throws ExecutionException, InterruptedException {
-    PathfinderConfiguration noFallbackConfig =
-        PathfinderConfiguration.builder()
-            .provider(mockProvider)
-            .maxIterations(100)
-            .maxLength(50)
-            .async(false)
-            .fallback(false)
-            .build();
-
-    TestPathfinder noFallbackPathfinder = new TestPathfinder(noFallbackConfig);
-
-    noFallbackPathfinder.setSimulateDelay(true);
-    noFallbackPathfinder.setAbortImmediately(true);
-
-    NavigationPoint mockNavigationPoint = Mockito.mock(NavigationPoint.class);
-    when(mockNavigationPoint.isTraversable()).thenReturn(true);
-    when(mockProvider.getNavigationPoint(any(PathPosition.class), any()))
-        .thenReturn(mockNavigationPoint);
-
-    CompletionStage<PathfinderResult> resultStage = noFallbackPathfinder.findPath(start, target);
-
-    PathfinderResult result = resultStage.toCompletableFuture().get();
-    assertEquals(PathState.ABORTED, result.getPathState());
-  }
-
-  @Test
-  void testRegisterPathfindingHook()
-      throws ExecutionException, InterruptedException, TimeoutException {
+  void testRegisterPathfindingHook() {
     NavigationPoint mockNavigationPoint = Mockito.mock(NavigationPoint.class);
     when(mockNavigationPoint.isTraversable()).thenReturn(true);
     when(mockProvider.getNavigationPoint(any(PathPosition.class), any()))
@@ -127,10 +99,12 @@ class AbstractPathfinderTest {
     PathfinderHook hook = context -> hookCalled.set(true);
     pathfinder.registerPathfindingHook(hook);
 
-    CompletionStage<PathfinderResult> resultStage = pathfinder.findPath(start, target);
+    PathfindingSearch search = pathfinder.findPath(start, target);
+    AtomicReference<PathfinderResult> resultRef = new AtomicReference<>();
+    search.ifPresent(resultRef::set);
+    PathfinderResult result = resultRef.get();
 
-    resultStage.toCompletableFuture().get(1, TimeUnit.SECONDS);
-
+    assertNotNull(result);
     assertTrue(hookCalled.get());
   }
 
@@ -149,14 +123,9 @@ class AbstractPathfinderTest {
 
     private final Set<PathfinderHook> testHooks = new HashSet<>();
     private boolean simulateDelay = false;
-    private boolean abortImmediately = false;
 
     public TestPathfinder(PathfinderConfiguration pathfinderConfiguration) {
       super(pathfinderConfiguration);
-    }
-
-    public void setAbortImmediately(boolean abortImmediately) {
-      this.abortImmediately = abortImmediately;
     }
 
     @Override
@@ -201,28 +170,6 @@ class AbstractPathfinderTest {
         Node currentNode,
         MinHeap openSet, // Typ angepasst!
         SearchContext searchContext) {
-
-      if (abortImmediately) {
-        abort();
-
-        // Dummy node add logic for abort test
-        Node dummyNode =
-            new Node(
-                requestStart,
-                requestStart,
-                requestTarget,
-                pathfinderConfiguration.getHeuristicWeights(),
-                pathfinderConfiguration.getHeuristicStrategy(),
-                1);
-        dummyNode.setParent(currentNode);
-
-        long packedDummy = RegionKey.pack(dummyNode.getPosition());
-        openSet.insertOrUpdate(packedDummy, dummyNode.getFCost());
-        testNodeMap.put(packedDummy, dummyNode);
-
-        return;
-      }
-
       if (simulateDelay) {
         try {
           Thread.sleep(500);

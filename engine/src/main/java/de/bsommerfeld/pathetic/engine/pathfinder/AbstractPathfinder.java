@@ -2,6 +2,7 @@ package de.bsommerfeld.pathetic.engine.pathfinder;
 
 import de.bsommerfeld.pathetic.api.pathing.INeighborStrategy;
 import de.bsommerfeld.pathetic.api.pathing.Pathfinder;
+import de.bsommerfeld.pathetic.api.pathing.PathfindingSearch;
 import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration;
 import de.bsommerfeld.pathetic.api.pathing.context.EnvironmentContext;
 import de.bsommerfeld.pathetic.api.pathing.hook.PathfinderHook;
@@ -32,7 +33,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -96,21 +96,12 @@ public abstract class AbstractPathfinder implements Pathfinder {
   }
 
   @Override
-  public CompletionStage<PathfinderResult> findPath(
+  public PathfindingSearch findPath(
       PathPosition start, PathPosition target, EnvironmentContext environmentContext) {
     Objects.requireNonNull(start, "start PathPosition must not be null");
     Objects.requireNonNull(target, "target PathPosition must not be null");
     this.abortRequested = false; // Reset abort flag for new search
     return initiatePathing(start, target, environmentContext);
-  }
-
-  /**
-   * Requests the current pathfinding operation to abort. The abortion is cooperative and might not
-   * be immediate.
-   */
-  @Override
-  public void abort() {
-    this.abortRequested = true;
   }
 
   @Override
@@ -120,24 +111,21 @@ public abstract class AbstractPathfinder implements Pathfinder {
     }
   }
 
-  private CompletionStage<PathfinderResult> initiatePathing(
+  private PathfindingSearch initiatePathing(
       PathPosition start, PathPosition target, EnvironmentContext environmentContext) {
+
     final PathPosition effectiveStart = start.floor();
     final PathPosition effectiveTarget = target.floor();
 
     if (pathfinderConfiguration.isAsync()) {
-      return CompletableFuture.supplyAsync(
+      return new PathfindingSearchImpl(
+          CompletableFuture.supplyAsync(
               () -> executePathingAlgorithm(effectiveStart, effectiveTarget, environmentContext),
-              PATHING_EXECUTOR_SERVICE)
-          .exceptionally(throwable -> handlePathingException(start, target, throwable));
+              PATHING_EXECUTOR_SERVICE));
     } else {
-      try {
-        return CompletableFuture.completedFuture(
-            executePathingAlgorithm(effectiveStart, effectiveTarget, environmentContext));
-      } catch (Exception e) {
-        // Synchronous execution exceptions are wrapped to be consistent with async reporting
-        return CompletableFuture.completedFuture(handlePathingException(start, target, e));
-      }
+      return new PathfindingSearchImpl(
+          CompletableFuture.completedFuture(
+              executePathingAlgorithm(effectiveStart, effectiveTarget, environmentContext)));
     }
   }
 
@@ -291,12 +279,6 @@ public abstract class AbstractPathfinder implements Pathfinder {
     this.abortRequested = false;
     return new PathfinderResultImpl(
         PathState.ABORTED, reconstructPath(start, target, fallbackNode));
-  }
-
-  private PathfinderResult handlePathingException(
-      PathPosition originalStart, PathPosition originalTarget, Throwable throwable) {
-    return new PathfinderResultImpl(
-        PathState.FAILED, new PathImpl(originalStart, originalTarget, EMPTY_PATH_POSITIONS));
   }
 
   /**
