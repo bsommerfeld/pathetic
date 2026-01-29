@@ -288,16 +288,16 @@ public abstract class AbstractPathfinder implements Pathfinder {
    * Determines the pathfinding result when the main loop finishes without finding the target. This
    * could be due to reaching max iterations or the open set becoming empty.
    *
-   * @param depthReached The maximum depth or iterations reached.
+   * @param iterations The maximum iterations reached.
    * @param start The effective start position.
    * @param target The effective target position.
    * @param fallbackNode The best node found to use for a fallback path.
    * @return The determined {@link PathfinderResult}.
    */
   private PathfinderResult determinePostLoopResult(
-      int depthReached, PathPosition start, PathPosition target, Node fallbackNode) {
+      int iterations, PathPosition start, PathPosition target, Node fallbackNode) {
 
-    if (depthReached >= pathfinderConfiguration.getMaxIterations()) {
+    if (iterations >= pathfinderConfiguration.getMaxIterations()) {
       return new PathfinderResultImpl(
           PathState.MAX_ITERATIONS_REACHED, reconstructPath(start, target, fallbackNode));
     }
