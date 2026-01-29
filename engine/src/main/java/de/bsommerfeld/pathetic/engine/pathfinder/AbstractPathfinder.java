@@ -220,12 +220,12 @@ public abstract class AbstractPathfinder implements Pathfinder {
       for (Processor processor : processors) {
         try {
           processor.finalizeSearch(searchContext);
-          performAlgorithmCleanup();
         } catch (Exception e) {
           System.err.println(
               "An exception occurred during pathfinding finalization: " + e.getMessage());
         }
       }
+      performAlgorithmCleanup();
     }
   }
 

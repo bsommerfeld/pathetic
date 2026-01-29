@@ -8,5 +8,7 @@
 
 ### Fixed
 
+- fixed issue with algorithm cleanup not being performed consistently
+
 ### Removed
 
