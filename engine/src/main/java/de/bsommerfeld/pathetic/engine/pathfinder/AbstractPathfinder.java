@@ -175,16 +175,16 @@ public abstract class AbstractPathfinder implements Pathfinder {
       double startKey = calculateHeapKey(startNode, startNode.getFCost());
       insertStartNode(startNode, startKey, openSet);
 
-      int currentDepth = 0;
+      int iteration = 0;
       Node bestFallbackNode = startNode;
 
-      while (!openSet.isEmpty() && currentDepth < pathfinderConfiguration.getMaxIterations()) {
-        currentDepth++;
+      while (!openSet.isEmpty() && iteration < pathfinderConfiguration.getMaxIterations()) {
+        iteration++;
 
         Node currentNode = extractBestNode(openSet);
         markNodeAsExpanded(currentNode);
 
-        final int finalCurrentDepth = currentDepth;
+        final int finalIteration = iteration;
 
         /*
          * TODO bsommerfeld 29.01.2026: This single action here costs us 1 object per iteration
@@ -195,8 +195,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
         pathfinderHooks.forEach(
             hook ->
                 hook.onPathfindingStep(
-                    new PathfindingContext(
-                        currentNode.getPosition(), Depth.of(finalCurrentDepth))));
+                    new PathfindingContext(currentNode.getPosition(), Depth.of(finalIteration))));
 
         if (currentNode.getHeuristic() < bestFallbackNode.getHeuristic()) {
           bestFallbackNode = currentNode;
@@ -215,7 +214,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
         processSuccessors(start, target, currentNode, openSet, searchContext);
       }
 
-      return determinePostLoopResult(currentDepth, start, target, bestFallbackNode);
+      return determinePostLoopResult(iteration, start, target, bestFallbackNode);
 
     } finally {
       for (Processor processor : processors) {
