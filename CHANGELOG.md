@@ -13,6 +13,7 @@
 - marked getEnvironmentContext Nullable in SearchContext
 - replaced CompletionStage<PathfinderResult> return from Pathfinder with [PathfindingSearch](https://github.com/bsommerfeld/pathetic/wiki/PathfindingSearch/)
 - simplified exception handling in AbstractPathfinder
+- aborting the pathfinding operation is now per-search
 
 ### Fixed
 
