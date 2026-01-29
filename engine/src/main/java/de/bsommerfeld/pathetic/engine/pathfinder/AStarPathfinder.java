@@ -297,6 +297,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
 
   @Override
   protected void performAlgorithmCleanup() {
+    getSessionOrThrow().cleanup();
     currentSession.remove();
   }
 

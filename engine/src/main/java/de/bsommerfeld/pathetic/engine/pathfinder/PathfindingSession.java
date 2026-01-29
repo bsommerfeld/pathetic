@@ -40,4 +40,11 @@ class PathfindingSession {
     return visitedRegions.computeIfAbsent(
         regionKey, (long k) -> new SpatialData(pathfinderConfiguration));
   }
+
+  // Defensive cleanup
+  void cleanup() {
+    visitedRegions.clear();
+    openSetNodes.clear();
+    closedSetGCosts.clear();
+  }
 }

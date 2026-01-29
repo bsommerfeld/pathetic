@@ -9,6 +9,7 @@
 ### Fixed
 
 - fixed issue with algorithm cleanup not being performed consistently
+- added defensive cleanup for PathfindingSession
 
 ### Removed
 
