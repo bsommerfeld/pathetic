@@ -4,7 +4,7 @@
 
 - add JetBrains annotations dependency
 - add pathfindingHooks to PathfinderConfiguration
-- introduced PathfindingSearch which represents a single search operation
+- introduced [PathfindingSearch](https://github.com/bsommerfeld/pathetic/wiki/PathfindingSearch/) which represents a single search operation
 - introduced validationProcessors in PathfinderConfigurationBuilder
 - introduced costProcessors in PathfinderConfigurationBuilder
 
