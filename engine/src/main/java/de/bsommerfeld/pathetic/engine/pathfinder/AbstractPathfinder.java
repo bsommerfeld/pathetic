@@ -67,8 +67,6 @@ public abstract class AbstractPathfinder implements Pathfinder {
 
   private final Set<PathfinderHook> pathfinderHooks = Collections.synchronizedSet(new HashSet<>());
 
-  private volatile boolean abortRequested = false;
-
   protected AbstractPathfinder(PathfinderConfiguration pathfinderConfiguration) {
     this.pathfinderConfiguration =
         Objects.requireNonNull(pathfinderConfiguration, "pathfinderConfiguration must not be null");
@@ -101,7 +99,6 @@ public abstract class AbstractPathfinder implements Pathfinder {
       PathPosition start, PathPosition target, EnvironmentContext environmentContext) {
     Objects.requireNonNull(start, "start PathPosition must not be null");
     Objects.requireNonNull(target, "target PathPosition must not be null");
-    this.abortRequested = false; // Reset abort flag for new search
     return initiatePathing(start, target, environmentContext);
   }
 
@@ -190,10 +187,6 @@ public abstract class AbstractPathfinder implements Pathfinder {
       while (!openSet.isEmpty() && currentDepth < pathfinderConfiguration.getMaxIterations()) {
         currentDepth++;
 
-        if (this.abortRequested) {
-          return createAbortedResult(start, target, bestFallbackNode);
-        }
-
         Node currentNode = extractBestNode(openSet);
         markNodeAsExpanded(currentNode);
 
@@ -261,13 +254,6 @@ public abstract class AbstractPathfinder implements Pathfinder {
       processors.addAll(validationProcessors);
     if (costProcessors != null && !costProcessors.isEmpty()) processors.addAll(costProcessors);
     return processors;
-  }
-
-  private PathfinderResult createAbortedResult(
-      PathPosition start, PathPosition target, Node fallbackNode) {
-    this.abortRequested = false;
-    return new PathfinderResultImpl(
-        PathState.ABORTED, reconstructPath(start, target, fallbackNode));
   }
 
   /**
