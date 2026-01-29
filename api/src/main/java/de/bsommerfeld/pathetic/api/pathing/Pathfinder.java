@@ -2,9 +2,7 @@ package de.bsommerfeld.pathetic.api.pathing;
 
 import de.bsommerfeld.pathetic.api.pathing.context.EnvironmentContext;
 import de.bsommerfeld.pathetic.api.pathing.hook.PathfinderHook;
-import de.bsommerfeld.pathetic.api.pathing.result.PathfinderResult;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
-import java.util.concurrent.CompletionStage;
 
 /**
  * A Pathfinder is a class that can find a path between two positions while following a given set of
@@ -40,9 +38,10 @@ public interface Pathfinder {
    * process. This can be used to modify the pathfinding process or to collect data.
    *
    * @param hook The hook to register.
-   * @deprecated Use {@link de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration.PathfinderConfigurationBuilder#pathfindingHooks(java.util.List)}
-   *     to configure hooks in the {@link de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration}
-   *     instead.
+   * @deprecated Use {@link
+   *     de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration.PathfinderConfigurationBuilder#pathfindingHooks(java.util.List)}
+   *     to configure hooks in the {@link
+   *     de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration} instead.
    */
   @Deprecated
   void registerPathfindingHook(PathfinderHook hook);
