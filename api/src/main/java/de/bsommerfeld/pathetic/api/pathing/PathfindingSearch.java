@@ -44,7 +44,8 @@ public interface PathfindingSearch {
    * already-finished PathfindingSearches.
    *
    * @api.Note This method will cause {@link #exceptionally(Function)} to fire since it ends with a
-   *     {@link java.util.concurrent.CancellationException}
+   *     {@link java.util.concurrent.CancellationException}. We may find a better way in the future
+   *     to handle this. If you have an idea, it's a good opportunity for contributing.
    * @return true if the operation was successfully aborted, false if it was already finished
    */
   boolean abort();
