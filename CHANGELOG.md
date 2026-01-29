@@ -7,7 +7,7 @@
 
 ### Changed
 
-- marked getEnvironmentContext NonNull in SearchContext
+- marked getEnvironmentContext Nullable in SearchContext
 - replaced CompletionStage<PathfinderResult> return from Pathfinder with PathfindingSearch
 
 **EXAMPLE:**
