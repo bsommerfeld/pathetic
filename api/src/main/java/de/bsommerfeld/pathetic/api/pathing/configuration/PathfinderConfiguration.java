@@ -373,13 +373,29 @@ public class PathfinderConfiguration {
       return this;
     }
 
+    /** {@link #validationProcessors(List)} */
+    @Deprecated
     public PathfinderConfiguration.PathfinderConfigurationBuilder nodeValidationProcessors(
         List<ValidationProcessor> validationProcessors) {
       this.validationProcessors = Objects.requireNonNull(validationProcessors);
       return this;
     }
 
+    public PathfinderConfiguration.PathfinderConfigurationBuilder validationProcessors(
+        List<ValidationProcessor> validationProcessors) {
+      this.validationProcessors = Objects.requireNonNull(validationProcessors);
+      return this;
+    }
+
+    /** {@link #costProcessor(List)} */
+    @Deprecated
     public PathfinderConfiguration.PathfinderConfigurationBuilder nodeCostProcessors(
+        List<CostProcessor> costProcessors) {
+      this.costProcessors = Objects.requireNonNull(costProcessors);
+      return this;
+    }
+
+    public PathfinderConfiguration.PathfinderConfigurationBuilder costProcessor(
         List<CostProcessor> costProcessors) {
       this.costProcessors = Objects.requireNonNull(costProcessors);
       return this;

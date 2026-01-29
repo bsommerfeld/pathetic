@@ -4,6 +4,8 @@
 
 - add JetBrains annotations dependency
 - introduced PathfindingSearch which represents a single search operation
+- introduced validationProcessors in PathfinderConfigurationBuilder
+- introduced costProcessors in PathfinderConfigurationBuilder
 
 ### Changed
 
@@ -26,4 +28,7 @@ pathfindingSearch.abort(); // This is per search now!
 ### Fixed
 
 ### Removed
+
+- deprecated nodeValidationProcessors in PathfinderConfigurationBuilder
+- deprecated nodeCostProcessors in PathfinderConfigurationBuilder
 
