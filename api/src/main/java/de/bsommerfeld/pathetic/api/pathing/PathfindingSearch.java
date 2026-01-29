@@ -2,7 +2,6 @@ package de.bsommerfeld.pathetic.api.pathing;
 
 import de.bsommerfeld.pathetic.api.pathing.result.PathfinderResult;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * Represents a pathfinding operation that can be configured with callbacks for different outcomes.
@@ -37,13 +36,13 @@ public interface PathfindingSearch {
    * @param callback the callback to execute if the pathfinding operation results in an exception
    * @return this PathfindingSearch instance for method chaining
    */
-  PathfindingSearch exceptionally(Function<Throwable, PathfinderResult> callback);
+  PathfindingSearch exceptionally(Consumer<Throwable> callback);
 
   /**
    * Aborts the pathfinding operation if it is still in progress. This method has no effect on
    * already-finished PathfindingSearches.
    *
-   * @api.Note This method will cause {@link #exceptionally(Function)} to fire since it ends with a
+   * @api.Note This method will cause {@link #exceptionally(Consumer)} to fire since it ends with a
    *     {@link java.util.concurrent.CancellationException}. We may find a better way in the future
    *     to handle this. If you have an idea, it's a good opportunity for contributing.
    * @return true if the operation was successfully aborted, false if it was already finished

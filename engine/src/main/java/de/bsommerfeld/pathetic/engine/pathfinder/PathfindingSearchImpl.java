@@ -5,7 +5,6 @@ import de.bsommerfeld.pathetic.api.pathing.result.PathfinderResult;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 public class PathfindingSearchImpl implements PathfindingSearch {
 
@@ -48,9 +47,13 @@ public class PathfindingSearchImpl implements PathfindingSearch {
   }
 
   @Override
-  public PathfindingSearchImpl exceptionally(Function<Throwable, PathfinderResult> callback) {
+  public PathfindingSearchImpl exceptionally(Consumer<Throwable> callback) {
     Objects.requireNonNull(callback, "Callback cannot be null");
-    completableFuture.exceptionally(callback);
+    completableFuture.exceptionally(
+        ex -> {
+          callback.accept(ex);
+          return null;
+        });
     return this;
   }
 
