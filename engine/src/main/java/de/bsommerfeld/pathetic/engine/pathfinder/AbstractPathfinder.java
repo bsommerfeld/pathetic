@@ -185,6 +185,13 @@ public abstract class AbstractPathfinder implements Pathfinder {
         markNodeAsExpanded(currentNode);
 
         final int finalCurrentDepth = currentDepth;
+
+        /*
+         * TODO bsommerfeld 29.01.2026: This single action here costs us 1 object per iteration
+         *  which, in pathfinding terms, is REALLY expensive.
+         *  <br>
+         *  Perhaps we can optimize this later using a mutable object?
+         */
         pathfinderHooks.forEach(
             hook ->
                 hook.onPathfindingStep(
