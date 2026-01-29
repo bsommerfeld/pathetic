@@ -172,13 +172,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
 
       MinHeap openSet = new PrimitiveMinHeap(INITIAL_CAPACITY);
 
-      double startKey;
-      try {
-        startKey = calculateHeapKey(startNode, startNode.getFCost());
-      } catch (Throwable t) {
-        startKey = startNode.getFCost();
-      }
-
+      double startKey = calculateHeapKey(startNode, startNode.getFCost());
       insertStartNode(startNode, startKey, openSet);
 
       int currentDepth = 0;
