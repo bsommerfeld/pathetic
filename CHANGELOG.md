@@ -3,6 +3,7 @@
 ### Added
 
 - add JetBrains annotations dependency
+- add pathfindingHooks to PathfinderConfiguration
 - introduced PathfindingSearch which represents a single search operation
 - introduced validationProcessors in PathfinderConfigurationBuilder
 - introduced costProcessors in PathfinderConfigurationBuilder
@@ -31,4 +32,5 @@ pathfindingSearch.abort(); // This is per search now!
 
 - deprecated nodeValidationProcessors in PathfinderConfigurationBuilder
 - deprecated nodeCostProcessors in PathfinderConfigurationBuilder
+- deprecated Pathfinder#registerPathfindingHooks
 

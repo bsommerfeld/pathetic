@@ -40,6 +40,10 @@ public interface Pathfinder {
    * process. This can be used to modify the pathfinding process or to collect data.
    *
    * @param hook The hook to register.
+   * @deprecated Use {@link de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration.PathfinderConfigurationBuilder#pathfindingHooks(java.util.List)}
+   *     to configure hooks in the {@link de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration}
+   *     instead.
    */
+  @Deprecated
   void registerPathfindingHook(PathfinderHook hook);
 }

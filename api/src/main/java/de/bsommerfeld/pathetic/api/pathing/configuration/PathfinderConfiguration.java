@@ -5,6 +5,7 @@ import de.bsommerfeld.pathetic.api.pathing.NeighborStrategies;
 import de.bsommerfeld.pathetic.api.pathing.heuristic.HeuristicStrategies;
 import de.bsommerfeld.pathetic.api.pathing.heuristic.HeuristicWeights;
 import de.bsommerfeld.pathetic.api.pathing.heuristic.IHeuristicStrategy;
+import de.bsommerfeld.pathetic.api.pathing.hook.PathfinderHook;
 import de.bsommerfeld.pathetic.api.pathing.processing.CostProcessor;
 import de.bsommerfeld.pathetic.api.pathing.processing.ValidationProcessor;
 import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
@@ -128,6 +129,13 @@ public class PathfinderConfiguration {
    */
   private final boolean reopenClosedNodes;
 
+  /**
+   * A list of {@link PathfinderHook}s to be called on every step of the pathfinding process. Hooks
+   * can be used to modify the pathfinding process or collect data. May be null or empty if no hooks
+   * are configured.
+   */
+  private final List<PathfinderHook> pathfindingHooks;
+
   private PathfinderConfiguration(
       int maxIterations,
       int maxLength,
@@ -142,7 +150,8 @@ public class PathfinderConfiguration {
       int bloomFilterSize,
       double bloomFilterFpp,
       IHeuristicStrategy heuristicStrategy,
-      boolean reopenClosedNodes) {
+      boolean reopenClosedNodes,
+      List<PathfinderHook> pathfindingHooks) {
     this.maxIterations = maxIterations;
     this.maxLength = maxLength;
     this.async = async;
@@ -157,6 +166,7 @@ public class PathfinderConfiguration {
     this.bloomFilterFpp = bloomFilterFpp;
     this.heuristicStrategy = heuristicStrategy;
     this.reopenClosedNodes = reopenClosedNodes;
+    this.pathfindingHooks = Collections.unmodifiableList(pathfindingHooks);
   }
 
   /**
@@ -185,6 +195,7 @@ public class PathfinderConfiguration {
         .bloomFilterFpp(pathfinderConfiguration.bloomFilterFpp)
         .heuristicStrategy(pathfinderConfiguration.heuristicStrategy)
         .reopenClosedNodes(pathfinderConfiguration.reopenClosedNodes)
+        .pathfindingHooks(pathfinderConfiguration.pathfindingHooks)
         .build();
   }
 
@@ -248,6 +259,10 @@ public class PathfinderConfiguration {
     return reopenClosedNodes;
   }
 
+  public List<PathfinderHook> pathfindingHooks() {
+    return pathfindingHooks;
+  }
+
   @Override
   public String toString() {
     return "PathfinderConfiguration{"
@@ -279,6 +294,8 @@ public class PathfinderConfiguration {
         + heuristicStrategy
         + ", reopenClosedNodes="
         + reopenClosedNodes
+        + ", pathfindingHooks="
+        + pathfindingHooks
         + '}';
   }
 
@@ -300,7 +317,8 @@ public class PathfinderConfiguration {
         && Objects.equals(validationProcessors, that.validationProcessors)
         && Objects.equals(costProcessors, that.costProcessors)
         && Objects.equals(neighborStrategy, that.neighborStrategy)
-        && heuristicStrategy == that.heuristicStrategy;
+        && heuristicStrategy == that.heuristicStrategy
+        && Objects.equals(pathfindingHooks, that.pathfindingHooks);
   }
 
   @Override
@@ -319,7 +337,8 @@ public class PathfinderConfiguration {
         bloomFilterSize,
         bloomFilterFpp,
         heuristicStrategy,
-        reopenClosedNodes);
+        reopenClosedNodes,
+        pathfindingHooks);
   }
 
   public static class PathfinderConfigurationBuilder {
@@ -337,6 +356,7 @@ public class PathfinderConfiguration {
     private double bloomFilterFpp = 0.01;
     private IHeuristicStrategy heuristicStrategy = HeuristicStrategies.LINEAR;
     private boolean reopenClosedNodes = false;
+    private List<PathfinderHook> pathfindingHooks = Collections.emptyList();
 
     PathfinderConfigurationBuilder() {}
 
@@ -436,6 +456,12 @@ public class PathfinderConfiguration {
       return this;
     }
 
+    public PathfinderConfiguration.PathfinderConfigurationBuilder pathfindingHooks(
+        List<PathfinderHook> pathfindingHooks) {
+      this.pathfindingHooks = Objects.requireNonNull(pathfindingHooks);
+      return this;
+    }
+
     public PathfinderConfiguration build() {
       return new PathfinderConfiguration(
           this.maxIterations,
@@ -451,7 +477,8 @@ public class PathfinderConfiguration {
           this.bloomFilterSize,
           this.bloomFilterFpp,
           this.heuristicStrategy,
-          this.reopenClosedNodes);
+          this.reopenClosedNodes,
+          this.pathfindingHooks);
     }
   }
 }

@@ -81,6 +81,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
     this.validationProcessors = pathfinderConfiguration.getNodeValidationProcessors();
     this.costProcessors = pathfinderConfiguration.getNodeCostProcessors();
     this.neighborStrategy = pathfinderConfiguration.getNeighborStrategy();
+    this.pathfinderHooks.addAll(pathfinderConfiguration.pathfindingHooks());
   }
 
   private static void shutdownExecutor() {
