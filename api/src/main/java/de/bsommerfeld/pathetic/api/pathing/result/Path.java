@@ -1,6 +1,5 @@
 package de.bsommerfeld.pathetic.api.pathing.result;
 
-import de.bsommerfeld.pathetic.api.util.ParameterizedSupplier;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import java.util.Collection;
 

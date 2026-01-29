@@ -17,7 +17,7 @@ public interface PathfindingSearch {
    *
    * @param callback the callback to execute if the pathfinding operation is successful or results
    *     in a fallback
-   * @return this PathfindingSearchImpl instance for method chaining
+   * @return this PathfindingSearch instance for method chaining
    */
   PathfindingSearch ifPresent(Consumer<PathfinderResult> callback);
 
@@ -27,7 +27,7 @@ public interface PathfindingSearch {
    *
    * @param callback the callback to execute if the pathfinding operation fails, is aborted, reaches
    *     length limitation, or maximum iterations
-   * @return this PathfindingSearchImpl instance for method chaining
+   * @return this PathfindingSearch instance for method chaining
    */
   PathfindingSearch orElse(Consumer<PathfinderResult> callback);
 
@@ -35,7 +35,7 @@ public interface PathfindingSearch {
    * Executes the given callback if the pathfinding operation results in an exception.
    *
    * @param callback the callback to execute if the pathfinding operation results in an exception
-   * @return this PathfindingSearchImpl instance for method chaining
+   * @return this PathfindingSearch instance for method chaining
    */
   PathfindingSearch exceptionally(Function<Throwable, PathfinderResult> callback);
 
@@ -43,6 +43,8 @@ public interface PathfindingSearch {
    * Aborts the pathfinding operation if it is still in progress. This method has no effect on
    * already-finished PathfindingSearches.
    *
+   * @api.Note This method will cause {@link #exceptionally(Function)} to fire since it ends with a
+   *     {@link java.util.concurrent.CancellationException}
    * @return true if the operation was successfully aborted, false if it was already finished
    */
   boolean abort();
