@@ -62,9 +62,10 @@ implementation("de.bsommerfeld.pathetic:api:5.4.5")
 ```java
 Pathfinder pf = factory.createPathfinder(config);
 
-pf.findPath(start, goal, context).thenAccept(result -> {
-    if (result.state() == FOUND) moveThatEntity(result.path());
-});
+pf.findPath(start, goal, context)
+.ifPresent(result -> {
+    moveThatEntity(result.path())
+}).orElse(result -> System.out.println("No path found!"));
 ```
 
 ### Features that hurt other libraries' feelings
