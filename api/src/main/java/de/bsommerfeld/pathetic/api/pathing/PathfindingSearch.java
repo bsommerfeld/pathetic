@@ -7,6 +7,8 @@ import java.util.function.Consumer;
  * Represents a pathfinding operation that can be configured with callbacks for different outcomes.
  * This interface provides methods to handle successful results, failures, and exceptions, as well
  * as the ability to abort the operation.
+ *
+ * @since 5.4.4
  */
 public interface PathfindingSearch {
 
