@@ -9,9 +9,12 @@ import java.util.function.Consumer;
 public class PathfindingSearchImpl implements PathfindingSearch {
 
   private final CompletableFuture<PathfinderResult> completableFuture;
+  private final Runnable abortAction;
 
-  PathfindingSearchImpl(CompletableFuture<PathfinderResult> completableFuture) {
+  PathfindingSearchImpl(
+      CompletableFuture<PathfinderResult> completableFuture, Runnable abortAction) {
     this.completableFuture = completableFuture;
+    this.abortAction = abortAction;
   }
 
   @Override
@@ -58,7 +61,7 @@ public class PathfindingSearchImpl implements PathfindingSearch {
   }
 
   @Override
-  public boolean abort() {
-    return completableFuture.cancel(true);
+  public void abort() {
+    if (abortAction != null) abortAction.run(); // Controlled abort
   }
 }

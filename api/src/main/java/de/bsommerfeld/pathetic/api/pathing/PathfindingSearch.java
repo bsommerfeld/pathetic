@@ -39,13 +39,12 @@ public interface PathfindingSearch {
   PathfindingSearch exceptionally(Consumer<Throwable> callback);
 
   /**
-   * Aborts the pathfinding operation if it is still in progress. This method has no effect on
-   * already-finished PathfindingSearches.
+   * Aborts the pathfinding operation if it is still in progress.
    *
-   * @api.Note This method will cause {@link #exceptionally(Consumer)} to fire since it ends with a
-   *     {@link java.util.concurrent.CancellationException}. We may find a better way in the future
-   *     to handle this. If you have an idea, it's a good opportunity for contributing.
-   * @return true if the operation was successfully aborted, false if it was already finished
+   * <p>This method uses <b>cooperative cancellation</b>. Instead of abruptly terminating the
+   * execution thread, it signals the pathfinder to gracefully stop at the next available
+   * opportunity (usually the start of the next iteration). This ensures that internal resources are
+   * released and cleanup logic is executed correctly.
    */
-  boolean abort();
+  void abort();
 }

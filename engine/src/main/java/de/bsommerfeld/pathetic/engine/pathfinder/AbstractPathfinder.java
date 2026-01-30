@@ -36,6 +36,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Provides a skeletal implementation of the {@link Pathfinder} interface, defining common behavior
@@ -115,16 +116,24 @@ public abstract class AbstractPathfinder implements Pathfinder {
     final PathPosition effectiveStart = start.floor();
     final PathPosition effectiveTarget = target.floor();
 
+    final AtomicBoolean abortFlag = new AtomicBoolean(false);
+
+    CompletableFuture<PathfinderResult> future;
     if (pathfinderConfiguration.isAsync()) {
-      return new PathfindingSearchImpl(
+      future =
           CompletableFuture.supplyAsync(
-              () -> executePathingAlgorithm(effectiveStart, effectiveTarget, environmentContext),
-              PATHING_EXECUTOR_SERVICE));
+              () ->
+                  executePathingAlgorithm(
+                      effectiveStart, effectiveTarget, environmentContext, abortFlag),
+              PATHING_EXECUTOR_SERVICE);
     } else {
-      return new PathfindingSearchImpl(
+      future =
           CompletableFuture.completedFuture(
-              executePathingAlgorithm(effectiveStart, effectiveTarget, environmentContext)));
+              executePathingAlgorithm(
+                  effectiveStart, effectiveTarget, environmentContext, abortFlag));
     }
+
+    return new PathfindingSearchImpl(future, () -> abortFlag.set(true));
   }
 
   /**
@@ -135,7 +144,10 @@ public abstract class AbstractPathfinder implements Pathfinder {
    * @return The result of the pathfinding operation.
    */
   private PathfinderResult executePathingAlgorithm(
-      PathPosition start, PathPosition target, EnvironmentContext environmentContext) {
+      PathPosition start,
+      PathPosition target,
+      EnvironmentContext environmentContext,
+      AtomicBoolean abortFlag) {
     initializeSearch();
 
     SearchContext searchContext =
@@ -179,6 +191,12 @@ public abstract class AbstractPathfinder implements Pathfinder {
       Node bestFallbackNode = startNode;
 
       while (!openSet.isEmpty() && iteration < pathfinderConfiguration.getMaxIterations()) {
+
+        if (abortFlag.get()) {
+          return new PathfinderResultImpl(
+              PathState.ABORTED, new PathImpl(start, target, EMPTY_PATH_POSITIONS));
+        }
+
         iteration++;
 
         Node currentNode = extractBestNode(openSet);
