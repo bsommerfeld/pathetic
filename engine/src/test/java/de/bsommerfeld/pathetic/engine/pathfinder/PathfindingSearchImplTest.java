@@ -8,8 +8,6 @@ import de.bsommerfeld.pathetic.api.pathing.result.PathfinderResult;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import org.junit.jupiter.api.Test;
 
 class PathfindingSearchImplTest {
@@ -68,8 +66,7 @@ class PathfindingSearchImplTest {
     search.ifPresent(result -> callbackCalled.set(true));
 
     // Then
-    assertFalse(
-        callbackCalled.get(), "ifPresent callback should NOT be called for FAILED state");
+    assertFalse(callbackCalled.get(), "ifPresent callback should NOT be called for FAILED state");
   }
 
   @Test
@@ -126,8 +123,7 @@ class PathfindingSearchImplTest {
     search.orElse(result -> callbackCalled.set(true));
 
     // Then
-    assertTrue(
-        callbackCalled.get(), "orElse callback should be called for LENGTH_LIMITED state");
+    assertTrue(callbackCalled.get(), "orElse callback should be called for LENGTH_LIMITED state");
   }
 
   @Test
@@ -145,8 +141,7 @@ class PathfindingSearchImplTest {
 
     // Then
     assertTrue(
-        callbackCalled.get(),
-        "orElse callback should be called for MAX_ITERATIONS_REACHED state");
+        callbackCalled.get(), "orElse callback should be called for MAX_ITERATIONS_REACHED state");
   }
 
   @Test
@@ -204,7 +199,6 @@ class PathfindingSearchImplTest {
         throwable -> {
           exceptionHandled.set(true);
           capturedException.set(throwable);
-          return fallbackResult;
         });
 
     // Then
@@ -246,28 +240,13 @@ class PathfindingSearchImplTest {
   void testAbortCancelsFuture() {
     // Given
     CompletableFuture<PathfinderResult> future = new CompletableFuture<>();
-    PathfindingSearchImpl search = new PathfindingSearchImpl(future);
+    AtomicBoolean aborted = new AtomicBoolean(false);
+    PathfindingSearchImpl search = new PathfindingSearchImpl(future, () -> aborted.set(true));
 
     // When
-    boolean aborted = search.abort();
+    search.abort();
 
     // Then
-    assertTrue(aborted, "abort() should return true when future is successfully cancelled");
-    assertTrue(future.isCancelled(), "CompletableFuture should be cancelled");
-  }
-
-  @Test
-  void testAbortReturnsFalseWhenAlreadyCompleted() {
-    // Given
-    PathfinderResult mockResult = mock(PathfinderResult.class);
-    CompletableFuture<PathfinderResult> future = CompletableFuture.completedFuture(mockResult);
-    PathfindingSearchImpl search = new PathfindingSearchImpl(future);
-
-    // When
-    boolean aborted = search.abort();
-
-    // Then
-    assertFalse(
-        aborted, "abort() should return false when future is already completed");
+    assertTrue(aborted.get(), "abort() should return true when future is successfully cancelled");
   }
 }

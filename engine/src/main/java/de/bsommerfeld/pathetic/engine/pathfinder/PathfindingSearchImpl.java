@@ -11,6 +11,10 @@ public class PathfindingSearchImpl implements PathfindingSearch {
   private final CompletableFuture<PathfinderResult> completableFuture;
   private final Runnable abortAction;
 
+  PathfindingSearchImpl(CompletableFuture<PathfinderResult> future) {
+    this(future, null);
+  }
+
   PathfindingSearchImpl(
       CompletableFuture<PathfinderResult> completableFuture, Runnable abortAction) {
     this.completableFuture = completableFuture;

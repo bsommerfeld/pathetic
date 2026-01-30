@@ -19,7 +19,6 @@ import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.engine.factory.AStarPathfinderFactory;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -589,13 +588,9 @@ class PathfindingWorkflowIntegrationTest {
     PathPosition target = new PathPosition(1000, 0, 1000); // Very far target
 
     // When
-    AtomicBoolean endedExceptionally = new AtomicBoolean(false);
+    AtomicReference<PathState> aborted = new AtomicReference<>();
     PathfindingSearch search = pathfinder.findPath(start, target);
-    search.exceptionally(
-        (ex) -> {
-          endedExceptionally.set(true);
-          return null;
-        });
+    search.orElse((result) -> aborted.set(result.getPathState()));
 
     // Give it a moment to start, then abort
     Thread.sleep(10);
@@ -604,7 +599,7 @@ class PathfindingWorkflowIntegrationTest {
     // Wait for completion
     Thread.sleep(100);
 
-    assertTrue(endedExceptionally.get(), "Pathfinding should be aborted");
+    assertEquals(PathState.ABORTED, aborted.get(), "Pathfinding should be aborted");
   }
 
   @Test
