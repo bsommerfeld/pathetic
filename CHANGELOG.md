@@ -5,7 +5,7 @@
 ### Changed
 
 - PathfindingSearch#exceptionally now accepts a Consumer instead of a Function
-- aborting the current pathfinding operation now triggers #orElse instead of exceptionally
+- aborting the current pathfinding operation now triggers #orElse instead of #exceptionally and returns an ABORTED PathfindingResult
 - #abort now returns void
 
 ### Fixed
