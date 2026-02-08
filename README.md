@@ -142,3 +142,15 @@ Issues, PRs, death threats → right here: https://github.com/bsommerfeld/pathet
 
 **Powered by JetBrains** (they saw the name and still sponsored us – legends recognize legends ❤️) <br>
 [![JetBrains logo.](https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg)](https://jb.gg/OpenSource)
+
+---
+
+<div align="center">
+    
+<br> <br>
+    
+**Don't be pathetic, use Pathetic.** 🥀  
+
+Add `Powered by Pathetic` to your project's page to show dominance.
+
+</div>
