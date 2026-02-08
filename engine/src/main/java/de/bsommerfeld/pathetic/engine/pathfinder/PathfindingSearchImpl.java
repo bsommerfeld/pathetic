@@ -3,6 +3,7 @@ package de.bsommerfeld.pathetic.engine.pathfinder;
 import de.bsommerfeld.pathetic.api.pathing.PathfindingSearch;
 import de.bsommerfeld.pathetic.api.pathing.result.PathfinderResult;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
@@ -62,6 +63,28 @@ public class PathfindingSearchImpl implements PathfindingSearch {
           return null;
         });
     return this;
+  }
+
+  @Override
+  public PathfinderResult resultBlocking() {
+    try {
+      return completableFuture.join();
+    } catch (Exception e) {
+      throw new RuntimeException("Failed to get result", e);
+    }
+  }
+
+  @Override
+  public Optional<PathfinderResult> result() {
+    if (done() && !completableFuture.isCompletedExceptionally()) {
+      return Optional.of(resultBlocking());
+    }
+    return Optional.empty();
+  }
+
+  @Override
+  public boolean done() {
+    return completableFuture.isDone();
   }
 
   @Override

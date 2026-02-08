@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import de.bsommerfeld.pathetic.api.pathing.result.PathState;
 import de.bsommerfeld.pathetic.api.pathing.result.PathfinderResult;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -248,5 +249,118 @@ class PathfindingSearchImplTest {
 
     // Then
     assertTrue(aborted.get(), "abort() should return true when future is successfully cancelled");
+  }
+
+  @Test
+  void testResultBlockingReturnsCompletedResult() {
+    // Given
+    PathfinderResult mockResult = mock(PathfinderResult.class);
+    CompletableFuture<PathfinderResult> future = CompletableFuture.completedFuture(mockResult);
+    PathfindingSearchImpl search = new PathfindingSearchImpl(future);
+
+    // When
+    PathfinderResult result = search.resultBlocking();
+
+    // Then
+    assertSame(mockResult, result, "resultBlocking should return the completed result");
+  }
+
+  @Test
+  void testResultBlockingThrowsOnException() {
+    // Given
+    CompletableFuture<PathfinderResult> future = new CompletableFuture<>();
+    future.completeExceptionally(new RuntimeException("Test exception"));
+    PathfindingSearchImpl search = new PathfindingSearchImpl(future);
+
+    // When & Then
+    assertThrows(
+        RuntimeException.class,
+        search::resultBlocking,
+        "resultBlocking should throw RuntimeException when future completes exceptionally");
+  }
+
+  @Test
+  void testResultReturnsEmptyWhenNotDone() {
+    // Given
+    CompletableFuture<PathfinderResult> future = new CompletableFuture<>();
+    PathfindingSearchImpl search = new PathfindingSearchImpl(future);
+
+    // When
+    Optional<PathfinderResult> result = search.result();
+
+    // Then
+    assertFalse(result.isPresent(), "result() should return empty Optional when future is not done");
+  }
+
+  @Test
+  void testResultReturnsPresentWhenDone() {
+    // Given
+    PathfinderResult mockResult = mock(PathfinderResult.class);
+    CompletableFuture<PathfinderResult> future = CompletableFuture.completedFuture(mockResult);
+    PathfindingSearchImpl search = new PathfindingSearchImpl(future);
+
+    // When
+    Optional<PathfinderResult> result = search.result();
+
+    // Then
+    assertTrue(result.isPresent(), "result() should return present Optional when future is done");
+    assertSame(mockResult, result.get(), "Optional should contain the completed result");
+  }
+
+  @Test
+  void testResultReturnsEmptyWhenCompletedExceptionally() {
+    // Given
+    CompletableFuture<PathfinderResult> future = new CompletableFuture<>();
+    future.completeExceptionally(new RuntimeException("Test exception"));
+    PathfindingSearchImpl search = new PathfindingSearchImpl(future);
+
+    // When
+    Optional<PathfinderResult> result = search.result();
+
+    // Then
+    assertFalse(
+        result.isPresent(),
+        "result() should return empty Optional when future completes exceptionally");
+  }
+
+  @Test
+  void testDoneReturnsFalseWhenNotComplete() {
+    // Given
+    CompletableFuture<PathfinderResult> future = new CompletableFuture<>();
+    PathfindingSearchImpl search = new PathfindingSearchImpl(future);
+
+    // When
+    boolean done = search.done();
+
+    // Then
+    assertFalse(done, "done() should return false when future is not complete");
+  }
+
+  @Test
+  void testDoneReturnsTrueWhenComplete() {
+    // Given
+    PathfinderResult mockResult = mock(PathfinderResult.class);
+    CompletableFuture<PathfinderResult> future = CompletableFuture.completedFuture(mockResult);
+    PathfindingSearchImpl search = new PathfindingSearchImpl(future);
+
+    // When
+    boolean done = search.done();
+
+    // Then
+    assertTrue(done, "done() should return true when future is complete");
+  }
+
+  @Test
+  void testDoneReturnsTrueWhenCompletedExceptionally() {
+    // Given
+    CompletableFuture<PathfinderResult> future = new CompletableFuture<>();
+    future.completeExceptionally(new RuntimeException("Test exception"));
+    PathfindingSearchImpl search = new PathfindingSearchImpl(future);
+
+    // When
+    boolean done = search.done();
+
+    // Then
+    assertTrue(done, "done() should return true even when future completes exceptionally");
   }
 }
