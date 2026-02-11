@@ -151,6 +151,6 @@ Issues, PRs, death threats → right here: https://github.com/bsommerfeld/pathet
     
 **Don't be pathetic, use Pathetic.** 🥀  
 
-Add `Powered by Pathetic` to your project's page to show dominance.
+Add `Powered by [Pathetic](https://github.com/bsommerfeld/pathetic)` to your project's page to show dominance.
 
 </div>
