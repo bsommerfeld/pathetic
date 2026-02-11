@@ -7,6 +7,8 @@ import java.util.Collection;
  * A Path is a sequence of positions that represents a path through a 3D space. The positions are
  * ordered such that the first position is the start of the path and the last position is the end of
  * the path. The path may contain additional positions between the start and end positions.
+ *
+ * @see Iterable<PathPosition>
  */
 public interface Path extends Iterable<PathPosition> {
 
