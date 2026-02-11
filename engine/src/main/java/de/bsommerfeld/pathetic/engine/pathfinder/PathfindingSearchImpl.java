@@ -76,10 +76,14 @@ class PathfindingSearchImpl implements PathfindingSearch {
 
   @Override
   public Optional<PathfinderResult> result() {
-    if (done() && !completableFuture.isCompletedExceptionally()) {
-      return Optional.of(resultBlocking());
+    if (!done() || completableFuture.isCancelled()) {
+      return Optional.empty();
     }
-    return Optional.empty();
+    try {
+      return Optional.ofNullable(completableFuture.getNow(null));
+    } catch (Exception e) {
+      return Optional.empty();
+    }
   }
 
   @Override
