@@ -7,7 +7,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
-public class PathfindingSearchImpl implements PathfindingSearch {
+class PathfindingSearchImpl implements PathfindingSearch {
 
   private final CompletableFuture<PathfinderResult> completableFuture;
   private final Runnable abortAction;
