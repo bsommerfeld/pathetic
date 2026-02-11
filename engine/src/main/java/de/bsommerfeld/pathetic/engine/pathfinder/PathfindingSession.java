@@ -18,8 +18,8 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
  */
 class PathfindingSession {
   final Long2ObjectMap<SpatialData> visitedRegions = new Long2ObjectOpenHashMap<>();
-  final Long2ObjectMap<Node> openSetNodes = new Long2ObjectOpenHashMap<>();
-  final Long2DoubleMap closedSetGCosts = new Long2DoubleOpenHashMap();
+  final Long2ObjectMap<Node> openSetNodes = new Long2ObjectOpenHashMap<>(1024);
+  final Long2DoubleMap closedSetGCosts = new Long2DoubleOpenHashMap(2048);
 
   private final PathfinderConfiguration pathfinderConfiguration;
 
