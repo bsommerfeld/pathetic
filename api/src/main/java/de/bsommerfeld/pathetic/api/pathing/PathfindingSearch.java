@@ -50,6 +50,7 @@ public interface PathfindingSearch {
    *
    * @return the {@link PathfinderResult} representing the outcome of the pathfinding operation,
    *     including success, failure, or fallback states, along with the generated path.
+   * @since 5.4.6
    */
   PathfinderResult resultBlocking();
 
@@ -65,6 +66,7 @@ public interface PathfindingSearch {
    * @return an {@link Optional} containing the {@link PathfinderResult} if the pathfinding
    *     operation has completed, or an empty {@link Optional} if the result is not yet available or
    *     the operation did not complete.
+   * @since 5.4.6
    */
   Optional<PathfinderResult> result();
 
@@ -77,6 +79,7 @@ public interface PathfindingSearch {
    * state.
    *
    * @return true if the pathfinding operation is complete; false otherwise.
+   * @since 5.4.6
    */
   boolean done();
 
