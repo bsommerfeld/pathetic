@@ -8,6 +8,9 @@
 
 ### Changed
 
+- optimized PathfinderSearch#result robustness
+- PathfinderSearchImpl is now package-private
+
 ### Fixed
 
 ### Removed
