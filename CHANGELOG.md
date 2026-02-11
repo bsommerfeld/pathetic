@@ -15,3 +15,5 @@
 
 ### Removed
 
+- JetBrains annotations dependency
+

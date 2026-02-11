@@ -6,7 +6,6 @@ import de.bsommerfeld.pathetic.api.pathing.processing.Processor;
 import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import java.util.Map;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Provides context for an entire pathfinding search operation. This context is typically created
@@ -60,6 +59,5 @@ public interface SearchContext {
    * @return The EnvironmentContext instance associated with this search, or {@code null} if no
    *     context is available.
    */
-  @Nullable
   EnvironmentContext getEnvironmentContext();
 }
