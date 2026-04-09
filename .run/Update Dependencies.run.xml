@@ -14,6 +14,7 @@
               <option value="clean" />
               <option value="install" />
               <option value="-Dgpg.skip=true" />
+              <option value="-U" />
             </list>
           </option>
           <option name="multimoduleDir" />
