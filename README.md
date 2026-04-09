@@ -44,19 +44,19 @@ Minecraft is a pathfinding hell — Pathetic just walked in, pissed on Hades' le
     <dependency>
         <groupId>de.bsommerfeld.pathetic</groupId>
         <artifactId>engine</artifactId>
-        <version>5.4.5</version>
+        <version>5.4.6</version>
     </dependency>
     <dependency>
         <groupId>de.bsommerfeld.pathetic</groupId>
         <artifactId>api</artifactId>
-        <version>5.4.5</version>
+        <version>5.4.6</version>
     </dependency>
 </dependencies>
 ```
 
 ```kotlin
-implementation("de.bsommerfeld.pathetic:engine:5.4.5")
-implementation("de.bsommerfeld.pathetic:api:5.4.5")
+implementation("de.bsommerfeld.pathetic:engine:5.4.6")
+implementation("de.bsommerfeld.pathetic:api:5.4.6")
 ```
 
 ```java
@@ -73,7 +73,7 @@ pf.findPath(start, goal, context)
 - **Hand-rolled primitive binary min-heap that makes FibonacciHeap look like a participation trophy**  
   → Zero allocations, perfect cache locality, O(log n) decrease-key that’s faster in practice than every “amortized O(1)” heap in the Java ecosystem.  
   → Two contiguous primitive arrays + fastutil Long2IntOpenHashMap. Your CPU prefetcher just sent us a thank-you note.
-- **Bloomfilter first-line-of-defense** → closed-set lookups go from "please wait"(O(n)) to "already done"(O(1))
+- **Bloomfilter first-line-of-defense** → closed-set lookups go from "lemme check"(O(n)) to "done"(O(1))
 - **Composite Heuristics from Hell™** – Manhattan + Octile + real perpendicular deviation + height penalty, all weighted, all running in parallel. Choose linear (accurate as fuck) or squared (2–3× faster, still consistent). One heuristic? Adorable.
 - **Perpendicular tie-breaking** → paths so straight your NPCs look like they're cheating
 - **Processor pipeline** → walking, swimming, flying, restricted areas - just drop a lambda, peasant 
@@ -151,6 +151,6 @@ Issues, PRs, death threats → right here: https://github.com/bsommerfeld/pathet
     
 **Don't be pathetic, use Pathetic.** 🥀  
 
-Add `Powered by Pathetic` to your project's page to show dominance.
+Add `Powered by [Pathetic](https://github.com/bsommerfeld/pathetic)` to your project's page to show dominance.
 
 </div>
