@@ -4,8 +4,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.google.common.util.concurrent.MoreExecutors;
 import de.bsommerfeld.pathetic.api.pathing.PathfindingSearch;
 import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration;
 import de.bsommerfeld.pathetic.api.pathing.context.EnvironmentContext;
@@ -23,7 +26,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
@@ -112,6 +117,22 @@ class AbstractPathfinderTest {
   void testNullHookNotRegistered() {
     pathfinder.registerPathfindingHook(null);
     assertEquals(0, pathfinder.getRegisteredHooksCount());
+  }
+
+  @Test
+  void testNonSharedExecutorPool() {
+    final ExecutorService spyedExecutorService = Mockito.spy(MoreExecutors.newDirectExecutorService());
+    configuration = PathfinderConfiguration.builder()
+      .provider(mockProvider)
+      .maxIterations(100)
+      .maxLength(50)
+      .async(true)
+      .executorService(spyedExecutorService)
+      .build();
+
+    final Optional<PathfinderResult> result = new TestPathfinder(configuration).findPath(start, target).result();
+    assertTrue(result.isPresent());
+    verify(spyedExecutorService, times(1)).execute(any());
   }
 
   /** A concrete implementation of AbstractPathfinder for testing. */
