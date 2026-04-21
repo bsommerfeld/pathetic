@@ -53,19 +53,13 @@ public abstract class AbstractPathfinder implements Pathfinder {
       Collections.unmodifiableSet(new LinkedHashSet<>(0));
   private static final int INITIAL_CAPACITY = 1024;
   private static final double TIE_BREAKER_WEIGHT = 1e-6;
-  private static final ExecutorService PATHING_EXECUTOR_SERVICE =
-      Executors.newWorkStealingPool(Math.max(1, Runtime.getRuntime().availableProcessors() / 2));
-
-  static {
-    Runtime.getRuntime().addShutdownHook(new Thread(AbstractPathfinder::shutdownExecutor));
-  }
 
   protected final PathfinderConfiguration pathfinderConfiguration;
   protected final NavigationPointProvider navigationPointProvider;
   protected final List<ValidationProcessor> validationProcessors;
   protected final List<CostProcessor> costProcessors;
   protected final INeighborStrategy neighborStrategy;
-  protected final ExecutorService asyncExecutorService;
+  protected final ExecutorService executorService;
 
   private final Set<PathfinderHook> pathfinderHooks = Collections.synchronizedSet(new HashSet<>());
 
@@ -82,19 +76,9 @@ public abstract class AbstractPathfinder implements Pathfinder {
     this.costProcessors = pathfinderConfiguration.getNodeCostProcessors();
     this.neighborStrategy = pathfinderConfiguration.getNeighborStrategy();
     this.pathfinderHooks.addAll(pathfinderConfiguration.pathfindingHooks());
-    this.asyncExecutorService = pathfinderConfiguration.asyncExecutorService() == null ? PATHING_EXECUTOR_SERVICE : pathfinderConfiguration.asyncExecutorService();
-  }
-
-  private static void shutdownExecutor() {
-    PATHING_EXECUTOR_SERVICE.shutdown();
-    try {
-      if (!PATHING_EXECUTOR_SERVICE.awaitTermination(5, TimeUnit.SECONDS)) {
-        PATHING_EXECUTOR_SERVICE.shutdownNow();
-      }
-    } catch (InterruptedException e) {
-      PATHING_EXECUTOR_SERVICE.shutdownNow();
-      Thread.currentThread().interrupt();
-    }
+    this.executorService = Objects.requireNonNull(
+            pathfinderConfiguration.executorService(),
+            "Executor service from configuration has not been set");
   }
 
   @Override
@@ -127,7 +111,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
               () ->
                   executePathingAlgorithm(
                       effectiveStart, effectiveTarget, environmentContext, abortFlag),
-              asyncExecutorService);
+              executorService);
     } else {
       future =
           CompletableFuture.completedFuture(

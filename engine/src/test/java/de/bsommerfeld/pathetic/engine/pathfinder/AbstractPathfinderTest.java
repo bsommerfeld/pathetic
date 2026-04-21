@@ -127,7 +127,7 @@ class AbstractPathfinderTest {
       .maxIterations(100)
       .maxLength(50)
       .async(true)
-      .asyncExecutorService(spyedExecutorService)
+      .executorService(spyedExecutorService)
       .build();
 
     final Optional<PathfinderResult> result = new TestPathfinder(configuration).findPath(start, target).result();
