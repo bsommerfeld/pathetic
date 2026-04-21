@@ -12,6 +12,7 @@ import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Defines a set of configurable parameters that govern the behavior of the A* pathfinding
@@ -136,6 +137,14 @@ public class PathfinderConfiguration {
    */
   private final List<PathfinderHook> pathfindingHooks;
 
+  /**
+   * The executor service used by the pathfinder to schedule and execute pathfinding requests in case it is marked
+   * as {@link PathfinderConfiguration#isAsync()}.
+   * If left as {@code null} the pathfinder implementation is responsible for providing an implementation-dependent
+   * executor service instead.
+   */
+  private final ExecutorService asyncExecutorService;
+
   private PathfinderConfiguration(
       int maxIterations,
       int maxLength,
@@ -151,7 +160,8 @@ public class PathfinderConfiguration {
       double bloomFilterFpp,
       IHeuristicStrategy heuristicStrategy,
       boolean reopenClosedNodes,
-      List<PathfinderHook> pathfindingHooks) {
+      List<PathfinderHook> pathfindingHooks,
+      ExecutorService asyncExecutorService) {
     this.maxIterations = maxIterations;
     this.maxLength = maxLength;
     this.async = async;
@@ -167,6 +177,7 @@ public class PathfinderConfiguration {
     this.heuristicStrategy = heuristicStrategy;
     this.reopenClosedNodes = reopenClosedNodes;
     this.pathfindingHooks = Collections.unmodifiableList(pathfindingHooks);
+    this.asyncExecutorService = asyncExecutorService;
   }
 
   /**
@@ -196,6 +207,7 @@ public class PathfinderConfiguration {
         .heuristicStrategy(pathfinderConfiguration.heuristicStrategy)
         .reopenClosedNodes(pathfinderConfiguration.reopenClosedNodes)
         .pathfindingHooks(pathfinderConfiguration.pathfindingHooks)
+        .asyncExecutorService(pathfinderConfiguration.asyncExecutorService)
         .build();
   }
 
@@ -263,6 +275,10 @@ public class PathfinderConfiguration {
     return pathfindingHooks;
   }
 
+  public ExecutorService asyncExecutorService() {
+    return asyncExecutorService;
+  }
+
   @Override
   public String toString() {
     return "PathfinderConfiguration{"
@@ -296,6 +312,8 @@ public class PathfinderConfiguration {
         + reopenClosedNodes
         + ", pathfindingHooks="
         + pathfindingHooks
+        + ", asyncExecutorService="
+        + asyncExecutorService
         + '}';
   }
 
@@ -318,7 +336,8 @@ public class PathfinderConfiguration {
         && Objects.equals(costProcessors, that.costProcessors)
         && Objects.equals(neighborStrategy, that.neighborStrategy)
         && heuristicStrategy == that.heuristicStrategy
-        && Objects.equals(pathfindingHooks, that.pathfindingHooks);
+        && Objects.equals(pathfindingHooks, that.pathfindingHooks)
+        && Objects.equals(asyncExecutorService, that.asyncExecutorService);
   }
 
   @Override
@@ -338,7 +357,9 @@ public class PathfinderConfiguration {
         bloomFilterFpp,
         heuristicStrategy,
         reopenClosedNodes,
-        pathfindingHooks);
+        pathfindingHooks,
+        asyncExecutorService
+      );
   }
 
   public static class PathfinderConfigurationBuilder {
@@ -357,6 +378,7 @@ public class PathfinderConfiguration {
     private IHeuristicStrategy heuristicStrategy = HeuristicStrategies.LINEAR;
     private boolean reopenClosedNodes = false;
     private List<PathfinderHook> pathfindingHooks = Collections.emptyList();
+    private ExecutorService asyncExecutorService = null;
 
     PathfinderConfigurationBuilder() {}
 
@@ -462,6 +484,12 @@ public class PathfinderConfiguration {
       return this;
     }
 
+    public PathfinderConfiguration.PathfinderConfigurationBuilder asyncExecutorService(
+        ExecutorService asyncExecutorService) {
+      this.asyncExecutorService = asyncExecutorService;
+      return this;
+    }
+
     public PathfinderConfiguration build() {
       return new PathfinderConfiguration(
           this.maxIterations,
@@ -478,7 +506,8 @@ public class PathfinderConfiguration {
           this.bloomFilterFpp,
           this.heuristicStrategy,
           this.reopenClosedNodes,
-          this.pathfindingHooks);
+          this.pathfindingHooks,
+          this.asyncExecutorService);
     }
   }
 }

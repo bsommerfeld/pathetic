@@ -65,6 +65,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
   protected final List<ValidationProcessor> validationProcessors;
   protected final List<CostProcessor> costProcessors;
   protected final INeighborStrategy neighborStrategy;
+  protected final ExecutorService asyncExecutorService;
 
   private final Set<PathfinderHook> pathfinderHooks = Collections.synchronizedSet(new HashSet<>());
 
@@ -81,6 +82,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
     this.costProcessors = pathfinderConfiguration.getNodeCostProcessors();
     this.neighborStrategy = pathfinderConfiguration.getNeighborStrategy();
     this.pathfinderHooks.addAll(pathfinderConfiguration.pathfindingHooks());
+    this.asyncExecutorService = pathfinderConfiguration.asyncExecutorService() == null ? PATHING_EXECUTOR_SERVICE : pathfinderConfiguration.asyncExecutorService();
   }
 
   private static void shutdownExecutor() {
@@ -125,7 +127,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
               () ->
                   executePathingAlgorithm(
                       effectiveStart, effectiveTarget, environmentContext, abortFlag),
-              PATHING_EXECUTOR_SERVICE);
+              asyncExecutorService);
     } else {
       future =
           CompletableFuture.completedFuture(
