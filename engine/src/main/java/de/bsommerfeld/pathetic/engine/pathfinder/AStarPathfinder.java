@@ -95,6 +95,8 @@ public final class AStarPathfinder extends AbstractPathfinder {
         continue;
       }
 
+      Node neighbor = createNeighborNode(neighborPos, start, target, currentNode);
+
       // Check if neighbor is in the closed set
       SpatialData spatialData = session.getOrCreateSpatialData(neighborPos);
       if (spatialData.flod(neighborPos)) {
@@ -117,16 +119,10 @@ public final class AStarPathfinder extends AbstractPathfinder {
         if (pathfinderConfiguration.shouldReopenClosedNodes()) {
           double oldCost = session.closedSetGCosts.get(packedPos);
 
-          /*
-           * We have to create a temp node here to calculate the costs.
-           * That's sadly necessary, since CostProcessors need the context.
-           * But since this only happens with closed nodes, the allocations stay in line.
-           */
-          Node tempNeighbor = createNeighborNode(neighborPos, start, target, currentNode);
           EvaluationContext context =
               new EvaluationContextImpl(
                   searchContext,
-                  tempNeighbor,
+                  neighbor,
                   currentNode,
                   pathfinderConfiguration.getHeuristicStrategy());
 
@@ -149,7 +145,6 @@ public final class AStarPathfinder extends AbstractPathfinder {
       }
 
       // Process as a new node
-      Node neighbor = createNeighborNode(neighborPos, start, target, currentNode);
       neighbor.setParent(currentNode);
       EvaluationContext context =
           new EvaluationContextImpl(
