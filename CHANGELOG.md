@@ -8,5 +8,7 @@
 
 ### Fixed
 
+- Add input validation for numeric values in PathfinderConfiguration
+
 ### Removed
 

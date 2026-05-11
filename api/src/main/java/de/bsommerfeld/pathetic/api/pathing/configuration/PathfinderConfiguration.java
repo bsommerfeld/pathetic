@@ -383,11 +383,19 @@ public class PathfinderConfiguration {
     PathfinderConfigurationBuilder() {}
 
     public PathfinderConfiguration.PathfinderConfigurationBuilder maxIterations(int maxIterations) {
+      if (maxIterations <= 0) {
+        throw new IllegalArgumentException(
+            "maxIterations must be > 0, was " + maxIterations);
+      }
       this.maxIterations = maxIterations;
       return this;
     }
 
     public PathfinderConfiguration.PathfinderConfigurationBuilder maxLength(int maxLength) {
+      if (maxLength < 0) {
+        throw new IllegalArgumentException(
+            "maxLength must be >= 0 (0 = unlimited), was " + maxLength);
+      }
       this.maxLength = maxLength;
       return this;
     }
@@ -450,18 +458,30 @@ public class PathfinderConfiguration {
     }
 
     public PathfinderConfiguration.PathfinderConfigurationBuilder gridCellSize(int gridCellSize) {
+      if (gridCellSize <= 0) {
+        throw new IllegalArgumentException(
+            "gridCellSize must be > 0, was " + gridCellSize);
+      }
       this.gridCellSize = gridCellSize;
       return this;
     }
 
     public PathfinderConfiguration.PathfinderConfigurationBuilder bloomFilterSize(
         int bloomFilterSize) {
+      if (bloomFilterSize <= 0) {
+        throw new IllegalArgumentException(
+            "bloomFilterSize must be > 0, was " + bloomFilterSize);
+      }
       this.bloomFilterSize = bloomFilterSize;
       return this;
     }
 
     public PathfinderConfiguration.PathfinderConfigurationBuilder bloomFilterFpp(
         double bloomFilterFpp) {
+      if (!(bloomFilterFpp > 0.0 && bloomFilterFpp < 1.0)) {
+        throw new IllegalArgumentException(
+            "bloomFilterFpp must be in (0.0, 1.0), was " + bloomFilterFpp);
+      }
       this.bloomFilterFpp = bloomFilterFpp;
       return this;
     }
@@ -486,7 +506,7 @@ public class PathfinderConfiguration {
 
     public PathfinderConfiguration.PathfinderConfigurationBuilder executorService(
         ExecutorService executorService) {
-      this.executorService = executorService;
+      this.executorService = Objects.requireNonNull(executorService);
       return this;
     }
 
