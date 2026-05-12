@@ -2,6 +2,7 @@ package de.bsommerfeld.pathetic.engine.pathfinder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
@@ -123,6 +124,81 @@ class AbstractPathfinderTest {
   void testNullHookNotRegistered() {
     pathfinder.registerPathfindingHook(null);
     assertEquals(0, pathfinder.getRegisteredHooksCount());
+  }
+
+  // -------------------------------------------------------------------------
+  // Null EnvironmentContext propagation - see CODE_REVIEW 3.6 (withdrawn)
+  // The JavaDoc on Pathfinder.findPath says EnvironmentContext may be null; the
+  // 2-arg overload always passes null. This test locks in that the null value
+  // actually reaches Processors as null, so a future engine-internal
+  // dereference would fail loudly here instead of in user code.
+  // -------------------------------------------------------------------------
+  @Test
+  void findPathWithoutContextDeliversNullEnvironmentContextToProcessors() {
+    NavigationPoint mockNavigationPoint = Mockito.mock(NavigationPoint.class);
+    when(mockNavigationPoint.isTraversable()).thenReturn(true);
+    when(mockProvider.getNavigationPoint(any(PathPosition.class), any()))
+        .thenReturn(mockNavigationPoint);
+
+    AtomicReference<Boolean> seenContextWasNull = new AtomicReference<>();
+    ValidationProcessor recorder =
+        new ValidationProcessor() {
+          @Override
+          public boolean isValid(EvaluationContext context) {
+            seenContextWasNull.compareAndSet(
+                null, context.getSearchContext().getEnvironmentContext() == null);
+            return true;
+          }
+        };
+
+    configuration =
+        PathfinderConfiguration.builder()
+            .provider(mockProvider)
+            .maxIterations(10)
+            .async(false)
+            .validationProcessors(Collections.singletonList(recorder))
+            .build();
+    pathfinder = new TestPathfinder(configuration);
+
+    // 2-arg overload delegates findPath(start, target, null) internally.
+    pathfinder.findPath(start, target).resultBlocking();
+    assertTrue(
+        Boolean.TRUE.equals(seenContextWasNull.get()),
+        "Processor must observe EnvironmentContext as null when no context was supplied");
+  }
+
+  @Test
+  void findPathWithContextDeliversIdentityToProcessors() {
+    NavigationPoint mockNavigationPoint = Mockito.mock(NavigationPoint.class);
+    when(mockNavigationPoint.isTraversable()).thenReturn(true);
+    when(mockProvider.getNavigationPoint(any(PathPosition.class), any()))
+        .thenReturn(mockNavigationPoint);
+
+    EnvironmentContext supplied = Mockito.mock(EnvironmentContext.class);
+    AtomicReference<EnvironmentContext> seenContext = new AtomicReference<>();
+    ValidationProcessor recorder =
+        new ValidationProcessor() {
+          @Override
+          public boolean isValid(EvaluationContext context) {
+            seenContext.compareAndSet(null, context.getSearchContext().getEnvironmentContext());
+            return true;
+          }
+        };
+
+    configuration =
+        PathfinderConfiguration.builder()
+            .provider(mockProvider)
+            .maxIterations(10)
+            .async(false)
+            .validationProcessors(Collections.singletonList(recorder))
+            .build();
+    pathfinder = new TestPathfinder(configuration);
+
+    pathfinder.findPath(start, target, supplied).resultBlocking();
+    assertSame(
+        supplied,
+        seenContext.get(),
+        "Processor must receive the exact EnvironmentContext instance supplied to findPath");
   }
 
   // -------------------------------------------------------------------------
