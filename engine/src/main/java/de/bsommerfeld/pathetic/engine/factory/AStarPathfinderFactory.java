@@ -8,6 +8,19 @@ import de.bsommerfeld.pathetic.engine.pathfinder.AStarPathfinder;
 
 public class AStarPathfinderFactory implements PathfinderFactory {
 
+    /**
+     * {@inheritDoc}
+     *
+     * <p>Returns an {@link AStarPathfinder} backed by an all-defaults configuration whose {@link
+     * de.bsommerfeld.pathetic.api.provider.NavigationPointProvider} treats every position as
+     * traversable - the resulting pathfinder will route through walls and obstacles. Suitable only
+     * for ad-hoc smoke tests.
+     *
+     * @deprecated Use {@link #createPathfinder(PathfinderConfiguration)} with an explicit
+     *     configuration that supplies a real {@link
+     *     de.bsommerfeld.pathetic.api.provider.NavigationPointProvider}.
+     */
+    @Deprecated
     @Override
     public Pathfinder createPathfinder() {
         return new AStarPathfinder(PathfinderConfiguration.builder().build()); // build with all defaults

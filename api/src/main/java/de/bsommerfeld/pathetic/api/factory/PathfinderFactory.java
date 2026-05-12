@@ -11,8 +11,19 @@ public interface PathfinderFactory {
     /**
      * Creates a new instance of a {@link Pathfinder} with a default {@link PathfinderConfiguration}.
      *
-     * @return A new {@link Pathfinder} instance.
+     * <p>The resulting pathfinder uses the builder defaults, including a {@link
+     * de.bsommerfeld.pathetic.api.provider.NavigationPointProvider} that reports <strong>every
+     * position as traversable</strong>. The returned pathfinder will therefore route through walls,
+     * obstacles, and otherwise non-traversable terrain. This is only useful for ad-hoc smoke tests
+     * and never for production use.
+     *
+     * @return A new {@link Pathfinder} instance configured with builder defaults.
+     * @deprecated Use {@link #createPathfinder(PathfinderConfiguration)} with an explicit
+     *     configuration that supplies a real {@link
+     *     de.bsommerfeld.pathetic.api.provider.NavigationPointProvider}. Calling this no-arg
+     *     overload almost always indicates a misconfiguration.
      */
+    @Deprecated
     Pathfinder createPathfinder();
 
     /**

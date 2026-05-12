@@ -10,6 +10,7 @@
 - Tighten `PathImpl` constructor parameter from `Iterable<PathPosition>` to `Collection<PathPosition>`
 - Reject all `null` arguments in `Validators` factories (`allOf`, `anyOf`, `noneOf`, `not`) with `NullPointerException`
 - Size the open-set heap per search from `manhattanDistance * branchingFactor`, capped by `maxIterations`
+- Deprecate `PathfinderFactory.createPathfinder()` no-arg overload (always-traversable provider routes through walls)
 
 ### Fixed
 
