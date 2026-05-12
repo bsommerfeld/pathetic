@@ -141,8 +141,9 @@ public class PathfinderConfiguration {
   private final List<PathfinderHook> pathfindingHooks;
 
   /**
-   * The executor service used by the pathfinder to schedule and execute pathfinding requests in case it is marked
-   * as {@link PathfinderConfiguration#isAsync()}.
+   * The executor service used by the pathfinder to schedule and execute pathfinding requests
+   * when {@link #isAsync()} is {@code true}. May be {@code null} for sync-only configurations
+   * that did not explicitly supply an executor - in that case no thread pool is allocated.
    */
   private final ExecutorService executorService;
 
@@ -210,24 +211,27 @@ public class PathfinderConfiguration {
    *     collection state.
    */
   public static PathfinderConfiguration deepCopy(PathfinderConfiguration pathfinderConfiguration) {
-    return builder()
-        .maxIterations(pathfinderConfiguration.maxIterations)
-        .maxLength(pathfinderConfiguration.maxLength)
-        .async(pathfinderConfiguration.async)
-        .fallback(pathfinderConfiguration.fallback)
-        .provider(pathfinderConfiguration.provider)
-        .heuristicWeights(pathfinderConfiguration.heuristicWeights)
-        .validationProcessors(new ArrayList<>(pathfinderConfiguration.validationProcessors))
-        .costProcessor(new ArrayList<>(pathfinderConfiguration.costProcessors))
-        .neighborStrategy(pathfinderConfiguration.neighborStrategy)
-        .gridCellSize(pathfinderConfiguration.gridCellSize)
-        .bloomFilterSize(pathfinderConfiguration.bloomFilterSize)
-        .bloomFilterFpp(pathfinderConfiguration.bloomFilterFpp)
-        .heuristicStrategy(pathfinderConfiguration.heuristicStrategy)
-        .reopenClosedNodes(pathfinderConfiguration.reopenClosedNodes)
-        .pathfindingHooks(new ArrayList<>(pathfinderConfiguration.pathfindingHooks))
-        .executorService(pathfinderConfiguration.executorService)
-        .build();
+    PathfinderConfigurationBuilder builder =
+        builder()
+            .maxIterations(pathfinderConfiguration.maxIterations)
+            .maxLength(pathfinderConfiguration.maxLength)
+            .async(pathfinderConfiguration.async)
+            .fallback(pathfinderConfiguration.fallback)
+            .provider(pathfinderConfiguration.provider)
+            .heuristicWeights(pathfinderConfiguration.heuristicWeights)
+            .validationProcessors(new ArrayList<>(pathfinderConfiguration.validationProcessors))
+            .costProcessor(new ArrayList<>(pathfinderConfiguration.costProcessors))
+            .neighborStrategy(pathfinderConfiguration.neighborStrategy)
+            .gridCellSize(pathfinderConfiguration.gridCellSize)
+            .bloomFilterSize(pathfinderConfiguration.bloomFilterSize)
+            .bloomFilterFpp(pathfinderConfiguration.bloomFilterFpp)
+            .heuristicStrategy(pathfinderConfiguration.heuristicStrategy)
+            .reopenClosedNodes(pathfinderConfiguration.reopenClosedNodes)
+            .pathfindingHooks(new ArrayList<>(pathfinderConfiguration.pathfindingHooks));
+    if (pathfinderConfiguration.executorService != null) {
+      builder.executorService(pathfinderConfiguration.executorService);
+    }
+    return builder.build();
   }
 
   public static PathfinderConfigurationBuilder builder() {
@@ -397,7 +401,11 @@ public class PathfinderConfiguration {
     private IHeuristicStrategy heuristicStrategy = HeuristicStrategies.LINEAR;
     private boolean reopenClosedNodes = false;
     private List<PathfinderHook> pathfindingHooks = Collections.emptyList();
-    private ExecutorService executorService = SharedAsyncPathfinderExecutorService.SHARED_PATHING_EXECUTOR_SERVICE;
+    /*
+     * Stays null until build() resolves it. Sync-only configurations (async=false without a
+     * user-supplied executor) keep this null so the shared pool is never instantiated for them.
+     */
+    private ExecutorService executorService = null;
 
     PathfinderConfigurationBuilder() {}
 
@@ -539,6 +547,11 @@ public class PathfinderConfiguration {
     }
 
     public PathfinderConfiguration build() {
+      ExecutorService resolvedExecutor = this.executorService;
+      if (resolvedExecutor == null && this.async) {
+        // Lazy-resolve the shared default only when actually needed (async dispatch).
+        resolvedExecutor = SharedAsyncPathfinderExecutorService.get();
+      }
       return new PathfinderConfiguration(
           this.maxIterations,
           this.maxLength,
@@ -555,7 +568,7 @@ public class PathfinderConfiguration {
           this.heuristicStrategy,
           this.reopenClosedNodes,
           this.pathfindingHooks,
-          this.executorService);
+          resolvedExecutor);
     }
   }
 }

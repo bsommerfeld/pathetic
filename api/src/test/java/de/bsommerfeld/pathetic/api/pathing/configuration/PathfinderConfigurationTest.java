@@ -1,7 +1,9 @@
 package de.bsommerfeld.pathetic.api.pathing.configuration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -92,10 +94,12 @@ class PathfinderConfigurationTest {
 
   @Test
   void deepCopySharesServiceReferences() {
-    // Provider, executor, strategies, individual processors and hooks are user-supplied
-    // interface implementations / external services. They have no clone contract and are
-    // intentionally shared by reference.
-    PathfinderConfiguration original = PathfinderConfiguration.builder().build();
+    /*
+     * Provider, executor, strategies, individual processors and hooks are user-supplied
+     * interface implementations / external services. They have no clone contract and are
+     * intentionally shared by reference.
+     */
+    PathfinderConfiguration original = PathfinderConfiguration.builder().async(true).build();
     PathfinderConfiguration copy = PathfinderConfiguration.deepCopy(original);
 
     assertSame(original.getProvider(), copy.getProvider());
@@ -103,6 +107,56 @@ class PathfinderConfigurationTest {
     assertSame(original.getHeuristicStrategy(), copy.getHeuristicStrategy());
     assertSame(original.getNeighborStrategy(), copy.getNeighborStrategy());
     assertSame(original.getHeuristicWeights(), copy.getHeuristicWeights());
+  }
+
+  /*
+   * Lazy executor resolution: sync-only configurations must not allocate the shared thread pool.
+   * Async configurations resolve to the shared pool unless the user supplied a custom one.
+   */
+  @Test
+  void syncConfigurationHasNullExecutorByDefault() {
+    PathfinderConfiguration cfg = PathfinderConfiguration.builder().async(false).build();
+    assertNull(cfg.executorService(), "sync configs must leave executor null when none was supplied");
+  }
+
+  @Test
+  void asyncConfigurationResolvesSharedExecutorLazily() {
+    PathfinderConfiguration cfg = PathfinderConfiguration.builder().async(true).build();
+    assertNotNull(
+        cfg.executorService(), "async configs must resolve to the shared executor when none was supplied");
+  }
+
+  @Test
+  void asyncConfigurationsShareTheSameDefaultExecutor() {
+    PathfinderConfiguration first = PathfinderConfiguration.builder().async(true).build();
+    PathfinderConfiguration second = PathfinderConfiguration.builder().async(true).build();
+    assertSame(
+        first.executorService(),
+        second.executorService(),
+        "all async-default configs must refer to the same shared pool instance");
+  }
+
+  @Test
+  void customExecutorIsPreservedRegardlessOfAsyncFlag() {
+    java.util.concurrent.ExecutorService custom =
+        java.util.concurrent.Executors.newSingleThreadExecutor();
+    try {
+      PathfinderConfiguration syncCfg =
+          PathfinderConfiguration.builder().async(false).executorService(custom).build();
+      PathfinderConfiguration asyncCfg =
+          PathfinderConfiguration.builder().async(true).executorService(custom).build();
+      assertSame(custom, syncCfg.executorService());
+      assertSame(custom, asyncCfg.executorService());
+    } finally {
+      custom.shutdownNow();
+    }
+  }
+
+  @Test
+  void deepCopyOfSyncConfigKeepsNullExecutor() {
+    PathfinderConfiguration original = PathfinderConfiguration.builder().async(false).build();
+    PathfinderConfiguration copy = PathfinderConfiguration.deepCopy(original);
+    assertNull(copy.executorService());
   }
 
   @Test

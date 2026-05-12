@@ -75,9 +75,18 @@ public abstract class AbstractPathfinder implements Pathfinder {
     this.costProcessors = pathfinderConfiguration.getNodeCostProcessors();
     this.neighborStrategy = pathfinderConfiguration.getNeighborStrategy();
     this.pathfinderHooks.addAll(pathfinderConfiguration.pathfindingHooks());
-    this.executorService = Objects.requireNonNull(
-            pathfinderConfiguration.executorService(),
-            "Executor service from configuration has not been set");
+    /*
+     * Only async configurations need an executor. Sync configurations are allowed to leave it
+     * null so that the shared default thread pool is never instantiated when nobody will use it.
+     */
+    if (pathfinderConfiguration.isAsync()) {
+      this.executorService =
+          Objects.requireNonNull(
+              pathfinderConfiguration.executorService(),
+              "Executor service from configuration has not been set");
+    } else {
+      this.executorService = pathfinderConfiguration.executorService();
+    }
   }
 
   @Override
