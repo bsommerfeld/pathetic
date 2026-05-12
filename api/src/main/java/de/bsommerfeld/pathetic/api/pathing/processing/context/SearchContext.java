@@ -48,6 +48,19 @@ public interface SearchContext {
    * Returns a mutable map that can be used by {@link Processor}s to share data throughout the
    * lifecycle of this search operation. This map is initialized once per search.
    *
+   * <p><strong>Thread-safety:</strong> The returned map is intentionally <em>not</em>
+   * thread-safe. The pathfinder runs each search on a single worker thread and invokes all
+   * processor callbacks sequentially on that thread, so concurrent access does not arise within
+   * a single search. Processors must therefore:
+   *
+   * <ul>
+   *   <li>only read and write this map from within their own {@code initializeSearch},
+   *       {@code isValid}, {@code calculateCostContribution}, or {@code finalizeSearch} callbacks;
+   *   <li>not hand the map reference to background threads or other searches;
+   *   <li>not assume isolation between searches - a fresh map is allocated per search and
+   *       discarded when the search completes.
+   * </ul>
+   *
    * @return A modifiable map for sharing data. Keys are typically strings.
    */
   Map<String, Object> getSharedData();

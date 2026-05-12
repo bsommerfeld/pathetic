@@ -33,6 +33,12 @@ public class SearchContextImpl implements SearchContext {
         Objects.requireNonNull(pathfinderConfiguration, "pathfinderConfiguration must not be null");
     this.navigationPointProvider =
         Objects.requireNonNull(navigationPointProvider, "navigationPointProvider must not be null");
+    /*
+     * Plain HashMap: each search runs sequentially on a single worker thread, so processors
+     * accessing sharedData never race within a search. See SearchContext#getSharedData() for the
+     * documented contract. A future parallel-A* implementation would need to switch this to a
+     * concurrent map (or per-thread partitioning).
+     */
     this.sharedData = new HashMap<>();
     this.environmentContext = environmentContext;
   }

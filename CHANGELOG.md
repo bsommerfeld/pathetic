@@ -19,6 +19,7 @@
 - Correct `PathfinderResult.hasFailed()` JavaDoc - `FALLBACK` is not treated as a failure
 - Print full stack trace (not just message) when a processor's `finalizeSearch` throws
 - `PathfinderConfiguration.deepCopy` now defensively clones processor and hook lists so the copy is independent of later source mutations
+- Document the single-threaded contract of `SearchContext.getSharedData()` in JavaDoc
 
 ### Removed
 
