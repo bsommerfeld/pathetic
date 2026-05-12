@@ -7,13 +7,10 @@ import org.junit.jupiter.api.Test;
 
 class PathfinderFactoryTest {
 
-  // -------------------------------------------------------------------------
-  // Deprecation contract - see CODE_REVIEW 3.8
-  // The no-arg factory builds with an always-traversable provider and is
-  // therefore unsafe for any real use; the @Deprecated marker must stay
-  // present so callers get a compiler warning.
-  // -------------------------------------------------------------------------
-
+  /*
+   * The no-arg factory builds with an always-traversable provider and is therefore unsafe for
+   * any real use; the @Deprecated marker must stay present so callers get a compiler warning.
+   */
   @Test
   void noArgCreatePathfinderIsDeprecated() throws NoSuchMethodException {
     Method method = PathfinderFactory.class.getDeclaredMethod("createPathfinder");

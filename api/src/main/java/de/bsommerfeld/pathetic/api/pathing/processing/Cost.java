@@ -22,12 +22,18 @@ public final class Cost {
   /**
    * Factory method to create a {@code Cost} instance.
    *
+   * <p>The value must be a finite non-negative number. {@code NaN}, {@code +Infinity},
+   * {@code -Infinity}, and negative values are rejected at the boundary so that downstream
+   * pathfinding arithmetic (G-cost accumulation, F-cost, heap keys, tie-breakers) cannot inherit
+   * non-finite operands.
+   *
    * @param value The numerical cost.
    * @return A new {@code Cost} instance.
+   * @throws IllegalArgumentException if {@code value} is NaN, infinite, or negative.
    */
   public static Cost of(double value) {
-    if (Double.isNaN(value) || value < 0)
-      throw new IllegalArgumentException("Cost must be a positive number or 0");
+    if (!Double.isFinite(value) || value < 0)
+      throw new IllegalArgumentException("Cost must be a finite non-negative number, was " + value);
 
     return new Cost(value);
   }

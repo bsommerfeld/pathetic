@@ -903,15 +903,13 @@ class PathfindingWorkflowIntegrationTest {
     assertTrue(positions.contains(target));
   }
 
-  // ===========================================================================
-  // Regression coverage for fixes tracked in CODE_REVIEW.md
-  // ===========================================================================
-
   @Test
-  @DisplayName("Validators.allOf rejects null arguments end-to-end (CODE_REVIEW 4.1)")
+  @DisplayName("Validators.allOf rejects null arguments end-to-end")
   void testValidatorsAllOfRejectsNullsAtConfigTime() {
-    // Building a config that funnels a null validator into Validators.allOf must fail fast,
-    // before any pathfinding starts.
+    /*
+     * Building a config that funnels a null validator into Validators.allOf must fail fast,
+     * before any pathfinding starts.
+     */
     ValidationProcessor real =
         ctx -> ctx.getCurrentPathPosition().getY() <= 100; // arbitrary always-true
     assertThrows(
@@ -928,7 +926,7 @@ class PathfindingWorkflowIntegrationTest {
   }
 
   @Test
-  @DisplayName("Validators.allOf with real validators still gates pathfinding (CODE_REVIEW 4.1)")
+  @DisplayName("Validators.allOf with real validators still gates pathfinding")
   void testValidatorsAllOfCompositionRunsEndToEnd() {
     // Two valid validators combined via allOf must successfully filter and let the search succeed.
     Set<PathPosition> blocked = new HashSet<>();
@@ -963,7 +961,7 @@ class PathfindingWorkflowIntegrationTest {
   }
 
   @Test
-  @DisplayName("hasFailed and hasFallenBack are mutually exclusive (CODE_REVIEW 4.3)")
+  @DisplayName("hasFailed and hasFallenBack are mutually exclusive")
   void testHasFailedExcludesFallbackOnRealSearch() {
     // A reachable target -> FOUND. Neither failed nor fallback.
     PathfinderConfiguration config =
@@ -984,10 +982,12 @@ class PathfindingWorkflowIntegrationTest {
   }
 
   @Test
-  @DisplayName("Pathfinder runs against PathImpl Collection contract (CODE_REVIEW 4.2)")
+  @DisplayName("Pathfinder runs against PathImpl Collection contract")
   void testPathImplCollectionSignatureEndToEnd() {
-    // Pathfinder uses PathImpl under the hood; this test simply asserts that the returned path
-    // honours the Collection-backed contract: length matches iteration, collect returns a copy.
+    /*
+     * Pathfinder uses PathImpl under the hood; this test simply asserts that the returned path
+     * honours the Collection-backed contract: length matches iteration, collect returns a copy.
+     */
     PathfinderConfiguration config =
         PathfinderConfiguration.builder().provider(simpleProvider).async(false).build();
     Pathfinder pathfinder = factory.createPathfinder(config);

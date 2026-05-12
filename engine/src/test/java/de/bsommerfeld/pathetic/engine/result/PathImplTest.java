@@ -46,12 +46,10 @@ class PathImplTest {
     assertEquals(5, path.length());
   }
 
-  // -------------------------------------------------------------------------
-  // Collection signature - see CODE_REVIEW 4.2
-  // PathImpl was tightened from Iterable<PathPosition> to Collection<PathPosition>.
-  // Verify it accepts the concrete collection types in active use across the codebase.
-  // -------------------------------------------------------------------------
-
+  /*
+   * Constructor accepts every concrete Collection<PathPosition> shape used across the codebase
+   * (ArrayList, ArrayDeque, LinkedHashSet, singleton, empty) and reports length() in O(1).
+   */
   @Test
   void acceptsArrayList() {
     List<PathPosition> positions = createPathPositions(3);

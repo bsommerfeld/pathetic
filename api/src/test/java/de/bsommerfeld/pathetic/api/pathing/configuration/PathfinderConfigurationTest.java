@@ -15,13 +15,11 @@ import org.junit.jupiter.api.Test;
 
 class PathfinderConfigurationTest {
 
-  // -------------------------------------------------------------------------
-  // deepCopy contract - see CODE_REVIEW 3.5
-  // The copy must be independent of subsequent mutations to the source's
-  // backing collections, even when the user retains a reference to the
-  // original mutable list passed into the builder.
-  // -------------------------------------------------------------------------
-
+  /*
+   * deepCopy must produce a configuration that is independent of subsequent mutations to the
+   * source's backing collections, even when the user retains a reference to the original mutable
+   * list passed into the builder.
+   */
   @Test
   void deepCopyIsolatesValidatorListFromSourceListMutation() {
     ValidationProcessor v1 = ctx -> true;

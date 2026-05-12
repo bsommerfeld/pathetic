@@ -126,13 +126,12 @@ class AbstractPathfinderTest {
     assertEquals(0, pathfinder.getRegisteredHooksCount());
   }
 
-  // -------------------------------------------------------------------------
-  // Null EnvironmentContext propagation - see CODE_REVIEW 3.6 (withdrawn)
-  // The JavaDoc on Pathfinder.findPath says EnvironmentContext may be null; the
-  // 2-arg overload always passes null. This test locks in that the null value
-  // actually reaches Processors as null, so a future engine-internal
-  // dereference would fail loudly here instead of in user code.
-  // -------------------------------------------------------------------------
+  /*
+   * The 2-arg findPath overload passes null as the EnvironmentContext. The Pathfinder.findPath
+   * JavaDoc and SearchContext.getEnvironmentContext both declare the value nullable, so the null
+   * must actually reach processors as null. Locks in that contract end-to-end; a future
+   * engine-internal dereference would fail loudly here instead of in user code.
+   */
   @Test
   void findPathWithoutContextDeliversNullEnvironmentContextToProcessors() {
     NavigationPoint mockNavigationPoint = Mockito.mock(NavigationPoint.class);
@@ -201,12 +200,10 @@ class AbstractPathfinderTest {
         "Processor must receive the exact EnvironmentContext instance supplied to findPath");
   }
 
-  // -------------------------------------------------------------------------
-  // Finalizer error reporting - see CODE_REVIEW 3.7
-  // When a processor's finalizeSearch throws, the pathfinder must swallow the
-  // exception (the main result is already known) AND emit the full stack trace
-  // to stderr, not just the message.
-  // -------------------------------------------------------------------------
+  /*
+   * When a processor's finalizeSearch throws, the pathfinder must swallow the exception (the
+   * main result is already known) AND emit the full stack trace to stderr, not just the message.
+   */
   @Test
   void finalizerExceptionPrintsFullStackTraceToStderr() {
     NavigationPoint mockNavigationPoint = Mockito.mock(NavigationPoint.class);

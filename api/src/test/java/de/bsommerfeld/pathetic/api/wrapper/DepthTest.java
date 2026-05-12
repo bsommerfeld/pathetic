@@ -11,12 +11,7 @@ import org.junit.jupiter.api.Test;
 
 class DepthTest {
 
-  // -------------------------------------------------------------------------
-  // Immutability contract - see CODE_REVIEW 2.8
-  // Depth is a value type. The increment() method that previously allowed
-  // mutating the internal counter is gone; the backing field must be final.
-  // -------------------------------------------------------------------------
-
+  /* Depth is a value type: no mutating increment method, final backing field, final class. */
   @Test
   void hasNoIncrementMethod() throws Exception {
     for (Method method : Depth.class.getDeclaredMethods()) {
@@ -44,10 +39,7 @@ class DepthTest {
         "Depth must be final - it is a value type, not an extension point");
   }
 
-  // -------------------------------------------------------------------------
-  // Value semantics
-  // -------------------------------------------------------------------------
-
+  /* Value semantics: equals/hashCode based on the numeric value, of() returns fresh instances. */
   @Test
   void factoryReturnsIndependentInstances() {
     Depth a = Depth.of(7);

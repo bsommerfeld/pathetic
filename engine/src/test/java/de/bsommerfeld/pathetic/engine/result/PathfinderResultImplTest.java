@@ -14,11 +14,7 @@ class PathfinderResultImplTest {
   private static final Path EMPTY_PATH =
       new PathImpl(new PathPosition(0, 0, 0), new PathPosition(0, 0, 0), Collections.emptyList());
 
-  // -------------------------------------------------------------------------
-  // hasFailed contract - see CODE_REVIEW 4.3
-  // FALLBACK is explicitly *not* a failure; hasFallenBack() is the right query.
-  // -------------------------------------------------------------------------
-
+  /* FALLBACK is explicitly *not* a failure; hasFallenBack() is the right query. */
   @Test
   void hasFailedIsTrueForFailedState() {
     PathfinderResultImpl result = new PathfinderResultImpl(PathState.FAILED, EMPTY_PATH);

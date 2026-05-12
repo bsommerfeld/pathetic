@@ -15,13 +15,10 @@ class PathVectorTest {
 
   private static final double EPS = 1e-9;
 
-  // -------------------------------------------------------------------------
-  // Immutability contract - see CODE_REVIEW 2.7
-  // PathVector lost its Cloneable + non-final fields. Mutator-style methods
-  // (setX/setY/setZ, add, multiply, ...) must continue to return fresh
-  // instances rather than mutate this.
-  // -------------------------------------------------------------------------
-
+  /*
+   * Mutator-style methods (setX/setY/setZ, add, multiply, ...) must return fresh instances
+   * rather than mutate this. The coordinate fields are final and the class is not Cloneable.
+   */
   @Test
   void coordinateFieldsAreFinal() throws NoSuchFieldException {
     for (String name : new String[] {"x", "y", "z"}) {
@@ -64,10 +61,7 @@ class PathVectorTest {
     assertEquals(1, a.getX(), EPS, "source vector must remain unchanged after arithmetic");
   }
 
-  // -------------------------------------------------------------------------
-  // computeDistance hardening - see CODE_REVIEW 4.5
-  // -------------------------------------------------------------------------
-
+  /* computeDistance must reject every null argument and degenerate to A.distance(B) when B==C. */
   @Test
   void computeDistanceRejectsNullA() {
     PathVector b = PathVector.of(0, 0, 0);

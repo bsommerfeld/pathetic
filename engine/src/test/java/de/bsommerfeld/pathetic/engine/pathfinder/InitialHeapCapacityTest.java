@@ -9,8 +9,8 @@ import org.junit.jupiter.api.Test;
 /**
  * Unit tests for {@link AbstractPathfinder#computeInitialHeapCapacity}.
  *
- * <p>See CODE_REVIEW 3.10 - the heap capacity per search must scale with manhattan distance and
- * branching factor, capped by maxIterations and floored to a sensible minimum.
+ * <p>The heap capacity per search must scale with manhattan distance and branching factor, capped
+ * by {@code maxIterations} and floored to a sensible minimum.
  */
 class InitialHeapCapacityTest {
 

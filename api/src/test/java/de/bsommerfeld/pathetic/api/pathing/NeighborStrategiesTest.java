@@ -14,11 +14,15 @@ import org.junit.jupiter.api.Test;
 
 class NeighborStrategiesTest {
 
-  // -------------------------------------------------------------------------
-  // Caching - see CODE_REVIEW 4.6
-  // The strategy must return the same Iterable instance on repeated calls so
-  // the A* hot loop performs zero per-iteration allocations.
-  // -------------------------------------------------------------------------
+  /*
+   * Strategies must return the same Iterable instance on repeated calls so the A* hot loop
+   * performs zero per-iteration allocations.
+   */
+  private static Set<PathVector> collect(Iterable<PathVector> iterable) {
+    Set<PathVector> set = new HashSet<>();
+    for (PathVector v : iterable) set.add(v);
+    return set;
+  }
 
   @Test
   void verticalAndHorizontalReturnsSameInstanceAcrossCalls() {
@@ -34,18 +38,14 @@ class NeighborStrategiesTest {
     assertSame(a, b);
   }
 
+  /* Offset content sanity and immutability - guard against accidental list edits. */
   @Test
   void positionAwareCallDelegatesToCachedOffsets() {
     PathPosition any = new PathPosition(0, 0, 0);
     Iterable<PathVector> cached = NeighborStrategies.VERTICAL_AND_HORIZONTAL.getOffsets();
-    Iterable<PathVector> viaPosition =
-        NeighborStrategies.VERTICAL_AND_HORIZONTAL.getOffsets(any);
+    Iterable<PathVector> viaPosition = NeighborStrategies.VERTICAL_AND_HORIZONTAL.getOffsets(any);
     assertSame(cached, viaPosition);
   }
-
-  // -------------------------------------------------------------------------
-  // Offset content - guard against accidental list edits
-  // -------------------------------------------------------------------------
 
   @Test
   void verticalAndHorizontalHasSixCardinalOffsets() {
@@ -70,8 +70,10 @@ class NeighborStrategiesTest {
 
   @Test
   void offsetListsAreImmutable() {
-    // Lists are exposed via the Iterable contract. The backing structure must not be mutable,
-    // otherwise a misbehaving caller could corrupt every subsequent search.
+    /*
+     * Lists are exposed via the Iterable contract. The backing structure must not be mutable,
+     * otherwise a misbehaving caller could corrupt every subsequent search.
+     */
     Iterable<PathVector> offsets = NeighborStrategies.VERTICAL_AND_HORIZONTAL.getOffsets();
     if (offsets instanceof java.util.List) {
       java.util.List<PathVector> asList = (java.util.List<PathVector>) offsets;
@@ -79,11 +81,5 @@ class NeighborStrategiesTest {
       assertThrows(
           UnsupportedOperationException.class, () -> asList.add(new PathVector(99, 99, 99)));
     }
-  }
-
-  private static Set<PathVector> collect(Iterable<PathVector> iterable) {
-    Set<PathVector> set = new HashSet<>();
-    for (PathVector v : iterable) set.add(v);
-    return set;
   }
 }

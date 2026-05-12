@@ -17,10 +17,7 @@ class ValidatorsTest {
   private static final ValidationProcessor FAIL = ctx -> false;
   private static final EvaluationContext DUMMY_CTX = null; // validators don't dereference it here
 
-  // -------------------------------------------------------------------------
-  // Strict null rejection — see CODE_REVIEW 4.1
-  // -------------------------------------------------------------------------
-
+  /* Every factory rejects null arrays, null lists, and null elements with NullPointerException. */
   @Test
   void allOfRejectsNullVarargsArray() {
     assertThrows(NullPointerException.class, () -> Validators.allOf((ValidationProcessor[]) null));
@@ -33,7 +30,8 @@ class ValidatorsTest {
 
   @Test
   void allOfRejectsNullList() {
-    assertThrows(NullPointerException.class, () -> Validators.allOf((List<ValidationProcessor>) null));
+    assertThrows(
+        NullPointerException.class, () -> Validators.allOf((List<ValidationProcessor>) null));
   }
 
   @Test
@@ -54,7 +52,8 @@ class ValidatorsTest {
 
   @Test
   void anyOfRejectsNullList() {
-    assertThrows(NullPointerException.class, () -> Validators.anyOf((List<ValidationProcessor>) null));
+    assertThrows(
+        NullPointerException.class, () -> Validators.anyOf((List<ValidationProcessor>) null));
   }
 
   @Test
@@ -75,7 +74,8 @@ class ValidatorsTest {
 
   @Test
   void noneOfRejectsNullList() {
-    assertThrows(NullPointerException.class, () -> Validators.noneOf((List<ValidationProcessor>) null));
+    assertThrows(
+        NullPointerException.class, () -> Validators.noneOf((List<ValidationProcessor>) null));
   }
 
   @Test
@@ -86,14 +86,10 @@ class ValidatorsTest {
 
   @Test
   void notRejectsNullWithNpe() {
-    // Contract changed from IllegalArgumentException to NullPointerException — see CODE_REVIEW 4.1.
     assertThrows(NullPointerException.class, () -> Validators.not(null));
   }
 
-  // -------------------------------------------------------------------------
-  // Empty inputs remain allowed (identity element semantics)
-  // -------------------------------------------------------------------------
-
+  /* Empty inputs remain allowed: allOf/noneOf return true, anyOf returns false (identity elements). */
   @Test
   void allOfWithNoArgumentsReturnsTrue() {
     assertTrue(Validators.allOf().isValid(DUMMY_CTX));
@@ -124,10 +120,7 @@ class ValidatorsTest {
     assertTrue(Validators.noneOf(Collections.emptyList()).isValid(DUMMY_CTX));
   }
 
-  // -------------------------------------------------------------------------
-  // Functional behavior of combinators (sanity)
-  // -------------------------------------------------------------------------
-
+  /* Combinator semantics: allOf/anyOf short-circuit, not inverts. */
   @Test
   void allOfShortCircuitsOnFirstFail() {
     int[] callCount = {0};

@@ -15,13 +15,10 @@ class PathPositionTest {
 
   private static final double EPS = 1e-9;
 
-  // -------------------------------------------------------------------------
-  // Immutability contract - see CODE_REVIEW 2.7
-  // PathPosition lost its Cloneable + non-final fields. Mutator-style methods
-  // (setX/setY/setZ, add, subtract, floor, mid, midPoint, ...) must return
-  // fresh instances rather than mutate this.
-  // -------------------------------------------------------------------------
-
+  /*
+   * Mutator-style methods (setX/setY/setZ, add, subtract, floor, mid, midPoint, ...) must return
+   * fresh instances rather than mutate this. Coordinate fields are final, class is not Cloneable.
+   */
   @Test
   void coordinateFieldsAreFinal() throws NoSuchFieldException {
     for (String name : new String[] {"x", "y", "z"}) {
@@ -66,10 +63,7 @@ class PathPositionTest {
     assertEquals(1.5, a.getX(), EPS, "source position must remain unchanged");
   }
 
-  // -------------------------------------------------------------------------
-  // Value semantics - equals/hashCode based on floored coordinates
-  // -------------------------------------------------------------------------
-
+  /* Value semantics: equals/hashCode are based on floored coordinates. */
   @Test
   void equalsUsesFlooredCoordinates() {
     PathPosition a = new PathPosition(1.0, 2.0, 3.0);
