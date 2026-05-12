@@ -16,9 +16,10 @@ import java.util.Objects;
  * Processor#initializeSearch(SearchContext)} and {@link Processor#finalizeSearch(SearchContext)}
  * lifecycle calls to their underlying child validators.
  *
- * <p>Null validator instances passed within arrays or lists to factory methods (e.g., {@code
- * allOf(validator1, null, validator2)}) will be ignored during processing and lifecycle calls. If
- * the main varargs array or list itself is null, it will be treated as an empty collection.
+ * <p><strong>Null handling:</strong> Every factory method rejects {@code null}. Passing {@code
+ * null} as the varargs array, the list, or any individual element triggers a {@link
+ * NullPointerException}. There is no silent filtering; a {@code null} validator is always a
+ * caller bug.
  */
 public final class Validators {
 
@@ -28,10 +29,12 @@ public final class Validators {
    * Creates a {@link ValidationProcessor} that evaluates to {@code true} if all of the provided
    * validators evaluate to {@code true}. This operation short-circuits: evaluation stops and {@code
    * false} is returned as soon as the first validator evaluates to {@code false}. If no validators
-   * are provided (or all are null), this validator evaluates to {@code true}.
+   * are provided, this validator evaluates to {@code true}.
    *
-   * @param validators The validators to combine with an AND logic.
+   * @param validators The validators to combine with an AND logic. Must not be {@code null} and
+   *     must not contain {@code null} elements.
    * @return A new {@link ValidationProcessor} representing the AND condition.
+   * @throws NullPointerException if {@code validators} or any element is {@code null}.
    */
   public static ValidationProcessor allOf(ValidationProcessor... validators) {
     return new AllOfValidator(validators);
@@ -41,10 +44,12 @@ public final class Validators {
    * Creates a {@link ValidationProcessor} that evaluates to {@code true} if all of the provided
    * validators evaluate to {@code true}. This operation short-circuits: evaluation stops and {@code
    * false} is returned as soon as the first validator evaluates to {@code false}. If the list is
-   * empty or contains only null validators, this validator evaluates to {@code true}.
+   * empty, this validator evaluates to {@code true}.
    *
-   * @param validators A list of validators to combine with an AND logic.
+   * @param validators A list of validators to combine with an AND logic. Must not be {@code null}
+   *     and must not contain {@code null} elements.
    * @return A new {@link ValidationProcessor} representing the AND condition.
+   * @throws NullPointerException if {@code validators} or any element is {@code null}.
    */
   public static ValidationProcessor allOf(List<ValidationProcessor> validators) {
     return new AllOfValidator(validators);
@@ -54,10 +59,12 @@ public final class Validators {
    * Creates a {@link ValidationProcessor} that evaluates to {@code true} if any of the provided
    * validators evaluate to {@code true}. This operation short-circuits: evaluation stops and {@code
    * true} is returned as soon as the first validator evaluates to {@code true}. If no validators
-   * are provided (or all are null), this validator evaluates to {@code false}.
+   * are provided, this validator evaluates to {@code false}.
    *
-   * @param validators The validators to combine with an OR logic.
+   * @param validators The validators to combine with an OR logic. Must not be {@code null} and
+   *     must not contain {@code null} elements.
    * @return A new {@link ValidationProcessor} representing the OR condition.
+   * @throws NullPointerException if {@code validators} or any element is {@code null}.
    */
   public static ValidationProcessor anyOf(ValidationProcessor... validators) {
     return new AnyOfValidator(validators);
@@ -67,10 +74,12 @@ public final class Validators {
    * Creates a {@link ValidationProcessor} that evaluates to {@code true} if any of the provided
    * validators evaluate to {@code true}. This operation short-circuits: evaluation stops and {@code
    * true} is returned as soon as the first validator evaluates to {@code true}. If the list is
-   * empty or contains only null validators, this validator evaluates to {@code false}.
+   * empty, this validator evaluates to {@code false}.
    *
-   * @param validators A list of validators to combine with an OR logic.
+   * @param validators A list of validators to combine with an OR logic. Must not be {@code null}
+   *     and must not contain {@code null} elements.
    * @return A new {@link ValidationProcessor} representing the OR condition.
+   * @throws NullPointerException if {@code validators} or any element is {@code null}.
    */
   public static ValidationProcessor anyOf(List<ValidationProcessor> validators) {
     return new AnyOfValidator(validators);
@@ -80,11 +89,13 @@ public final class Validators {
    * Creates a {@link ValidationProcessor} that evaluates to {@code true} if none of the provided
    * validators evaluate to {@code true} (i.e., all evaluate to {@code false}). This operation
    * short-circuits: evaluation stops and {@code false} is returned as soon as the first validator
-   * evaluates to {@code true}. If no validators are provided (or all are null), this validator
-   * evaluates to {@code true}.
+   * evaluates to {@code true}. If no validators are provided, this validator evaluates to {@code
+   * true}.
    *
-   * @param validators The validators to combine with a NOR logic.
+   * @param validators The validators to combine with a NOR logic. Must not be {@code null} and
+   *     must not contain {@code null} elements.
    * @return A new {@link ValidationProcessor} representing the NOR condition.
+   * @throws NullPointerException if {@code validators} or any element is {@code null}.
    */
   public static ValidationProcessor noneOf(ValidationProcessor... validators) {
     return new NoneOfValidator(validators);
@@ -94,29 +105,26 @@ public final class Validators {
    * Creates a {@link ValidationProcessor} that evaluates to {@code true} if none of the provided
    * validators evaluate to {@code true} (i.e., all evaluate to {@code false}). This operation
    * short-circuits: evaluation stops and {@code false} is returned as soon as the first validator
-   * evaluates to {@code true}. If the list is empty or contains only null validators, this
-   * validator evaluates to {@code true}.
+   * evaluates to {@code true}. If the list is empty, this validator evaluates to {@code true}.
    *
-   * @param validators A list of validators to combine with a NOR logic.
+   * @param validators A list of validators to combine with a NOR logic. Must not be {@code null}
+   *     and must not contain {@code null} elements.
    * @return A new {@link ValidationProcessor} representing the NOR condition.
+   * @throws NullPointerException if {@code validators} or any element is {@code null}.
    */
   public static ValidationProcessor noneOf(List<ValidationProcessor> validators) {
     return new NoneOfValidator(validators);
   }
 
   /**
-   * Creates a {@link ValidationProcessor} that inverts the result of the given validator. If the
-   * provided validator is {@code null}, this method will throw an {@link IllegalArgumentException}.
+   * Creates a {@link ValidationProcessor} that inverts the result of the given validator.
    *
-   * @param validator The validator whose result is to be inverted. Must not be null.
+   * @param validator The validator whose result is to be inverted. Must not be {@code null}.
    * @return A new {@link ValidationProcessor} representing the NOT condition.
-   * @throws IllegalArgumentException if the provided validator is null.
+   * @throws NullPointerException if {@code validator} is {@code null}.
    */
   public static ValidationProcessor not(ValidationProcessor validator) {
-    if (validator == null) {
-      throw new IllegalArgumentException("Validator for 'not' operation cannot be null.");
-    }
-    return new NotValidator(validator);
+    return new NotValidator(Objects.requireNonNull(validator, "validator must not be null"));
   }
 
   /**
@@ -139,29 +147,26 @@ public final class Validators {
     return AlwaysFalseValidator.INSTANCE;
   }
 
-  private static List<ValidationProcessor> copyAndFilterNulls(ValidationProcessor... validators) {
-    if (validators == null || validators.length == 0) {
+  private static List<ValidationProcessor> requireAllNonNull(ValidationProcessor... validators) {
+    Objects.requireNonNull(validators, "validators must not be null");
+    if (validators.length == 0) {
       return Collections.emptyList();
     }
     List<ValidationProcessor> list = new ArrayList<>(validators.length);
-    for (ValidationProcessor validator : validators) {
-      if (validator != null) {
-        list.add(validator);
-      }
+    for (int i = 0; i < validators.length; i++) {
+      list.add(Objects.requireNonNull(validators[i], "validators[" + i + "] must not be null"));
     }
     return list;
   }
 
-  private static List<ValidationProcessor> copyAndFilterNulls(
-      List<ValidationProcessor> validators) {
-    if (validators == null || validators.isEmpty()) {
+  private static List<ValidationProcessor> requireAllNonNull(List<ValidationProcessor> validators) {
+    Objects.requireNonNull(validators, "validators must not be null");
+    if (validators.isEmpty()) {
       return Collections.emptyList();
     }
     List<ValidationProcessor> list = new ArrayList<>(validators.size());
-    for (ValidationProcessor validator : validators) {
-      if (validator != null) {
-        list.add(validator);
-      }
+    for (int i = 0; i < validators.size(); i++) {
+      list.add(Objects.requireNonNull(validators.get(i), "validators[" + i + "] must not be null"));
     }
     return list;
   }
@@ -170,11 +175,11 @@ public final class Validators {
     protected final List<ValidationProcessor> children;
 
     protected AbstractCompositeValidator(ValidationProcessor... validators) {
-      this.children = copyAndFilterNulls(validators);
+      this.children = requireAllNonNull(validators);
     }
 
     protected AbstractCompositeValidator(List<ValidationProcessor> validators) {
-      this.children = copyAndFilterNulls(validators);
+      this.children = requireAllNonNull(validators);
     }
 
     @Override
@@ -259,9 +264,7 @@ public final class Validators {
     private final ValidationProcessor child;
 
     public NotValidator(ValidationProcessor validator) {
-      this.child =
-          Objects.requireNonNull(
-              validator, "Child validator for NotValidator cannot be null post-construction.");
+      this.child = Objects.requireNonNull(validator, "validator must not be null");
     }
 
     @Override
