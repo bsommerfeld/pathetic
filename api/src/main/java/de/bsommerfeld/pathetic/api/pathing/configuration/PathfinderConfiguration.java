@@ -413,13 +413,14 @@ public class PathfinderConfiguration {
 
     public PathfinderConfiguration.PathfinderConfigurationBuilder provider(
         NavigationPointProvider provider) {
-      this.provider = Objects.requireNonNull(provider);
+      this.provider = Objects.requireNonNull(provider, "provider must not be null");
       return this;
     }
 
     public PathfinderConfiguration.PathfinderConfigurationBuilder heuristicWeights(
         HeuristicWeights heuristicWeights) {
-      this.heuristicWeights = Objects.requireNonNull(heuristicWeights);
+      this.heuristicWeights =
+          Objects.requireNonNull(heuristicWeights, "heuristicWeights must not be null");
       return this;
     }
 
@@ -427,13 +428,15 @@ public class PathfinderConfiguration {
     @Deprecated
     public PathfinderConfiguration.PathfinderConfigurationBuilder nodeValidationProcessors(
         List<ValidationProcessor> validationProcessors) {
-      this.validationProcessors = Objects.requireNonNull(validationProcessors);
+      this.validationProcessors =
+          Objects.requireNonNull(validationProcessors, "validationProcessors must not be null");
       return this;
     }
 
     public PathfinderConfiguration.PathfinderConfigurationBuilder validationProcessors(
         List<ValidationProcessor> validationProcessors) {
-      this.validationProcessors = Objects.requireNonNull(validationProcessors);
+      this.validationProcessors =
+          Objects.requireNonNull(validationProcessors, "validationProcessors must not be null");
       return this;
     }
 
@@ -441,19 +444,22 @@ public class PathfinderConfiguration {
     @Deprecated
     public PathfinderConfiguration.PathfinderConfigurationBuilder nodeCostProcessors(
         List<CostProcessor> costProcessors) {
-      this.costProcessors = Objects.requireNonNull(costProcessors);
+      this.costProcessors =
+          Objects.requireNonNull(costProcessors, "costProcessors must not be null");
       return this;
     }
 
     public PathfinderConfiguration.PathfinderConfigurationBuilder costProcessor(
         List<CostProcessor> costProcessors) {
-      this.costProcessors = Objects.requireNonNull(costProcessors);
+      this.costProcessors =
+          Objects.requireNonNull(costProcessors, "costProcessors must not be null");
       return this;
     }
 
     public PathfinderConfiguration.PathfinderConfigurationBuilder neighborStrategy(
         INeighborStrategy neighborStrategy) {
-      this.neighborStrategy = Objects.requireNonNull(neighborStrategy);
+      this.neighborStrategy =
+          Objects.requireNonNull(neighborStrategy, "neighborStrategy must not be null");
       return this;
     }
 
@@ -488,7 +494,8 @@ public class PathfinderConfiguration {
 
     public PathfinderConfiguration.PathfinderConfigurationBuilder heuristicStrategy(
         IHeuristicStrategy heuristicStrategy) {
-      this.heuristicStrategy = Objects.requireNonNull(heuristicStrategy);
+      this.heuristicStrategy =
+          Objects.requireNonNull(heuristicStrategy, "heuristicStrategy must not be null");
       return this;
     }
 
@@ -500,13 +507,15 @@ public class PathfinderConfiguration {
 
     public PathfinderConfiguration.PathfinderConfigurationBuilder pathfindingHooks(
         List<PathfinderHook> pathfindingHooks) {
-      this.pathfindingHooks = Objects.requireNonNull(pathfindingHooks);
+      this.pathfindingHooks =
+          Objects.requireNonNull(pathfindingHooks, "pathfindingHooks must not be null");
       return this;
     }
 
     public PathfinderConfiguration.PathfinderConfigurationBuilder executorService(
         ExecutorService executorService) {
-      this.executorService = Objects.requireNonNull(executorService);
+      this.executorService =
+          Objects.requireNonNull(executorService, "executorService must not be null");
       return this;
     }
 

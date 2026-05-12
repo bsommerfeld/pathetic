@@ -24,7 +24,7 @@ class PathfindingSearchImpl implements PathfindingSearch {
 
   @Override
   public PathfindingSearchImpl ifPresent(Consumer<PathfinderResult> callback) {
-    Objects.requireNonNull(callback, "Callback cannot be null");
+    Objects.requireNonNull(callback, "callback must not be null");
     completableFuture.thenAccept(
         result -> {
           switch (result.getPathState()) {
@@ -39,7 +39,7 @@ class PathfindingSearchImpl implements PathfindingSearch {
 
   @Override
   public PathfindingSearchImpl orElse(Consumer<PathfinderResult> callback) {
-    Objects.requireNonNull(callback, "Callback cannot be null");
+    Objects.requireNonNull(callback, "callback must not be null");
     completableFuture.thenAccept(
         result -> {
           switch (result.getPathState()) {
@@ -56,7 +56,7 @@ class PathfindingSearchImpl implements PathfindingSearch {
 
   @Override
   public PathfindingSearchImpl exceptionally(Consumer<Throwable> callback) {
-    Objects.requireNonNull(callback, "Callback cannot be null");
+    Objects.requireNonNull(callback, "callback must not be null");
     completableFuture.exceptionally(
         ex -> {
           callback.accept(ex);

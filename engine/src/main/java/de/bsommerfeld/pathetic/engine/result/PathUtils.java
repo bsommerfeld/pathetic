@@ -234,8 +234,8 @@ public final class PathUtils {
   /**
    * Removes duplicate consecutive positions while preserving order.
    *
-   * <p>Nur direkt aufeinanderfolgende Duplikate werden entfernt. Vergleich erfolgt über exakte
-   * Koordinaten (mit kleinem EPS), nicht über equals()/floor.
+   * <p>Only directly consecutive duplicates are removed. Comparison is done on exact coordinates
+   * (with a small EPS), not via {@code equals()} or floored coordinates.
    */
   private static Path removeDuplicates(Path path) {
     final double EPS = 1e-12;

@@ -164,13 +164,13 @@ class AStarPathfinderTest {
 
     assertEquals(PathState.FOUND, result.getPathState());
 
-    // Debugging Output, falls es fehlschlägt
+    // Debug output in case the assertion fails
     List<String> pathCoords = new ArrayList<>();
     for (PathPosition p : result.getPath())
       pathCoords.add(String.format("(%d,%d)", (int) p.getX(), (int) p.getY()));
     System.out.println("Path Found: " + String.join(" -> ", pathCoords));
 
-    // Check: Ging der Pfad über die Trap Node (1,0)?
+    // Check: did the path go through the trap node (1,0)?
     boolean tookDetour = false;
     for (PathPosition p : result.getPath()) {
       if (isAt(p, 1, 0)) {

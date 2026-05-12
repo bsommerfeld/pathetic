@@ -24,20 +24,20 @@ class PathUtilsTest {
     assertEquals(2, path.length(), "Input path must have 2 points");
 
     // Test 1: Resolution 3.0
-    // Mathematik: 10.0 / 3.0 = 3.333...
-    // Fast-Sqrt Fehler macht daraus vllt 3.333...4 -> Ceil ist immer noch 4.
+    // Math: 10.0 / 3.0 = 3.333...
+    // Fast-sqrt error may push it to ~3.333...4 -> ceil is still 4.
     // Steps = 4.
-    // Zwischenpunkte (Loop 1 bis <4): 3 Stück.
-    // Total: 1 (Start) + 3 (Inter) + 1 (End) = 5.
+    // Intermediate points (loop 1 to <4): 3.
+    // Total: 1 (start) + 3 (intermediate) + 1 (end) = 5.
     Path interpolated3 = PathUtils.interpolate(path, 3.0);
     assertEquals(5, interpolated3.length(), "Resolution 3.0 should safely yield 5 points");
 
     // Test 2: Resolution 1.4
-    // Mathematik: 10.0 / 1.4 ≈ 7.14
-    // Fast-Sqrt Fehler macht daraus vllt 7.14...1 -> Ceil ist immer noch 8.
+    // Math: 10.0 / 1.4 ≈ 7.14
+    // Fast-sqrt error may push it to ~7.14...1 -> ceil is still 8.
     // Steps = 8.
-    // Zwischenpunkte (Loop 1 bis <8): 7 Stück.
-    // Total: 1 (Start) + 7 (Inter) + 1 (End) = 9.
+    // Intermediate points (loop 1 to <8): 7.
+    // Total: 1 (start) + 7 (intermediate) + 1 (end) = 9.
     Path interpolated1_4 = PathUtils.interpolate(path, 1.4);
     assertEquals(9, interpolated1_4.length(), "Resolution 1.4 should safely yield 9 points");
   }
