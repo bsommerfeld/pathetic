@@ -89,6 +89,22 @@ public abstract class AbstractPathfinder implements Pathfinder {
     }
   }
 
+  /**
+   * Pure formula behind {@link #estimateInitialHeapCapacity(PathPosition, PathPosition)}, exposed
+   * package-private for unit testing. Returns the same value as the instance method when given the
+   * branching factor and {@code maxIterations} the running search would see.
+   */
+  static int computeInitialHeapCapacity(
+      PathPosition start, PathPosition target, int branching, int maxIterations) {
+    int dx = Math.abs(start.getFlooredX() - target.getFlooredX());
+    int dy = Math.abs(start.getFlooredY() - target.getFlooredY());
+    int dz = Math.abs(start.getFlooredZ() - target.getFlooredZ());
+    long manhattan = (long) dx + (long) dy + (long) dz;
+    long estimated = manhattan * Math.max(1, branching);
+    long bounded = Math.max(MIN_INITIAL_HEAP_CAPACITY, Math.min(estimated, maxIterations));
+    return (int) bounded;
+  }
+
   @Override
   public PathfindingSearch findPath(
       PathPosition start, PathPosition target, EnvironmentContext environmentContext) {
@@ -181,6 +197,18 @@ public abstract class AbstractPathfinder implements Pathfinder {
       double startKey = calculateHeapKey(startNode, startNode.getFCost());
       insertStartNode(startNode, startKey, openSet);
 
+      /*
+       * Snapshot the registered hooks once per search so the hot loop never contends on the
+       * synchronized set monitor and concurrent searches don't fight over the same lock. Hooks
+       * registered after the snapshot is taken (via the deprecated registerPathfindingHook)
+       * apply only to subsequent searches.
+       */
+      final List<PathfinderHook> hookSnapshot;
+      synchronized (pathfinderHooks) {
+        hookSnapshot =
+            pathfinderHooks.isEmpty() ? Collections.emptyList() : new ArrayList<>(pathfinderHooks);
+      }
+
       int iteration = 0;
       Node bestFallbackNode = startNode;
 
@@ -196,18 +224,13 @@ public abstract class AbstractPathfinder implements Pathfinder {
         Node currentNode = extractBestNode(openSet);
         markNodeAsExpanded(currentNode);
 
-        final int finalIteration = iteration;
-
-        /*
-         * TODO bsommerfeld 29.01.2026: This single action here costs us 1 object per iteration
-         *  which, in pathfinding terms, is REALLY expensive.
-         *  <br>
-         *  Perhaps we can optimize this later using a mutable object?
-         */
-        pathfinderHooks.forEach(
-            hook ->
-                hook.onPathfindingStep(
-                    new PathfindingContext(currentNode.getPosition(), Depth.of(finalIteration))));
+        if (!hookSnapshot.isEmpty()) {
+          PathfindingContext hookContext =
+              new PathfindingContext(currentNode.getPosition(), Depth.of(iteration));
+          for (PathfinderHook hook : hookSnapshot) {
+            hook.onPathfindingStep(hookContext);
+          }
+        }
 
         if (currentNode.getHeuristic() < bestFallbackNode.getHeuristic()) {
           bestFallbackNode = currentNode;
@@ -263,36 +286,20 @@ public abstract class AbstractPathfinder implements Pathfinder {
    *
    * <p>The estimate is {@code manhattanDistance(start, target) × branchingFactor}, capped by {@link
    * PathfinderConfiguration#getMaxIterations() maxIterations} (the algorithm cannot expand more
-   * nodes than that anyway) and floored by {@link #MIN_INITIAL_HEAP_CAPACITY} to keep tiny
-   * searches from allocating sub-cacheline arrays.
+   * nodes than that anyway) and floored by {@link #MIN_INITIAL_HEAP_CAPACITY} to keep tiny searches
+   * from allocating sub-cacheline arrays.
    *
    * <p>Manhattan distance is the strictest upper bound on the number of steps any traversal mode
-   * (cardinal-only or diagonal) needs to cover. The branching factor (number of vectors returned
-   * by the current {@link INeighborStrategy} at the start position) approximates how many open
-   * nodes each expanded node contributes to the frontier. Together they capture a realistic peak
-   * for the open set in well-behaved terrain. Pathological maze-like terrain can still exceed it,
-   * but only up to the {@code maxIterations} ceiling, at which point the heap grows dynamically.
+   * (cardinal-only or diagonal) needs to cover. The branching factor (number of vectors returned by
+   * the current {@link INeighborStrategy} at the start position) approximates how many open nodes
+   * each expanded node contributes to the frontier. Together they capture a realistic peak for the
+   * open set in well-behaved terrain. Pathological maze-like terrain can still exceed it, but only
+   * up to the {@code maxIterations} ceiling, at which point the heap grows dynamically.
    */
   private int estimateInitialHeapCapacity(PathPosition start, PathPosition target) {
     int branching = Math.max(1, Iterables.size(neighborStrategy.getOffsets(start)));
     return computeInitialHeapCapacity(
         start, target, branching, pathfinderConfiguration.getMaxIterations());
-  }
-
-  /**
-   * Pure formula behind {@link #estimateInitialHeapCapacity(PathPosition, PathPosition)}, exposed
-   * package-private for unit testing. Returns the same value as the instance method when given the
-   * branching factor and {@code maxIterations} the running search would see.
-   */
-  static int computeInitialHeapCapacity(
-      PathPosition start, PathPosition target, int branching, int maxIterations) {
-    int dx = Math.abs(start.getFlooredX() - target.getFlooredX());
-    int dy = Math.abs(start.getFlooredY() - target.getFlooredY());
-    int dz = Math.abs(start.getFlooredZ() - target.getFlooredZ());
-    long manhattan = (long) dx + (long) dy + (long) dz;
-    long estimated = manhattan * Math.max(1, branching);
-    long bounded = Math.max(MIN_INITIAL_HEAP_CAPACITY, Math.min(estimated, maxIterations));
-    return (int) bounded;
   }
 
   /**

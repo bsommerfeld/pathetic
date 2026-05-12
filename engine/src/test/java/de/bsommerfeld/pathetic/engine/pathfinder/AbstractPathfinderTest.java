@@ -120,6 +120,62 @@ class AbstractPathfinderTest {
     assertTrue(hookCalled.get());
   }
 
+  /*
+   * Hooks are snapshotted once per search: all hooks of a single iteration observe the same
+   * PathfindingContext instance (cheaper than allocating one per hook), and hooks registered
+   * after a search has started do not apply to that search.
+   */
+  @Test
+  void allHooksInOneIterationShareTheSameContextInstance() {
+    NavigationPoint mockNavigationPoint = Mockito.mock(NavigationPoint.class);
+    when(mockNavigationPoint.isTraversable()).thenReturn(true);
+    when(mockProvider.getNavigationPoint(any(PathPosition.class), any()))
+        .thenReturn(mockNavigationPoint);
+
+    AtomicReference<Object> seenByA = new AtomicReference<>();
+    AtomicReference<Object> seenByB = new AtomicReference<>();
+    pathfinder.registerPathfindingHook(ctx -> seenByA.compareAndSet(null, ctx));
+    pathfinder.registerPathfindingHook(ctx -> seenByB.compareAndSet(null, ctx));
+
+    pathfinder.findPath(start, target).resultBlocking();
+
+    assertNotNull(seenByA.get());
+    assertNotNull(seenByB.get());
+    assertSame(
+        seenByA.get(),
+        seenByB.get(),
+        "all hooks of the same iteration must receive the same context instance");
+  }
+
+  @Test
+  void hooksRegisteredAfterSearchStartDoNotApplyToThatSearch() {
+    NavigationPoint mockNavigationPoint = Mockito.mock(NavigationPoint.class);
+    when(mockNavigationPoint.isTraversable()).thenReturn(true);
+    when(mockProvider.getNavigationPoint(any(PathPosition.class), any()))
+        .thenReturn(mockNavigationPoint);
+
+    AtomicBoolean lateHookSawCurrentSearch = new AtomicBoolean(false);
+    PathfinderHook earlyHook =
+        ctx -> {
+          // Register a second hook DURING the first iteration of the current search.
+          pathfinder.registerPathfindingHook(c -> lateHookSawCurrentSearch.set(true));
+        };
+    pathfinder.registerPathfindingHook(earlyHook);
+
+    pathfinder.findPath(start, target).resultBlocking();
+
+    assertEquals(
+        false,
+        lateHookSawCurrentSearch.get(),
+        "a hook registered mid-search must not be invoked for the running search");
+
+    // Sanity check: it IS invoked for the next search.
+    AtomicBoolean nextSearchSeen = new AtomicBoolean(false);
+    pathfinder.registerPathfindingHook(c -> nextSearchSeen.set(true));
+    pathfinder.findPath(start, target).resultBlocking();
+    assertTrue(nextSearchSeen.get());
+  }
+
   @Test
   void testNullHookNotRegistered() {
     pathfinder.registerPathfindingHook(null);

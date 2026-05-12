@@ -34,8 +34,12 @@ public interface Pathfinder {
   PathfindingSearch findPath(PathPosition start, PathPosition target, EnvironmentContext context);
 
   /**
-   * Registers a {@link PathfinderHook} that will be called on every step of the pathfinding
-   * process. This can be used to modify the pathfinding process or to collect data.
+   * Registers a {@link PathfinderHook} that will be called on every step of subsequent
+   * pathfinding operations.
+   *
+   * <p>Each search snapshots the currently registered hooks at the moment it starts. Hooks
+   * registered after that snapshot apply only to <em>future</em> searches, never to a search
+   * that is already running.
    *
    * @param hook The hook to register.
    * @deprecated Use {@link
