@@ -260,14 +260,24 @@ public abstract class AbstractPathfinder implements Pathfinder {
    * but only up to the {@code maxIterations} ceiling, at which point the heap grows dynamically.
    */
   private int estimateInitialHeapCapacity(PathPosition start, PathPosition target) {
+    int branching = Math.max(1, Iterables.size(neighborStrategy.getOffsets(start)));
+    return computeInitialHeapCapacity(
+        start, target, branching, pathfinderConfiguration.getMaxIterations());
+  }
+
+  /**
+   * Pure formula behind {@link #estimateInitialHeapCapacity(PathPosition, PathPosition)}, exposed
+   * package-private for unit testing. Returns the same value as the instance method when given the
+   * branching factor and {@code maxIterations} the running search would see.
+   */
+  static int computeInitialHeapCapacity(
+      PathPosition start, PathPosition target, int branching, int maxIterations) {
     int dx = Math.abs(start.getFlooredX() - target.getFlooredX());
     int dy = Math.abs(start.getFlooredY() - target.getFlooredY());
     int dz = Math.abs(start.getFlooredZ() - target.getFlooredZ());
     long manhattan = (long) dx + (long) dy + (long) dz;
-    int branching = Math.max(1, Iterables.size(neighborStrategy.getOffsets(start)));
-    long estimated = manhattan * branching;
-    long ceiling = pathfinderConfiguration.getMaxIterations();
-    long bounded = Math.max(MIN_INITIAL_HEAP_CAPACITY, Math.min(estimated, ceiling));
+    long estimated = manhattan * Math.max(1, branching);
+    long bounded = Math.max(MIN_INITIAL_HEAP_CAPACITY, Math.min(estimated, maxIterations));
     return (int) bounded;
   }
 

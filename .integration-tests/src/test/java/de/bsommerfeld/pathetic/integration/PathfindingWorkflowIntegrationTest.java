@@ -902,4 +902,109 @@ class PathfindingWorkflowIntegrationTest {
     assertTrue(positions.contains(start));
     assertTrue(positions.contains(target));
   }
+
+  // ===========================================================================
+  // Regression coverage for fixes tracked in CODE_REVIEW.md
+  // ===========================================================================
+
+  @Test
+  @DisplayName("Validators.allOf rejects null arguments end-to-end (CODE_REVIEW 4.1)")
+  void testValidatorsAllOfRejectsNullsAtConfigTime() {
+    // Building a config that funnels a null validator into Validators.allOf must fail fast,
+    // before any pathfinding starts.
+    ValidationProcessor real =
+        ctx -> ctx.getCurrentPathPosition().getY() <= 100; // arbitrary always-true
+    assertThrows(
+        NullPointerException.class,
+        () -> de.bsommerfeld.pathetic.api.pathing.processing.Validators.allOf(real, null));
+    assertThrows(
+        NullPointerException.class,
+        () ->
+            de.bsommerfeld.pathetic.api.pathing.processing.Validators.allOf(
+                java.util.Arrays.asList(real, null)));
+    assertThrows(
+        NullPointerException.class,
+        () -> de.bsommerfeld.pathetic.api.pathing.processing.Validators.not(null));
+  }
+
+  @Test
+  @DisplayName("Validators.allOf with real validators still gates pathfinding (CODE_REVIEW 4.1)")
+  void testValidatorsAllOfCompositionRunsEndToEnd() {
+    // Two valid validators combined via allOf must successfully filter and let the search succeed.
+    Set<PathPosition> blocked = new HashSet<>();
+    blocked.add(new PathPosition(2, 0, 0));
+
+    ValidationProcessor notBlocked = ctx -> !blocked.contains(ctx.getCurrentPathPosition());
+    ValidationProcessor underCeiling = ctx -> ctx.getCurrentPathPosition().getY() <= 10;
+    ValidationProcessor composite =
+        de.bsommerfeld.pathetic.api.pathing.processing.Validators.allOf(notBlocked, underCeiling);
+
+    PathfinderConfiguration config =
+        PathfinderConfiguration.builder()
+            .provider(simpleProvider)
+            .neighborStrategy(NeighborStrategies.VERTICAL_AND_HORIZONTAL)
+            .validationProcessors(java.util.Collections.singletonList(composite))
+            .async(false)
+            .build();
+
+    Pathfinder pathfinder = factory.createPathfinder(config);
+    PathPosition start = new PathPosition(0, 0, 0);
+    PathPosition target = new PathPosition(5, 0, 0);
+
+    AtomicReference<PathfinderResult> resultRef = new AtomicReference<>();
+    pathfinder.findPath(start, target).ifPresent(resultRef::set);
+    PathfinderResult result = resultRef.get();
+
+    assertNotNull(result);
+    assertTrue(result.successful());
+    for (PathPosition pos : result.getPath()) {
+      assertFalse(blocked.contains(pos), "Validator filtering must hold along the path");
+    }
+  }
+
+  @Test
+  @DisplayName("hasFailed and hasFallenBack are mutually exclusive (CODE_REVIEW 4.3)")
+  void testHasFailedExcludesFallbackOnRealSearch() {
+    // A reachable target -> FOUND. Neither failed nor fallback.
+    PathfinderConfiguration config =
+        PathfinderConfiguration.builder().provider(simpleProvider).async(false).build();
+    Pathfinder pathfinder = factory.createPathfinder(config);
+
+    AtomicReference<PathfinderResult> resultRef = new AtomicReference<>();
+    pathfinder
+        .findPath(new PathPosition(0, 0, 0), new PathPosition(3, 0, 0))
+        .ifPresent(resultRef::set);
+    PathfinderResult result = resultRef.get();
+
+    assertNotNull(result);
+    assertEquals(PathState.FOUND, result.getPathState());
+    assertTrue(result.successful());
+    assertFalse(result.hasFailed());
+    assertFalse(result.hasFallenBack());
+  }
+
+  @Test
+  @DisplayName("Pathfinder runs against PathImpl Collection contract (CODE_REVIEW 4.2)")
+  void testPathImplCollectionSignatureEndToEnd() {
+    // Pathfinder uses PathImpl under the hood; this test simply asserts that the returned path
+    // honours the Collection-backed contract: length matches iteration, collect returns a copy.
+    PathfinderConfiguration config =
+        PathfinderConfiguration.builder().provider(simpleProvider).async(false).build();
+    Pathfinder pathfinder = factory.createPathfinder(config);
+
+    AtomicReference<PathfinderResult> resultRef = new AtomicReference<>();
+    pathfinder
+        .findPath(new PathPosition(0, 0, 0), new PathPosition(7, 0, 0))
+        .ifPresent(resultRef::set);
+    Path path = resultRef.get().getPath();
+
+    int counted = 0;
+    for (PathPosition ignored : path) counted++;
+    assertEquals(path.length(), counted);
+
+    Collection<PathPosition> snapshot = path.collect();
+    assertEquals(path.length(), snapshot.size());
+    snapshot.clear();
+    assertEquals(counted, path.length(), "mutating collect() result must not affect the path");
+  }
 }
