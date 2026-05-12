@@ -1,6 +1,7 @@
 package de.bsommerfeld.pathetic.api.wrapper;
 
 import de.bsommerfeld.pathetic.api.util.NumberUtils;
+import java.util.Objects;
 
 /**
  * Represents a 3D vector within a pathfinding context. This class encapsulates the x, y, and z
@@ -39,16 +40,34 @@ public class PathVector implements Cloneable {
   }
 
   /**
-   * Computes the distance between a point and a line segment.
+   * Computes the perpendicular distance from point {@code A} to the infinite line defined by points
+   * {@code B} and {@code C}.
    *
-   * @param A The point represented as a {@code PathVector}.
-   * @param B The first endpoint of the line segment represented as a {@code PathVector}.
-   * @param C The second endpoint of the line segment represented as a {@code PathVector}.
-   * @return The distance between the point A and the line segment BC.
+   * <p>If {@code B} and {@code C} coincide (or are numerically indistinguishable), the line
+   * degenerates to a single point and the Euclidean distance from {@code A} to {@code B} is
+   * returned.
+   *
+   * @param A The point represented as a {@code PathVector}. Must not be {@code null}.
+   * @param B The first reference point of the line represented as a {@code PathVector}. Must not be
+   *     {@code null}.
+   * @param C The second reference point of the line represented as a {@code PathVector}. Must not
+   *     be {@code null}.
+   * @return The perpendicular distance from {@code A} to the line through {@code B} and {@code C},
+   *     or the distance from {@code A} to {@code B} if the line degenerates.
+   * @throws NullPointerException if any argument is {@code null}.
    */
   public static double computeDistance(PathVector A, PathVector B, PathVector C) {
+    Objects.requireNonNull(A, "A must not be null");
+    Objects.requireNonNull(B, "B must not be null");
+    Objects.requireNonNull(C, "C must not be null");
 
-    PathVector d = C.subtract(B).divide(C.distance(B));
+    double lineLength = C.distance(B);
+    if (lineLength == 0.0 || !Double.isFinite(lineLength)) {
+      // B and C coincide -> line degenerates to a point; fall back to point-to-point distance.
+      return A.distance(B);
+    }
+
+    PathVector d = C.subtract(B).divide(lineLength);
     PathVector v = A.subtract(B);
 
     double t = v.dot(d);
