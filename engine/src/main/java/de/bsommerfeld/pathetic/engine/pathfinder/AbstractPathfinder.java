@@ -224,8 +224,11 @@ public abstract class AbstractPathfinder implements Pathfinder {
         try {
           processor.finalizeSearch(searchContext);
         } catch (Exception e) {
-          System.err.println(
-              "An exception occurred during pathfinding finalization: " + e.getMessage());
+          // Deliberately printStackTrace() instead of a logging framework: as a library we do not
+          // pull in SLF4J / Log4j; consumers wrap their own logger around their Processors.
+          //noinspection CallToPrintStackTrace
+          System.err.println("An exception occurred during pathfinding finalization:");
+          e.printStackTrace();
         }
       }
       performAlgorithmCleanup();

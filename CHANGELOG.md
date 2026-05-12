@@ -17,6 +17,7 @@
 - Add input validation for numeric values in PathfinderConfiguration
 - Guard `PathVector.computeDistance` against null arguments and degenerate `B == C` input
 - Correct `PathfinderResult.hasFailed()` JavaDoc - `FALLBACK` is not treated as a failure
+- Print full stack trace (not just message) when a processor's `finalizeSearch` throws
 
 ### Removed
 
