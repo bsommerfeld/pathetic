@@ -25,6 +25,7 @@ import de.bsommerfeld.pathetic.engine.pathfinder.processing.EvaluationContextImp
 import de.bsommerfeld.pathetic.engine.pathfinder.processing.SearchContextImpl;
 import de.bsommerfeld.pathetic.engine.result.PathImpl;
 import de.bsommerfeld.pathetic.engine.result.PathfinderResultImpl;
+import de.bsommerfeld.pathetic.engine.util.Iterables;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -34,8 +35,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -51,7 +50,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
 
   protected static final Set<PathPosition> EMPTY_PATH_POSITIONS =
       Collections.unmodifiableSet(new LinkedHashSet<>(0));
-  private static final int INITIAL_CAPACITY = 1024;
+  private static final int MIN_INITIAL_HEAP_CAPACITY = 32;
   private static final double TIE_BREAKER_WEIGHT = 1e-6;
 
   protected final PathfinderConfiguration pathfinderConfiguration;
@@ -168,7 +167,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
         }
       }
 
-      MinHeap openSet = new PrimitiveMinHeap(INITIAL_CAPACITY);
+      MinHeap openSet = new PrimitiveMinHeap(estimateInitialHeapCapacity(start, target));
 
       double startKey = calculateHeapKey(startNode, startNode.getFCost());
       insertStartNode(startNode, startKey, openSet);
@@ -243,6 +242,33 @@ public abstract class AbstractPathfinder implements Pathfinder {
     }
 
     return heapKey;
+  }
+
+  /**
+   * Estimates a heap capacity that fits the expected open-set peak for the upcoming search.
+   *
+   * <p>The estimate is {@code manhattanDistance(start, target) × branchingFactor}, capped by {@link
+   * PathfinderConfiguration#getMaxIterations() maxIterations} (the algorithm cannot expand more
+   * nodes than that anyway) and floored by {@link #MIN_INITIAL_HEAP_CAPACITY} to keep tiny
+   * searches from allocating sub-cacheline arrays.
+   *
+   * <p>Manhattan distance is the strictest upper bound on the number of steps any traversal mode
+   * (cardinal-only or diagonal) needs to cover. The branching factor (number of vectors returned
+   * by the current {@link INeighborStrategy} at the start position) approximates how many open
+   * nodes each expanded node contributes to the frontier. Together they capture a realistic peak
+   * for the open set in well-behaved terrain. Pathological maze-like terrain can still exceed it,
+   * but only up to the {@code maxIterations} ceiling, at which point the heap grows dynamically.
+   */
+  private int estimateInitialHeapCapacity(PathPosition start, PathPosition target) {
+    int dx = Math.abs(start.getFlooredX() - target.getFlooredX());
+    int dy = Math.abs(start.getFlooredY() - target.getFlooredY());
+    int dz = Math.abs(start.getFlooredZ() - target.getFlooredZ());
+    long manhattan = (long) dx + (long) dy + (long) dz;
+    int branching = Math.max(1, Iterables.size(neighborStrategy.getOffsets(start)));
+    long estimated = manhattan * branching;
+    long ceiling = pathfinderConfiguration.getMaxIterations();
+    long bounded = Math.max(MIN_INITIAL_HEAP_CAPACITY, Math.min(estimated, ceiling));
+    return (int) bounded;
   }
 
   /**
