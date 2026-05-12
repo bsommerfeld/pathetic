@@ -12,6 +12,7 @@ import de.bsommerfeld.pathetic.api.pathing.heuristic.HeuristicWeights;
 import de.bsommerfeld.pathetic.api.pathing.processing.Cost;
 import de.bsommerfeld.pathetic.api.pathing.processing.CostProcessor;
 import de.bsommerfeld.pathetic.api.pathing.processing.ValidationProcessor;
+import de.bsommerfeld.pathetic.api.pathing.processing.Validators;
 import de.bsommerfeld.pathetic.api.pathing.result.Path;
 import de.bsommerfeld.pathetic.api.pathing.result.PathState;
 import de.bsommerfeld.pathetic.api.pathing.result.PathfinderResult;
@@ -912,17 +913,10 @@ class PathfindingWorkflowIntegrationTest {
      */
     ValidationProcessor real =
         ctx -> ctx.getCurrentPathPosition().getY() <= 100; // arbitrary always-true
+    assertThrows(NullPointerException.class, () -> Validators.allOf(real, null));
     assertThrows(
-        NullPointerException.class,
-        () -> de.bsommerfeld.pathetic.api.pathing.processing.Validators.allOf(real, null));
-    assertThrows(
-        NullPointerException.class,
-        () ->
-            de.bsommerfeld.pathetic.api.pathing.processing.Validators.allOf(
-                java.util.Arrays.asList(real, null)));
-    assertThrows(
-        NullPointerException.class,
-        () -> de.bsommerfeld.pathetic.api.pathing.processing.Validators.not(null));
+        NullPointerException.class, () -> Validators.allOf(Arrays.asList(real, null)));
+    assertThrows(NullPointerException.class, () -> Validators.not(null));
   }
 
   @Test
@@ -934,14 +928,13 @@ class PathfindingWorkflowIntegrationTest {
 
     ValidationProcessor notBlocked = ctx -> !blocked.contains(ctx.getCurrentPathPosition());
     ValidationProcessor underCeiling = ctx -> ctx.getCurrentPathPosition().getY() <= 10;
-    ValidationProcessor composite =
-        de.bsommerfeld.pathetic.api.pathing.processing.Validators.allOf(notBlocked, underCeiling);
+    ValidationProcessor composite = Validators.allOf(notBlocked, underCeiling);
 
     PathfinderConfiguration config =
         PathfinderConfiguration.builder()
             .provider(simpleProvider)
             .neighborStrategy(NeighborStrategies.VERTICAL_AND_HORIZONTAL)
-            .validationProcessors(java.util.Collections.singletonList(composite))
+            .validationProcessors(Collections.singletonList(composite))
             .async(false)
             .build();
 

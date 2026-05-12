@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.api.wrapper.PathVector;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
@@ -75,8 +76,8 @@ class NeighborStrategiesTest {
      * otherwise a misbehaving caller could corrupt every subsequent search.
      */
     Iterable<PathVector> offsets = NeighborStrategies.VERTICAL_AND_HORIZONTAL.getOffsets();
-    if (offsets instanceof java.util.List) {
-      java.util.List<PathVector> asList = (java.util.List<PathVector>) offsets;
+    if (offsets instanceof List) {
+      List<PathVector> asList = (List<PathVector>) offsets;
       assertNotNull(asList);
       assertThrows(
           UnsupportedOperationException.class, () -> asList.add(new PathVector(99, 99, 99)));

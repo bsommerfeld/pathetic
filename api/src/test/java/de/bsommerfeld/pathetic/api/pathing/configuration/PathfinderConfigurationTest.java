@@ -8,11 +8,14 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import de.bsommerfeld.pathetic.api.pathing.hook.PathfinderHook;
+import de.bsommerfeld.pathetic.api.pathing.processing.Cost;
 import de.bsommerfeld.pathetic.api.pathing.processing.CostProcessor;
 import de.bsommerfeld.pathetic.api.pathing.processing.ValidationProcessor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.junit.jupiter.api.Test;
 
 class PathfinderConfigurationTest {
@@ -47,8 +50,8 @@ class PathfinderConfigurationTest {
 
   @Test
   void deepCopyIsolatesCostProcessorListFromSourceListMutation() {
-    CostProcessor c1 = ctx -> de.bsommerfeld.pathetic.api.pathing.processing.Cost.ZERO;
-    CostProcessor c2 = ctx -> de.bsommerfeld.pathetic.api.pathing.processing.Cost.ZERO;
+    CostProcessor c1 = ctx -> Cost.ZERO;
+    CostProcessor c2 = ctx -> Cost.ZERO;
     List<CostProcessor> mutableSource = new ArrayList<>(Arrays.asList(c1));
 
     PathfinderConfiguration original =
@@ -138,8 +141,7 @@ class PathfinderConfigurationTest {
 
   @Test
   void customExecutorIsPreservedRegardlessOfAsyncFlag() {
-    java.util.concurrent.ExecutorService custom =
-        java.util.concurrent.Executors.newSingleThreadExecutor();
+    ExecutorService custom = Executors.newSingleThreadExecutor();
     try {
       PathfinderConfiguration syncCfg =
           PathfinderConfiguration.builder().async(false).executorService(custom).build();
