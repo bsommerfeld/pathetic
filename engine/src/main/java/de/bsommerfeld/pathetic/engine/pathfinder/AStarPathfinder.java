@@ -292,7 +292,12 @@ public final class AStarPathfinder extends AbstractPathfinder {
 
   @Override
   protected void performAlgorithmCleanup() {
-    getSessionOrThrow().cleanup();
+    /*
+     * Single source of truth for per-search cleanup: dropping the ThreadLocal entry makes the
+     * PathfindingSession unreferenced, and the next GC cycle implicitly reclaims its full state
+     * (open-set node map, closed-set G-costs, visited region cache, spatial bloom filters) in
+     * one sweep.
+     */
     currentSession.remove();
   }
 
