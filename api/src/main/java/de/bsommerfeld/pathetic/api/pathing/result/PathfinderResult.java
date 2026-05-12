@@ -17,8 +17,10 @@ public interface PathfinderResult {
 
   /**
    * Whether the pathfinder has failed to reach its target. This includes {@link PathState#FAILED},
-   * {@link PathState#LENGTH_LIMITED}, {@link PathState#MAX_ITERATIONS_REACHED} and {@link
-   * PathState#FALLBACK}
+   * {@link PathState#LENGTH_LIMITED} and {@link PathState#MAX_ITERATIONS_REACHED}.
+   *
+   * <p>{@link PathState#FALLBACK} is <strong>not</strong> considered a failure here — use {@link
+   * #hasFallenBack()} to detect that state.
    *
    * @return Whether the pathfinder has failed to reach its target
    */
