@@ -9,6 +9,7 @@ import de.bsommerfeld.pathetic.api.pathing.hook.PathfinderHook;
 import de.bsommerfeld.pathetic.api.pathing.processing.CostProcessor;
 import de.bsommerfeld.pathetic.api.pathing.processing.ValidationProcessor;
 import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -183,12 +184,30 @@ public class PathfinderConfiguration {
   /**
    * Creates a deep copy of the given {@link PathfinderConfiguration}.
    *
-   * <p>This method constructs a new instance of {@link PathfinderConfiguration} with the same
-   * values as the input. It ensures a deep copy by copying the values of primitive and boolean
-   * fields directly.
+   * <p>The returned instance is independent of the source for every field that can sensibly be
+   * cloned:
+   *
+   * <ul>
+   *   <li>Primitives ({@code maxIterations}, {@code maxLength}, {@code gridCellSize},
+   *       {@code bloomFilterSize}, {@code bloomFilterFpp}, the boolean flags) are copied by value.
+   *   <li>{@link HeuristicWeights} is immutable and shared safely.
+   *   <li>The processor lists ({@link #getNodeValidationProcessors()},
+   *       {@link #getNodeCostProcessors()}) and {@link #pathfindingHooks()} are copied
+   *       element-wise into fresh {@link ArrayList} instances. Subsequent mutations on the
+   *       source's underlying lists (e.g. via a reference still held by the caller) do not leak
+   *       into the copy.
+   * </ul>
+   *
+   * <p>The following fields hold user-supplied interface implementations or external services and
+   * are intentionally shared by reference: {@link NavigationPointProvider}, individual
+   * {@link ValidationProcessor} / {@link CostProcessor} / {@link PathfinderHook} instances,
+   * {@link INeighborStrategy}, {@link IHeuristicStrategy}, and {@link ExecutorService}. They have
+   * no generic clone contract, and a "deep copy" of an executor or a custom traversability
+   * provider would either be impossible or semantically wrong.
    *
    * @param pathfinderConfiguration The {@link PathfinderConfiguration} to copy.
-   * @return A new {@link PathfinderConfiguration} instance with the same values as the input.
+   * @return A new {@link PathfinderConfiguration} instance independent of the source's mutable
+   *     collection state.
    */
   public static PathfinderConfiguration deepCopy(PathfinderConfiguration pathfinderConfiguration) {
     return builder()
@@ -198,15 +217,15 @@ public class PathfinderConfiguration {
         .fallback(pathfinderConfiguration.fallback)
         .provider(pathfinderConfiguration.provider)
         .heuristicWeights(pathfinderConfiguration.heuristicWeights)
-        .nodeValidationProcessors(pathfinderConfiguration.validationProcessors)
-        .nodeCostProcessors(pathfinderConfiguration.costProcessors)
+        .validationProcessors(new ArrayList<>(pathfinderConfiguration.validationProcessors))
+        .costProcessor(new ArrayList<>(pathfinderConfiguration.costProcessors))
         .neighborStrategy(pathfinderConfiguration.neighborStrategy)
         .gridCellSize(pathfinderConfiguration.gridCellSize)
         .bloomFilterSize(pathfinderConfiguration.bloomFilterSize)
         .bloomFilterFpp(pathfinderConfiguration.bloomFilterFpp)
         .heuristicStrategy(pathfinderConfiguration.heuristicStrategy)
         .reopenClosedNodes(pathfinderConfiguration.reopenClosedNodes)
-        .pathfindingHooks(pathfinderConfiguration.pathfindingHooks)
+        .pathfindingHooks(new ArrayList<>(pathfinderConfiguration.pathfindingHooks))
         .executorService(pathfinderConfiguration.executorService)
         .build();
   }
