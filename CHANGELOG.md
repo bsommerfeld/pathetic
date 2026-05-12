@@ -7,6 +7,7 @@
 ### Changed
 
 - Cache neighbor offset lists in `NeighborStrategies` to avoid per-iteration allocations
+- Tighten `PathImpl` constructor parameter from `Iterable<PathPosition>` to `Collection<PathPosition>`
 
 ### Fixed
 

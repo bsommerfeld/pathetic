@@ -2,7 +2,6 @@ package de.bsommerfeld.pathetic.engine.result;
 
 import de.bsommerfeld.pathetic.api.pathing.result.Path;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
-import de.bsommerfeld.pathetic.engine.util.Iterables;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -10,17 +9,24 @@ import java.util.function.Consumer;
 
 public class PathImpl implements Path {
 
-  private final Iterable<PathPosition> positions;
+  /*
+   * Collection guarantees O(1) size() and safe re-iteration without a
+   * runtime collection check. The previous Iterable signature was a leftover from when
+   * Guava's lazy concat/limit results were piped straight into the constructor; that
+   * pipeline now lives in PathUtils and materializes its buffer beforehand. PathImpl
+   * is internal, so the tighter contract has no downstream cost.
+   */
+  private final Collection<PathPosition> positions;
   private final PathPosition start;
   private final PathPosition end;
 
   private final int length;
 
-  public PathImpl(PathPosition start, PathPosition end, Iterable<PathPosition> positions) {
+  public PathImpl(PathPosition start, PathPosition end, Collection<PathPosition> positions) {
     this.start = start;
     this.end = end;
     this.positions = positions;
-    this.length = Iterables.size(positions);
+    this.length = positions.size();
   }
 
   @Override
@@ -50,8 +56,6 @@ public class PathImpl implements Path {
 
   @Override
   public Collection<PathPosition> collect() {
-    Collection<PathPosition> collection = new ArrayList<>(length);
-    positions.forEach(collection::add);
-    return collection;
+    return new ArrayList<>(positions);
   }
 }
