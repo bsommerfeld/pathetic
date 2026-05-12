@@ -8,11 +8,11 @@ import java.util.Objects;
  * components of a vector and provides methods for vector operations such as addition, subtraction,
  * dot product, cross product, and normalization.
  */
-public class PathVector implements Cloneable {
+public class PathVector {
 
-  private double x;
-  private double y;
-  private double z;
+  private final double x;
+  private final double y;
+  private final double z;
 
   /**
    * Constructs a {@code PathVector} with the specified x, y, and z components.
@@ -204,21 +204,6 @@ public class PathVector implements Cloneable {
     double y = this.z * o.getX() - o.getZ() * this.x;
     double z = this.x * o.getY() - o.getX() * this.y;
     return new PathVector(x, y, z);
-  }
-
-  @Override
-  public PathVector clone() {
-    final PathVector clone;
-    try {
-      clone = (PathVector) super.clone();
-    } catch (CloneNotSupportedException ex) {
-      throw new IllegalStateException("Superclass messed up", ex);
-    }
-
-    clone.x = this.x;
-    clone.y = this.y;
-    clone.z = this.z;
-    return clone;
   }
 
   /**

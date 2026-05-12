@@ -1,14 +1,68 @@
 package de.bsommerfeld.pathetic.api.wrapper;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import org.junit.jupiter.api.Test;
 
 class PathVectorTest {
 
   private static final double EPS = 1e-9;
+
+  // -------------------------------------------------------------------------
+  // Immutability contract - see CODE_REVIEW 2.7
+  // PathVector lost its Cloneable + non-final fields. Mutator-style methods
+  // (setX/setY/setZ, add, multiply, ...) must continue to return fresh
+  // instances rather than mutate this.
+  // -------------------------------------------------------------------------
+
+  @Test
+  void coordinateFieldsAreFinal() throws NoSuchFieldException {
+    for (String name : new String[] {"x", "y", "z"}) {
+      Field field = PathVector.class.getDeclaredField(name);
+      assertTrue(
+          Modifier.isFinal(field.getModifiers()),
+          "PathVector." + name + " must be final - the class is a value type");
+    }
+  }
+
+  @Test
+  void notCloneableAndNoCloneMethod() {
+    assertFalse(
+        Cloneable.class.isAssignableFrom(PathVector.class),
+        "PathVector must not implement Cloneable - the value type is immutable");
+    for (Method method : PathVector.class.getDeclaredMethods()) {
+      assertFalse(
+          method.getName().equals("clone"),
+          "PathVector.clone() must not exist - use the constructor or fluent operations");
+    }
+  }
+
+  @Test
+  void fluentSettersReturnFreshInstance() {
+    PathVector original = PathVector.of(1, 2, 3);
+    PathVector withX = original.setX(99);
+    assertNotSame(original, withX);
+    assertEquals(99, withX.getX(), EPS);
+    assertEquals(1, original.getX(), EPS, "original must not be mutated");
+  }
+
+  @Test
+  void arithmeticOperationsReturnFreshInstances() {
+    PathVector a = PathVector.of(1, 2, 3);
+    PathVector b = PathVector.of(10, 20, 30);
+    assertNotSame(a, a.add(b));
+    assertNotSame(a, a.subtract(b));
+    assertNotSame(a, a.multiply(2));
+    assertNotSame(a, a.divide(2));
+    assertEquals(1, a.getX(), EPS, "source vector must remain unchanged after arithmetic");
+  }
 
   // -------------------------------------------------------------------------
   // computeDistance hardening - see CODE_REVIEW 4.5

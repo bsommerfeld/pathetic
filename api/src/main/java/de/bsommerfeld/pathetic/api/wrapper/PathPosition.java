@@ -6,11 +6,11 @@ import de.bsommerfeld.pathetic.api.util.NumberUtils;
  * Represents a position. This class encapsulates the coordinates (x, y, z) of a point in the
  * pathfinding environment and provides methods for manipulating and comparing positions.
  */
-public class PathPosition implements Cloneable {
+public class PathPosition {
 
-  private double x;
-  private double y;
-  private double z;
+  private final double x;
+  private final double y;
+  private final double z;
   /**
    * Constructs a {@code PathPosition} with the specified coordinates.
    *
@@ -269,22 +269,6 @@ public class PathPosition implements Cloneable {
    */
   public PathPosition midPoint(PathPosition end) {
     return new PathPosition((this.x + end.x) / 2, (this.y + end.y) / 2, (this.z + end.z) / 2);
-  }
-
-  @Override
-  public PathPosition clone() {
-
-    final PathPosition clone;
-    try {
-      clone = (PathPosition) super.clone();
-    } catch (CloneNotSupportedException ex) {
-      throw new IllegalStateException("Superclass messed up", ex);
-    }
-
-    clone.x = this.x;
-    clone.y = this.y;
-    clone.z = this.z;
-    return clone;
   }
 
   @Override
