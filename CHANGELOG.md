@@ -24,3 +24,4 @@
 ### Removed
 
 - Remove unused `Pathetic` engine-version utility and its `pathetic.properties` resource
+- Remove `Depth.increment()` and make `Depth` immutable
