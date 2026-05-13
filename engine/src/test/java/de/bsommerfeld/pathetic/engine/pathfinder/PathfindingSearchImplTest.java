@@ -194,7 +194,6 @@ class PathfindingSearchImplTest {
 
     AtomicBoolean exceptionHandled = new AtomicBoolean(false);
     AtomicReference<Throwable> capturedException = new AtomicReference<>();
-    PathfinderResult fallbackResult = mock(PathfinderResult.class);
 
     // When
     search.exceptionally(
@@ -206,6 +205,31 @@ class PathfindingSearchImplTest {
     // Then
     assertTrue(exceptionHandled.get(), "exceptionally callback should be called on exception");
     assertSame(testException, capturedException.get());
+  }
+
+  /*
+   * exceptionally is a pure side-effect callback - it does not recover the failed search.
+   * After the callback ran, resultBlocking must still throw and result() must still be empty.
+   */
+  @Test
+  void testExceptionallyIsSideEffectOnlyAndDoesNotRecover() {
+    Exception testException = new RuntimeException("boom");
+    CompletableFuture<PathfinderResult> future = new CompletableFuture<>();
+    future.completeExceptionally(testException);
+    PathfindingSearchImpl search = new PathfindingSearchImpl(future);
+
+    AtomicBoolean handled = new AtomicBoolean(false);
+    search.exceptionally(t -> handled.set(true));
+
+    assertTrue(handled.get(), "callback must run before we check downstream contract");
+    assertThrows(
+        CompletionException.class,
+        search::resultBlocking,
+        "exceptionally must not recover the search - resultBlocking must still throw");
+    assertEquals(
+        Optional.empty(),
+        search.result(),
+        "exceptionally must not recover the search - result() must remain empty");
   }
 
   @Test

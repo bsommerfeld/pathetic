@@ -36,6 +36,10 @@ public interface PathfindingSearch {
   /**
    * Executes the given callback if the pathfinding operation results in an exception.
    *
+   * <p>The callback is purely observational. The search stays in its exceptional state afterwards
+   * - {@link #resultBlocking()} will still throw and {@link #result()} will still return
+   * {@link java.util.Optional#empty()}.
+   *
    * @param callback the callback to execute if the pathfinding operation results in an exception
    * @return this PathfindingSearch instance for method chaining
    */
@@ -44,14 +48,11 @@ public interface PathfindingSearch {
   /**
    * Blocks until the pathfinding operation completes and returns the result.
    *
-   * <p>This method waits for the pathfinding process to finish and retrieves the final outcome,
-   * encapsulated as a {@link PathfinderResult}. It ensures that the calling thread is blocked until
-   * the result is ready, making it suitable for scenarios where synchronous behavior is required.
-   *
-   * <p>If the pathfinding operation completed exceptionally, this method throws a {@link
+   * <p>If the operation completed exceptionally, this method throws a {@link
    * java.util.concurrent.CompletionException} whose {@link Throwable#getCause() cause} is the
-   * original error. If the underlying future was externally cancelled, a {@link
-   * java.util.concurrent.CancellationException} is thrown.
+   * original error. External cancellation surfaces as a {@link
+   * java.util.concurrent.CancellationException}. Use {@link #result()} if you prefer an empty
+   * {@link Optional} over a thrown exception.
    *
    * @return the {@link PathfinderResult} representing the outcome of the pathfinding operation,
    *     including success, failure, or fallback states, along with the generated path.
@@ -60,17 +61,14 @@ public interface PathfindingSearch {
   PathfinderResult resultBlocking();
 
   /**
-   * Retrieves the result of the pathfinding operation if it has completed.
+   * Retrieves the result of the pathfinding operation if it has completed normally.
    *
-   * <p>This method returns an {@link Optional}, which may contain the {@link PathfinderResult} if
-   * the pathfinding process has finished. The result encapsulates the outcome of the operation,
-   * which could be successful, failed, or a fallback, along with the potential generated path. If
-   * the pathfinding has not completed or there is no result available, an empty {@link Optional} is
-   * returned.
+   * <p>Returns {@link Optional#empty()} when the operation has not yet completed, was cancelled,
+   * or completed exceptionally. Use {@link #resultBlocking()} if you want the exception to
+   * propagate instead of being swallowed.
    *
-   * @return an {@link Optional} containing the {@link PathfinderResult} if the pathfinding
-   *     operation has completed, or an empty {@link Optional} if the result is not yet available or
-   *     the operation did not complete.
+   * @return an {@link Optional} containing the {@link PathfinderResult} on normal completion,
+   *     empty otherwise.
    * @since 5.4.6
    */
   Optional<PathfinderResult> result();
