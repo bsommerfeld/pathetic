@@ -67,11 +67,7 @@ class PathfindingSearchImpl implements PathfindingSearch {
 
   @Override
   public PathfinderResult resultBlocking() {
-    try {
-      return completableFuture.join();
-    } catch (Exception e) {
-      throw new RuntimeException("Failed to get result", e);
-    }
+    return completableFuture.join();
   }
 
   @Override

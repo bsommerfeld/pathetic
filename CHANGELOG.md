@@ -22,6 +22,7 @@
 - `PathfinderConfiguration.deepCopy` now defensively clones processor and hook lists so the copy is independent of later source mutations
 - Document the single-threaded contract of `SearchContext.getSharedData()` in JavaDoc
 - `Cost.of` now rejects `+Infinity`, `-Infinity`, and `NaN` (previously only `NaN` and negative values)
+- `PathfindingSearch.resultBlocking` now propagates the JDK `CompletionException` directly instead of re-wrapping it in a generic `RuntimeException`
 - Default shared executor is lazily allocated and only when an async configuration is built; sync-only configurations never spawn the thread pool
 
 ### Removed

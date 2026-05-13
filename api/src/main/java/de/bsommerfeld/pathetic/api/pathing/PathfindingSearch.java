@@ -48,6 +48,11 @@ public interface PathfindingSearch {
    * encapsulated as a {@link PathfinderResult}. It ensures that the calling thread is blocked until
    * the result is ready, making it suitable for scenarios where synchronous behavior is required.
    *
+   * <p>If the pathfinding operation completed exceptionally, this method throws a {@link
+   * java.util.concurrent.CompletionException} whose {@link Throwable#getCause() cause} is the
+   * original error. If the underlying future was externally cancelled, a {@link
+   * java.util.concurrent.CancellationException} is thrown.
+   *
    * @return the {@link PathfinderResult} representing the outcome of the pathfinding operation,
    *     including success, failure, or fallback states, along with the generated path.
    * @since 5.4.6

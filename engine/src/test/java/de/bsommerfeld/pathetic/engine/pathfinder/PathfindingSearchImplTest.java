@@ -7,6 +7,7 @@ import de.bsommerfeld.pathetic.api.pathing.result.PathState;
 import de.bsommerfeld.pathetic.api.pathing.result.PathfinderResult;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.Test;
@@ -266,17 +267,25 @@ class PathfindingSearchImplTest {
   }
 
   @Test
-  void testResultBlockingThrowsOnException() {
+  void testResultBlockingThrowsCompletionExceptionWithOriginalCause() {
     // Given
+    RuntimeException original = new IllegalStateException("boom");
     CompletableFuture<PathfinderResult> future = new CompletableFuture<>();
-    future.completeExceptionally(new RuntimeException("Test exception"));
+    future.completeExceptionally(original);
     PathfindingSearchImpl search = new PathfindingSearchImpl(future);
 
-    // When & Then
-    assertThrows(
-        RuntimeException.class,
-        search::resultBlocking,
-        "resultBlocking should throw RuntimeException when future completes exceptionally");
+    // When
+    CompletionException thrown =
+        assertThrows(
+            CompletionException.class,
+            search::resultBlocking,
+            "resultBlocking should propagate the JDK CompletionException without re-wrapping");
+
+    // Then
+    assertSame(
+        original,
+        thrown.getCause(),
+        "the original exception must be reachable via getCause() (no extra wrap layer)");
   }
 
   @Test
