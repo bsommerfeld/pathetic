@@ -54,6 +54,20 @@
                 <artifactId>maven-shade-plugin</artifactId>
                 <version>3.5.1</version>
                 <configuration>
+
+                    <!--
+                      IMPORTANT FOR TRANSITIVE DEPENDENCIES:
+                      By default, the shade plugin packs ALL compile-scoped dependencies into the fat JAR.
+                      Since the 'api' module is a standalone artifact, we explicitly exclude it from shading here.
+                      This prevents duplicate API classes (split packages) in the consumer's classpath, while
+                      ensuring Maven still resolves the 'api' artifact as a clean, transitive dependency.
+                    -->
+                    <artifactSet>
+                        <excludes>
+                            <exclude>de.bsommerfeld.pathetic:api</exclude>
+                        </excludes>
+                    </artifactSet>
+
                     <relocations>
                         <relocation>
                             <pattern>org.checkerframework</pattern>
