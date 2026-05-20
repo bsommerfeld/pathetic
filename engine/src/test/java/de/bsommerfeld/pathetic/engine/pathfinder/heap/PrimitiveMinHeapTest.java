@@ -58,6 +58,27 @@ public class PrimitiveMinHeapTest {
     assertEquals(1L, heap.extractMin());
   }
 
+  /*
+   * Covers the heap-level mechanism that updateExistingNode's nudging branch relies on:
+   * when the recomputed F-key collapses to within 1 ulp of the stored key, the pathfinder
+   * forces a reorder by writing `oldKey - Math.ulp(oldKey)`. This test pins that a 1-ulp
+   * decrease is accepted by insertOrUpdate and the affected entry rises to the top.
+   */
+  @Test
+  void testInsertOrUpdateAcceptsUlpSizedDecrease() {
+    heap.insertOrUpdate(1L, 100.0);
+    heap.insertOrUpdate(2L, 100.0);
+
+    // Both entries share the same cost — extraction order is undefined.
+    // Nudging node 2L down by one ulp must make it strictly cheaper and pop first.
+    double oldCost = heap.cost(2L);
+    heap.insertOrUpdate(2L, oldCost - Math.ulp(oldCost));
+
+    assertTrue(heap.cost(2L) < oldCost, "Heap must accept a 1-ulp decrease");
+    assertEquals(2L, heap.extractMin(), "Nudged node should be popped before the equal-cost peer");
+    assertEquals(1L, heap.extractMin());
+  }
+
   @Test
   void testUpdateWithHigherCostIgnored() {
     heap.insertOrUpdate(1L, 100.0);

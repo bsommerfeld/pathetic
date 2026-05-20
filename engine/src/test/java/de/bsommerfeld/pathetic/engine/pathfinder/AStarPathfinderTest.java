@@ -254,6 +254,166 @@ class AStarPathfinderTest {
         "Pathfinder should NOT have reopened the node, sticking to the expensive direct path");
   }
 
+  // --- UPDATE-EXISTING-NODE TESTS ---
+
+  /*
+   * Shared topology for the three tests below:
+   *
+   *      B(0,1) ----+
+   *       |          \
+   *      S(0,0)       M(1,1) --- T(2,1)
+   *       |          /
+   *      A(1,0) ----+
+   *
+   * Heuristic values are pinned so that F(A) < F(B) < F(M-via-A). Order of
+   * expansion is therefore S, then A, then B, then M. M enters the open set
+   * first via A; B's expansion then meets an already-open M and triggers
+   * updateExistingNode.
+   */
+
+  private void setupUpdateExistingNodeProvider() {
+    when(mockProvider.getNavigationPoint(any(), any()))
+        .thenAnswer(
+            inv -> {
+              PathPosition pos = inv.getArgument(0);
+              int x = (int) Math.round(pos.getX());
+              int y = (int) Math.round(pos.getY());
+              boolean reachable =
+                  (x == 0 && y == 0) // S
+                      || (x == 1 && y == 0) // A
+                      || (x == 0 && y == 1) // B
+                      || (x == 1 && y == 1) // M
+                      || (x == 2 && y == 1); // T
+              return reachable ? traversablePoint : nonTraversablePoint;
+            });
+  }
+
+  private INeighborStrategy cardinalNeighbors() {
+    return () ->
+        Arrays.asList(
+            new PathVector(1, 0, 0),
+            new PathVector(-1, 0, 0),
+            new PathVector(0, 1, 0),
+            new PathVector(0, -1, 0));
+  }
+
+  private IHeuristicStrategy updateExistingNodeStrategy(
+      double aToMCost, double bToMCost) {
+    return new IHeuristicStrategy() {
+      @Override
+      public double calculate(HeuristicContext context) {
+        PathPosition p = context.position();
+        if (isAt(p, 0, 0)) return 5.0; // S
+        if (isAt(p, 1, 0)) return 1.0; // A — lowest h so popped first
+        if (isAt(p, 0, 1)) return 2.0; // B — popped before M
+        if (isAt(p, 1, 1)) return 2.0; // M — stays above F(B) until updated
+        if (isAt(p, 2, 1)) return 0.0; // T
+        return 999.0;
+      }
+
+      @Override
+      public double calculateTransitionCost(PathPosition from, PathPosition to) {
+        if (isAt(from, 1, 0) && isAt(to, 1, 1)) return aToMCost;
+        if (isAt(from, 0, 1) && isAt(to, 1, 1)) return bToMCost;
+        return 1.0;
+      }
+    };
+  }
+
+  private PathfinderResult runUpdateExistingNodeSearch(
+      IHeuristicStrategy strategy, List<ValidationProcessor> validators) {
+    PathfinderConfiguration config =
+        PathfinderConfiguration.builder()
+            .provider(mockProvider)
+            .neighborStrategy(cardinalNeighbors())
+            .heuristicStrategy(strategy)
+            .nodeValidationProcessors(validators)
+            .reopenClosedNodes(false)
+            .maxIterations(100)
+            .async(false)
+            .build();
+
+    AStarPathfinder pf = new AStarPathfinder(config);
+    PathfindingSearch search = pf.findPath(new PathPosition(0, 0, 0), new PathPosition(2, 1, 0));
+    AtomicReference<PathfinderResult> ref = new AtomicReference<>();
+    search.ifPresent(ref::set);
+    return ref.get();
+  }
+
+  private boolean pathContains(PathfinderResult result, int x, int y) {
+    for (PathPosition p : result.getPath()) {
+      if (isAt(p, x, y)) return true;
+    }
+    return false;
+  }
+
+  /*
+   * Covers the normal decrease-key branch of updateExistingNode: when a cheaper
+   * predecessor is found, parent and gCost are updated and the heap reorders.
+   * M enters via A with G=6, B's expansion then finds G=1.5 -> update wins.
+   */
+  @Test
+  void testUpdateExistingNodeAdoptsCheaperPredecessor() {
+    setupUpdateExistingNodeProvider();
+
+    PathfinderResult result =
+        runUpdateExistingNodeSearch(
+            updateExistingNodeStrategy(5.0, 0.5),
+            Collections.singletonList(traversabilityValidator));
+
+    assertEquals(PathState.FOUND, result.getPathState());
+    assertTrue(pathContains(result, 0, 1), "Path should route through B (cheaper predecessor)");
+    assertTrue(!pathContains(result, 1, 0), "Path should not route through A");
+  }
+
+  /*
+   * Covers the G-guard: when the second discovered path to M is not strictly
+   * better, the existing predecessor is kept. M enters via A with G=1.5,
+   * B's expansion offers G=6 -> guard rejects the swap.
+   */
+  @Test
+  void testUpdateExistingNodeKeepsExistingWhenNotBetter() {
+    setupUpdateExistingNodeProvider();
+
+    PathfinderResult result =
+        runUpdateExistingNodeSearch(
+            updateExistingNodeStrategy(0.5, 5.0),
+            Collections.singletonList(traversabilityValidator));
+
+    assertEquals(PathState.FOUND, result.getPathState());
+    assertTrue(pathContains(result, 1, 0), "Path should stay on A (already cheaper)");
+    assertTrue(!pathContains(result, 0, 1), "Path should not adopt the worse B route");
+  }
+
+  /*
+   * Covers the validator veto: even when G via B would be better, a validator
+   * rejecting the B->M transition prevents the update. The original A route
+   * stays in place.
+   */
+  @Test
+  void testUpdateExistingNodeRespectsValidatorVeto() {
+    setupUpdateExistingNodeProvider();
+
+    ValidationProcessor vetoBToM =
+        context -> {
+          PathPosition from = context.getPreviousPathPosition();
+          PathPosition to = context.getCurrentPathPosition();
+          if (from != null && isAt(from, 0, 1) && isAt(to, 1, 1)) {
+            return false;
+          }
+          return true;
+        };
+
+    PathfinderResult result =
+        runUpdateExistingNodeSearch(
+            updateExistingNodeStrategy(5.0, 0.5),
+            Arrays.asList(traversabilityValidator, vetoBToM));
+
+    assertEquals(PathState.FOUND, result.getPathState());
+    assertTrue(pathContains(result, 1, 0), "Path must stay on A because B->M is vetoed");
+    assertTrue(!pathContains(result, 0, 1), "Path must not adopt the vetoed B route");
+  }
+
   // --- STANDARD TESTS ---
 
   @Test
