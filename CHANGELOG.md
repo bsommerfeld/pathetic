@@ -26,6 +26,7 @@
 - Clarify in JavaDoc that `PathfindingSearch.exceptionally` is a side-effect callback and does not recover the search
 - Default shared executor is lazily allocated and only when an async configuration is built; sync-only configurations never spawn the thread pool
 - `api` classes are no longer shaded into the `engine` artifact; `engine` now pulls `api` as a clean transitive dependency
+- Reject `NaN` heap costs in `insertOrUpdate`; a `NaN` heuristic now fails fast instead of silently corrupting the open-set ordering
 
 ### Removed
 

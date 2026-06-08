@@ -127,6 +127,30 @@ public class PrimitiveMinHeapTest {
   }
 
   @Test
+  void testInsertNaNCostThrows() {
+    /*
+     * NaN compares false against everything, which would stall siftUp/siftDown and permanently
+     * corrupt the ordering. The heap must reject it at the boundary instead of silently storing it.
+     */
+    assertThrows(
+        IllegalArgumentException.class, () -> heap.insertOrUpdate(1L, Double.NaN));
+
+    // The rejected insert must leave the heap untouched.
+    assertTrue(heap.isEmpty());
+    assertFalse(heap.contains(1L));
+  }
+
+  @Test
+  void testInsertInfiniteCostIsAccepted() {
+    // Infinity is fully ordered; it must be accepted and simply sort last.
+    heap.insertOrUpdate(1L, Double.POSITIVE_INFINITY);
+    heap.insertOrUpdate(2L, 10.0);
+
+    assertEquals(2L, heap.extractMin());
+    assertEquals(1L, heap.extractMin());
+  }
+
+  @Test
   void testContains() {
     heap.insertOrUpdate(55L, 10.0);
     assertTrue(heap.contains(55L));

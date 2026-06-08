@@ -49,8 +49,15 @@ public interface MinHeap {
    * <p>If the node is not currently in the heap, it is inserted with the given cost. If the node
    * already exists and the new cost is lower, the node's cost is updated (decrease-key operation).
    *
+   * <p>The cost must be an orderable {@code double}. {@code NaN} is rejected, because every
+   * comparison against {@code NaN} evaluates to {@code false} and would silently break the heap
+   * ordering invariant (sift operations stop early, leaving the poisoned entry stuck and
+   * {@code extractMin} no longer returning the true minimum). {@code +Infinity} is permitted: it is
+   * fully ordered and simply sorts last.
+   *
    * @param nodeId the unique identifier of the node
    * @param cost the cost associated with the node (typically F-cost for A*)
+   * @throws IllegalArgumentException if {@code cost} is {@code NaN}
    */
   void insertOrUpdate(long nodeId, double cost);
 
