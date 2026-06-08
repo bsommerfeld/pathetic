@@ -13,6 +13,7 @@
 - Snapshot pathfinder hooks at search start; mid-search registrations now apply only to future searches
 - Deprecate `PathfinderFactory.createPathfinder()` no-arg overload (always-traversable provider routes through walls)
 - `PathPosition.distance` now uses exact `Math.sqrt` instead of an approximation; deprecate `NumberUtils.sqrt`
+- `RegionKey.pack` now validates coordinate ranges (X/Z in [-33554432, 33554431], Y in [-2048, 2047]) and throws instead of silently aliasing out-of-range values
 
 ### Fixed
 

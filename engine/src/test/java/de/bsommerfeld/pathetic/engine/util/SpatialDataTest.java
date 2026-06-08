@@ -113,7 +113,8 @@ class SpatialDataTest {
 
   @Test
   void testFlodWithLargeCoordinates() {
-    PathPosition largePosition = new PathPosition(100000, 200000, 300000);
+    // Boundary of the supported RegionKey range: X/Z at the 26-bit max, Y at the 12-bit max.
+    PathPosition largePosition = new PathPosition(33554431, 2047, 33554431);
     spatialData.register(largePosition);
     assertTrue(spatialData.flod(largePosition));
   }
