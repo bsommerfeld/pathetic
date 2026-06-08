@@ -12,6 +12,7 @@
 - Size the open-set heap per search from `manhattanDistance * branchingFactor`, capped by `maxIterations`
 - Snapshot pathfinder hooks at search start; mid-search registrations now apply only to future searches
 - Deprecate `PathfinderFactory.createPathfinder()` no-arg overload (always-traversable provider routes through walls)
+- `PathPosition.distance` now uses exact `Math.sqrt` instead of an approximation; deprecate `NumberUtils.sqrt`
 
 ### Fixed
 

@@ -30,16 +30,16 @@ public final class NumberUtils {
   }
 
   /**
-   * Computes the square root of the given value using an approximation method.
+   * Computes the square root of the given value.
    *
    * @param input the value to compute the square root of
-   * @return the approximated square root
+   * @return the square root of {@code input}
+   * @deprecated Call {@link Math#sqrt(double)} directly. This now simply delegates to it; the
+   *     former bit-hack approximation was less precise than the JDK intrinsic (and wrong at
+   *     {@code 0}) without being faster.
    */
+  @Deprecated
   public static double sqrt(double input) {
-    double sqrt =
-        Double.longBitsToDouble((Double.doubleToLongBits(input) - (1L << 52) >> 1) + (1L << 61));
-    double better = (sqrt + input / sqrt) / 2.0;
-
-    return (better + input / better) / 2.0;
+    return Math.sqrt(input);
   }
 }

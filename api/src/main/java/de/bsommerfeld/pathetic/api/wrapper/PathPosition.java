@@ -97,7 +97,7 @@ public class PathPosition {
    * @return The Euclidean distance between the two positions.
    */
   public double distance(PathPosition otherPosition) {
-    return NumberUtils.sqrt(this.distanceSquared(otherPosition));
+    return Math.sqrt(this.distanceSquared(otherPosition));
   }
 
   /**

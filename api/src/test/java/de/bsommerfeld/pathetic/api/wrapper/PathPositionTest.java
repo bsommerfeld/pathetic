@@ -84,4 +84,21 @@ class PathPositionTest {
     assertNotEquals(new PathPosition(0, 0, 0), "(0, 0, 0)");
     assertNotEquals(new PathPosition(0, 0, 0), null);
   }
+
+  /*
+   * distance uses exact Math.sqrt, not the former bit-hack approximation. A 3-4-5 triangle must
+   * resolve to exactly 5.0; the old approximation drifted by ~1e-6 and would miss the tight delta.
+   */
+  @Test
+  void distanceIsExact() {
+    PathPosition origin = new PathPosition(0, 0, 0);
+    assertEquals(5.0, origin.distance(new PathPosition(3, 0, 4)), 0.0);
+  }
+
+  /* distance to self is exactly 0.0; the old approximation returned a tiny non-zero value. */
+  @Test
+  void distanceToSelfIsZero() {
+    PathPosition p = new PathPosition(7, 11, 13);
+    assertEquals(0.0, p.distance(p), 0.0);
+  }
 }
