@@ -97,6 +97,14 @@ public final class AStarPathfinder extends AbstractPathfinder {
 
       Node neighbor = createNeighborNode(neighborPos, start, target, currentNode);
 
+      /*
+       * Reused across the reopen check and the "process as new node" branch below. The reopen
+       * path falls through into new-node processing with identical context arguments, so a single
+       * instance serves both and avoids a second allocation. Stays null when the neighbor is in
+       * the closed set and reopening is disabled, so the common skip path allocates nothing.
+       */
+      EvaluationContext context = null;
+
       // Check if neighbor is in the closed set
       SpatialData spatialData = session.getOrCreateSpatialData(neighborPos);
       if (spatialData.flod(neighborPos)) {
@@ -119,7 +127,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
         if (pathfinderConfiguration.shouldReopenClosedNodes()) {
           double oldCost = session.closedSetGCosts.get(packedPos);
 
-          EvaluationContext context =
+          context =
               new EvaluationContextImpl(
                   searchContext,
                   neighbor,
@@ -146,9 +154,11 @@ public final class AStarPathfinder extends AbstractPathfinder {
 
       // Process as a new node
       neighbor.setParent(currentNode);
-      EvaluationContext context =
-          new EvaluationContextImpl(
-              searchContext, neighbor, currentNode, pathfinderConfiguration.getHeuristicStrategy());
+      if (context == null) {
+        context =
+            new EvaluationContextImpl(
+                searchContext, neighbor, currentNode, pathfinderConfiguration.getHeuristicStrategy());
+      }
 
       if (!isValidByCustomProcessors(context)) {
         continue;
