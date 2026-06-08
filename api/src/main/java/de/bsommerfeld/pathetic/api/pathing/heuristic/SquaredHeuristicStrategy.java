@@ -18,8 +18,13 @@ import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
  * </ul>
  *
  * <p>By avoiding {@code sqrt} operations and working in squared space, this heuristic is
- * significantly faster than {@link LinearHeuristicStrategy}, while maintaining consistency and
- * admissibility <strong>if weights are tuned appropriately</strong>.
+ * significantly faster than {@link LinearHeuristicStrategy}. It is <strong>not admissible</strong>:
+ * squaring each distance term makes the heuristic grow quadratically with distance while the
+ * accumulated path cost grows only linearly, so the overestimation factor increases without bound
+ * as the target gets farther away (e.g. roughly 20x at distance 10 and 200x at distance 100 with the
+ * default weights). The search therefore behaves greedily and can return noticeably suboptimal paths
+ * at range. Choose this strategy when raw speed matters more than path optimality; use {@link
+ * LinearHeuristicStrategy} when paths must stay close to optimal.
  *
  * <p>Ideal for high-performance pathfinding in large 3D environments.
  *

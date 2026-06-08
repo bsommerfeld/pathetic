@@ -16,8 +16,13 @@ import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
  *   <li>Vertical (Y-axis) height difference
  * </ul>
  *
- * <p>All metrics are computed in <strong>linear space</strong> (not squared), making this heuristic
- * admissible and consistent when weights are properly configured.
+ * <p>All metrics are computed in <strong>linear space</strong> (not squared). Note that the metrics
+ * overlap (Manhattan and Octile both approximate the full remaining distance), so the weighted sum
+ * is <strong>not strictly admissible with the default weights</strong>: it overestimates the true
+ * cost by a bounded, distance-independent factor (roughly 2x for axis-aligned and up to ~3.3x for
+ * fully diagonal targets). This makes the search behave like Weighted A* - fast and near-optimal in
+ * practice, with returned paths bounded by that factor times the optimum, but not provably optimal.
+ * Strict admissibility requires scaling the weights down so the sum stays below the true cost.
  *
  * <p>Ideal for 3D grid-based environments with diagonal movement and path-straightness penalties.
  *
