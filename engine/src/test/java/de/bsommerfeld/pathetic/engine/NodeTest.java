@@ -130,32 +130,13 @@ class NodeTest {
     }
 
     @Test
-    void testCompareTo() {
-        // Create nodes with different F-costs
-        Node node1 = new Node(position, start, target, weights, strategy, 0);
-        node1.setParent(new Node(start, start, target, weights, strategy, 0));
-        node1.setGCost(5.0);
-
-        Node node2 = new Node(position, start, target, weights, strategy, 0);
-        node2.setParent(new Node(start, start, target, weights, strategy, 0));
-        node2.setGCost(10.0);
-
-        // node1 has lower F-cost, so should be less than node2
-        assertTrue(node1.compareTo(node2) < 0);
-        assertTrue(node2.compareTo(node1) > 0);
-
-        // Same F-cost but different depths
-        Node node3 = new Node(position, start, target, weights, strategy, 1);
-        node3.setParent(new Node(start, start, target, weights, strategy, 0));
-        node3.setGCost(5.0);
-
-        // If F-costs and heuristics are equal, compare by depth
-        if (node1.getFCost() == node3.getFCost() &&
-                node1.getHeuristic() == node3.getHeuristic()) {
-            assertTrue(node1.compareTo(node3) < 0);
-        }
-
-        // Same node should be equal
-        assertEquals(0, node1.compareTo(node1));
+    void testNotComparable() {
+        /*
+         * Node intentionally does not implement Comparable. A cost-based natural ordering would
+         * contradict the position-based equals/hashCode and silently break sorted containers
+         * (TreeSet/TreeMap). The heap orders nodes via explicit primitive cost keys, so no natural
+         * ordering is needed.
+         */
+        assertFalse(node instanceof Comparable, "Node must not implement Comparable");
     }
 }

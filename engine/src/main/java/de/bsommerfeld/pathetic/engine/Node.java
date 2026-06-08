@@ -19,7 +19,7 @@ import java.util.Objects;
  *       may be slightly slower due to square root operations.
  * </ul>
  */
-public class Node implements Comparable<Node> {
+public class Node {
 
   private final PathPosition position;
   private final int depth;
@@ -118,23 +118,5 @@ public class Node implements Comparable<Node> {
   @Override
   public int hashCode() {
     return Objects.hashCode(position);
-  }
-
-  @Override
-  public int compareTo(Node o) {
-    // First compare by F-cost (G-cost + H-cost)
-    int fCostComparison = Double.compare(this.getFCost(), o.getFCost());
-    if (fCostComparison != 0) {
-      return fCostComparison;
-    }
-
-    // If F-costs are equal, compare by heuristic value
-    int heuristicComparison = Double.compare(this.getHeuristic(), o.getHeuristic());
-    if (heuristicComparison != 0) {
-      return heuristicComparison;
-    }
-
-    // If heuristics are equal, compare by depth
-    return Integer.compare(this.depth, o.depth);
   }
 }

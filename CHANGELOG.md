@@ -32,3 +32,4 @@
 - Remove unused `Pathetic` engine-version utility and its `pathetic.properties` resource
 - Remove `Depth.increment()` and make `Depth` immutable
 - Remove `Cloneable` and `clone()` from `PathPosition` and `PathVector`; coordinate fields are now `final`
+- Remove `Comparable` from `Node`; its cost-based ordering was inconsistent with position-based `equals`
