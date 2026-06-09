@@ -44,13 +44,13 @@ Minecraft is a pathfinding hell — Pathetic just walked in, pissed on Hades' le
     <dependency>
         <groupId>de.bsommerfeld.pathetic</groupId>
         <artifactId>engine</artifactId>
-        <version>5.4.6</version>
+        <version>5.5.0</version>
     </dependency>
 </dependencies>
 ```
 
 ```kotlin
-implementation("de.bsommerfeld.pathetic:engine:5.4.6")
+implementation("de.bsommerfeld.pathetic:engine:5.5.0")
 ```
 
 ```java
