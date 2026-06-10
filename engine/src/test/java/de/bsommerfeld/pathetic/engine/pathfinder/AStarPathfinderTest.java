@@ -11,7 +11,10 @@ import de.bsommerfeld.pathetic.api.pathing.PathfindingSearch;
 import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration;
 import de.bsommerfeld.pathetic.api.pathing.heuristic.HeuristicContext;
 import de.bsommerfeld.pathetic.api.pathing.heuristic.IHeuristicStrategy;
+import de.bsommerfeld.pathetic.api.pathing.processing.Cost;
+import de.bsommerfeld.pathetic.api.pathing.processing.CostProcessor;
 import de.bsommerfeld.pathetic.api.pathing.processing.ValidationProcessor;
+import de.bsommerfeld.pathetic.api.pathing.processing.context.EvaluationContext;
 import de.bsommerfeld.pathetic.api.pathing.result.PathState;
 import de.bsommerfeld.pathetic.api.pathing.result.PathfinderResult;
 import de.bsommerfeld.pathetic.api.provider.NavigationPoint;
@@ -21,12 +24,15 @@ import de.bsommerfeld.pathetic.api.wrapper.PathVector;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -252,6 +258,195 @@ class AStarPathfinderTest {
     assertTrue(
         !tookDetour,
         "Pathfinder should NOT have reopened the node, sticking to the expensive direct path");
+  }
+
+  /*
+   * Locks in that cost processors are evaluated at most once per EvaluationContext. The reopen
+   * path computes a G-cost to justify reopening and must reuse exactly that value when the node
+   * is processed as new; a second evaluation of the same context could diverge for stateful
+   * processors and store a G-cost inconsistent with the reopen decision.
+   */
+  @Test
+  void testReopenEvaluatesCostProcessorsOncePerContext() {
+    PathPosition start = new PathPosition(0, 0, 0);
+    PathPosition target = new PathPosition(0, 2, 0);
+
+    INeighborStrategy explicitStrategy =
+        () ->
+            Arrays.asList(
+                new PathVector(1, 0, 0),
+                new PathVector(-1, 0, 0),
+                new PathVector(0, 1, 0),
+                new PathVector(0, -1, 0),
+                new PathVector(-1, 1, 0));
+
+    when(mockProvider.getNavigationPoint(any(), any()))
+        .thenAnswer(
+            inv -> {
+              PathPosition pos = inv.getArgument(0);
+              int x = (int) Math.round(pos.getX());
+              int y = (int) Math.round(pos.getY());
+              boolean isValid =
+                  (x == 0 && y == 0)
+                      || (x == 0 && y == 1)
+                      || (x == 0 && y == 2)
+                      || (x == 1 && y == 0);
+              return isValid ? traversablePoint : nonTraversablePoint;
+            });
+
+    IHeuristicStrategy graphLogicStrategy =
+        new IHeuristicStrategy() {
+          @Override
+          public double calculate(HeuristicContext context) {
+            if (isAt(context.position(), 1, 0)) return 100.0;
+            return 0.0;
+          }
+
+          @Override
+          public double calculateTransitionCost(PathPosition from, PathPosition to) {
+            if (isAt(from, 0, 0) && isAt(to, 0, 1)) return 50.0;
+            if (isAt(from, 0, 1) && isAt(to, 0, 2)) return 200.0;
+            return 1.0;
+          }
+        };
+
+    Set<EvaluationContext> seenContexts = Collections.newSetFromMap(new IdentityHashMap<>());
+    AtomicInteger duplicateEvaluations = new AtomicInteger();
+    CostProcessor countingProcessor =
+        context -> {
+          if (!seenContexts.add(context)) {
+            duplicateEvaluations.incrementAndGet();
+          }
+          return Cost.ZERO;
+        };
+
+    PathfinderConfiguration config =
+        PathfinderConfiguration.builder()
+            .provider(mockProvider)
+            .neighborStrategy(explicitStrategy)
+            .heuristicStrategy(graphLogicStrategy)
+            .nodeValidationProcessors(Collections.singletonList(traversabilityValidator))
+            .costProcessor(Collections.singletonList(countingProcessor))
+            .reopenClosedNodes(true)
+            .maxIterations(100)
+            .async(false)
+            .build();
+
+    AStarPathfinder pf = new AStarPathfinder(config);
+    PathfindingSearch search = pf.findPath(start, target);
+    AtomicReference<PathfinderResult> resultRef = new AtomicReference<>();
+    search.ifPresent(resultRef::set);
+    PathfinderResult result = resultRef.get();
+
+    assertEquals(PathState.FOUND, result.getPathState());
+    assertTrue(
+        pathContains(result, 1, 0),
+        "Sanity check failed: scenario must actually trigger a reopen");
+    assertEquals(
+        0,
+        duplicateEvaluations.get(),
+        "Cost processors must be evaluated at most once per EvaluationContext");
+  }
+
+  /*
+   * Locks in that a reopen attempt vetoed by a validator does not lower the recorded closed-set
+   * G-cost. Topology: N closes via A with G=10; B then offers G=5 but the B->N transition is
+   * vetoed; C later offers G=7, which must still be able to reopen N against the original 10.
+   *
+   *      B(1,1) --x--+
+   *       |           \
+   *      S(0,0)-A(1,0)-N(2,0)-T(3,0)
+   *       |           /
+   *      C(1,-1)-----+
+   */
+  @Test
+  void testVetoedReopenDoesNotLowerRecordedGCost() {
+    PathPosition start = new PathPosition(0, 0, 0);
+    PathPosition target = new PathPosition(3, 0, 0);
+
+    INeighborStrategy forwardStrategy =
+        () ->
+            Arrays.asList(
+                new PathVector(1, 0, 0), new PathVector(1, 1, 0), new PathVector(1, -1, 0));
+
+    when(mockProvider.getNavigationPoint(any(), any()))
+        .thenAnswer(
+            inv -> {
+              PathPosition pos = inv.getArgument(0);
+              int x = (int) Math.round(pos.getX());
+              int y = (int) Math.round(pos.getY());
+              boolean isValid =
+                  (x == 0 && y == 0) // S
+                      || (x == 1 && y == 0) // A
+                      || (x == 1 && y == 1) // B
+                      || (x == 1 && y == -1) // C
+                      || (x == 2 && y == 0) // N
+                      || (x == 3 && y == 0); // T
+              return isValid ? traversablePoint : nonTraversablePoint;
+            });
+
+    /*
+     * Heuristic values pin the expansion order S, A, N (closed via A, G=10), B (vetoed offer),
+     * C (valid offer), reopened N, T. T's heuristic keeps it behind B and C until the cheaper
+     * route through the reopened N updates it.
+     */
+    IHeuristicStrategy orderPinningStrategy =
+        new IHeuristicStrategy() {
+          @Override
+          public double calculate(HeuristicContext context) {
+            PathPosition p = context.position();
+            if (isAt(p, 0, 0)) return 5.0; // S
+            if (isAt(p, 1, 0)) return 0.0; // A
+            if (isAt(p, 1, 1)) return 11.0; // B
+            if (isAt(p, 1, -1)) return 13.0; // C
+            if (isAt(p, 2, 0)) return 0.0; // N
+            if (isAt(p, 3, 0)) return 4.0; // T
+            return 999.0;
+          }
+
+          @Override
+          public double calculateTransitionCost(PathPosition from, PathPosition to) {
+            if (isAt(from, 1, 0) && isAt(to, 2, 0)) return 9.0; // A->N: G(N)=10
+            if (isAt(from, 1, 1) && isAt(to, 2, 0)) return 4.0; // B->N: offer G=5 (vetoed)
+            if (isAt(from, 1, -1) && isAt(to, 2, 0)) return 6.0; // C->N: offer G=7
+            return 1.0;
+          }
+        };
+
+    ValidationProcessor vetoBToN =
+        context -> {
+          PathPosition from = context.getPreviousPathPosition();
+          PathPosition to = context.getCurrentPathPosition();
+          if (from != null && isAt(from, 1, 1) && isAt(to, 2, 0)) {
+            return false;
+          }
+          return true;
+        };
+
+    PathfinderConfiguration config =
+        PathfinderConfiguration.builder()
+            .provider(mockProvider)
+            .neighborStrategy(forwardStrategy)
+            .heuristicStrategy(orderPinningStrategy)
+            .nodeValidationProcessors(Arrays.asList(traversabilityValidator, vetoBToN))
+            .reopenClosedNodes(true)
+            .maxIterations(100)
+            .async(false)
+            .build();
+
+    AStarPathfinder pf = new AStarPathfinder(config);
+    PathfindingSearch search = pf.findPath(start, target);
+    AtomicReference<PathfinderResult> resultRef = new AtomicReference<>();
+    search.ifPresent(resultRef::set);
+    PathfinderResult result = resultRef.get();
+
+    assertEquals(PathState.FOUND, result.getPathState());
+    assertTrue(
+        pathContains(result, 1, -1),
+        "C's valid offer (G=7) must still reopen N; the vetoed offer (G=5) must not be recorded");
+    assertTrue(
+        !pathContains(result, 1, 0),
+        "Path must not stay on the expensive A route once N is reopened via C");
   }
 
   // --- UPDATE-EXISTING-NODE TESTS ---

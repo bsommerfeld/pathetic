@@ -105,6 +105,15 @@ public final class AStarPathfinder extends AbstractPathfinder {
        */
       EvaluationContext context = null;
 
+      /*
+       * G-cost computed during the reopen check, reused verbatim when the node is processed as a
+       * new node below. CostProcessors are a public extension point and may be stateful, so
+       * recomputing could yield a different value than the one that justified reopening - the
+       * node would then enter the open set with a key inconsistent with the reopen decision.
+       */
+      double reopenGCost = 0.0;
+      boolean reopening = false;
+
       // Check if neighbor is in the closed set
       SpatialData spatialData = session.getOrCreateSpatialData(neighborPos);
       if (spatialData.flod(neighborPos)) {
@@ -123,7 +132,6 @@ public final class AStarPathfinder extends AbstractPathfinder {
          * we hide this behind a configuration flag, so the user can decide whether this should be active.
          */
 
-        boolean shouldReopen = false;
         if (pathfinderConfiguration.shouldReopenClosedNodes()) {
           double oldCost = session.closedSetGCosts.get(packedPos);
 
@@ -134,19 +142,16 @@ public final class AStarPathfinder extends AbstractPathfinder {
                   currentNode,
                   pathfinderConfiguration.getHeuristicStrategy());
 
-          double newGCost = calculateGCost(context);
+          reopenGCost = calculateGCost(context);
 
           // Is this path significantly better?
-          if (Double.isNaN(oldCost) || newGCost + Math.ulp(newGCost) < oldCost) {
-            // Update the value for future comparison
-            session.closedSetGCosts.put(packedPos, newGCost);
-
-            // And mark this node for reopening
-            shouldReopen = true;
+          if (Double.isNaN(oldCost) || reopenGCost + Math.ulp(reopenGCost) < oldCost) {
+            // Mark this node for reopening
+            reopening = true;
           }
         }
 
-        if (!shouldReopen) continue;
+        if (!reopening) continue;
 
         // Once we got here, the node will be processed as "new" node
         // and with that effectively reopened.
@@ -190,7 +195,17 @@ public final class AStarPathfinder extends AbstractPathfinder {
        * to the magnitude of the values.
        * --------------------------------------------------------------------------------
        */
-      double gCost = calculateGCost(context);
+      double gCost = reopening ? reopenGCost : calculateGCost(context);
+
+      /*
+       * Recorded only after validation so that a vetoed reopen attempt does not lower the stored
+       * G-cost; otherwise a later, valid path with a cost between the vetoed and the stored value
+       * could no longer reopen this node.
+       */
+      if (reopening) {
+        session.closedSetGCosts.put(packedPos, gCost);
+      }
+
       neighbor.setGCost(gCost);
       double fCost = neighbor.getFCost();
       double heapKey = calculateHeapKey(neighbor, fCost);
