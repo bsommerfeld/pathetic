@@ -62,6 +62,21 @@ public interface MinHeap {
   void insertOrUpdate(long nodeId, double cost);
 
   /**
+   * Shared boundary check for {@link #insertOrUpdate(long, double)} implementations: rejects
+   * {@code NaN} costs as documented there. Implementations should call this before touching their
+   * internal state so every heap enforces the identical contract.
+   *
+   * @param nodeId the node identifier, included in the error message
+   * @param cost the cost to validate
+   * @throws IllegalArgumentException if {@code cost} is {@code NaN}
+   */
+  static void requireOrderableCost(long nodeId, double cost) {
+    if (Double.isNaN(cost)) {
+      throw new IllegalArgumentException("Heap cost must not be NaN (node " + nodeId + ")");
+    }
+  }
+
+  /**
    * Removes and returns the node with the minimum cost from the heap.
    *
    * @return the identifier of the node with the minimum cost

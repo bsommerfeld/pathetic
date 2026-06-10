@@ -78,13 +78,7 @@ public class PrimitiveMinHeap implements MinHeap, Siftable, Resizable {
 
   @Override
   public void insertOrUpdate(long packedNode, double cost) {
-    /*
-     * Reject NaN at the boundary: it compares false against everything, so it would stall siftUp /
-     * siftDown and permanently corrupt the heap ordering. Infinity is orderable and allowed.
-     */
-    if (Double.isNaN(cost)) {
-      throw new IllegalArgumentException("Heap cost must not be NaN (node " + packedNode + ")");
-    }
+    MinHeap.requireOrderableCost(packedNode, cost);
 
     int existingIndex = nodeToIndexMap.get(packedNode);
 
