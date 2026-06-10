@@ -201,7 +201,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
           new EvaluationContextImpl(
               searchContext, startNode, null, pathfinderConfiguration.getHeuristicStrategy());
 
-      if (this.validationProcessors != null && !this.validationProcessors.isEmpty()) {
+      if (!this.validationProcessors.isEmpty()) {
         final boolean isStartNodeInvalid =
             this.validationProcessors.stream()
                 .anyMatch(validator -> !validator.isValid(startNodeContext));
@@ -352,9 +352,8 @@ public abstract class AbstractPathfinder implements Pathfinder {
    */
   private List<Processor> getProcessors() {
     List<Processor> processors = new ArrayList<>();
-    if (validationProcessors != null && !validationProcessors.isEmpty())
-      processors.addAll(validationProcessors);
-    if (costProcessors != null && !costProcessors.isEmpty()) processors.addAll(costProcessors);
+    processors.addAll(validationProcessors);
+    processors.addAll(costProcessors);
     return processors;
   }
 

@@ -279,9 +279,6 @@ public final class AStarPathfinder extends AbstractPathfinder {
   }
 
   private boolean isValidByCustomProcessors(EvaluationContext context) {
-    if (validationProcessors == null || validationProcessors.isEmpty()) {
-      return true;
-    }
     for (ValidationProcessor validator : validationProcessors) {
       if (!validator.isValid(context)) {
         return false;
@@ -294,11 +291,9 @@ public final class AStarPathfinder extends AbstractPathfinder {
     double baseCost = context.getBaseTransitionCost();
     double additionalCost = 0.0;
 
-    if (costProcessors != null && !costProcessors.isEmpty()) {
-      for (CostProcessor processor : costProcessors) {
-        Cost contribution = processor.calculateCostContribution(context);
-        additionalCost += (contribution != null) ? contribution.getValue() : Cost.ZERO.getValue();
-      }
+    for (CostProcessor processor : costProcessors) {
+      Cost contribution = processor.calculateCostContribution(context);
+      additionalCost += (contribution != null) ? contribution.getValue() : Cost.ZERO.getValue();
     }
 
     double transitionCost = baseCost + additionalCost;

@@ -21,6 +21,21 @@ import org.junit.jupiter.api.Test;
 class PathfinderConfigurationTest {
 
   /*
+   * The engine iterates these lists without null guards, so a default-built configuration must
+   * expose empty (never null) processor and hook collections.
+   */
+  @Test
+  void processorListsAreNeverNull() {
+    PathfinderConfiguration config = PathfinderConfiguration.builder().build();
+
+    assertNotNull(config.getNodeValidationProcessors());
+    assertNotNull(config.getNodeCostProcessors());
+    assertNotNull(config.pathfindingHooks());
+    assertTrue(config.getNodeValidationProcessors().isEmpty());
+    assertTrue(config.getNodeCostProcessors().isEmpty());
+  }
+
+  /*
    * deepCopy must produce a configuration that is independent of subsequent mutations to the
    * source's backing collections, even when the user retains a reference to the original mutable
    * list passed into the builder.
