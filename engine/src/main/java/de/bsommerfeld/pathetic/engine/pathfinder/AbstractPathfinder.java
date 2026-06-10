@@ -251,6 +251,18 @@ public abstract class AbstractPathfinder implements Pathfinder {
 
       return determinePostLoopResult(iteration, start, target, bestFallbackNode);
 
+    } catch (RuntimeException e) {
+      /*
+       * Custom extension points (heuristics, processors, providers, neighbor strategies) run
+       * inside the loop and may throw. Without this catch the exception would propagate raw
+       * through the CompletableFuture, and async callers observing only the result path
+       * (ifPresent / orElse) would never learn the search died. Surface it as a FAILED result
+       * and report the cause on stderr (same convention as processor finalization below).
+       */
+      System.err.println("An exception occurred during pathfinding; returning FAILED result:");
+      e.printStackTrace();
+      return new PathfinderResultImpl(
+          PathState.FAILED, new PathImpl(start, target, EMPTY_PATH_POSITIONS));
     } finally {
       for (Processor processor : processors) {
         try {
@@ -270,15 +282,24 @@ public abstract class AbstractPathfinder implements Pathfinder {
   }
 
   double calculateHeapKey(Node neighbor, double fCost) {
-    double heuristic = neighbor.getHeuristic();
-    double tieBreaker = TIE_BREAKER_WEIGHT * (heuristic / (Math.abs(fCost) + 1));
-    double heapKey = fCost - tieBreaker;
-
-    if (Double.isNaN(heapKey) || Double.isInfinite(heapKey)) {
-      heapKey = fCost;
+    /*
+     * The F-cost is where heuristic output first feeds into a heap key. Heuristics are a public
+     * extension point returning a raw double, so this is the single boundary that protects the
+     * heap ordering against NaN and Infinity; with a finite F the tie-breaker below is finite by
+     * construction. The search loop turns this into a FAILED result.
+     */
+    if (!Double.isFinite(fCost)) {
+      throw new IllegalStateException(
+          "Non-finite F-cost "
+              + fCost
+              + " for node at "
+              + neighbor.getPosition()
+              + "; a custom IHeuristicStrategy or CostProcessor likely returned NaN or Infinity");
     }
 
-    return heapKey;
+    double heuristic = neighbor.getHeuristic();
+    double tieBreaker = TIE_BREAKER_WEIGHT * (heuristic / (Math.abs(fCost) + 1));
+    return fCost - tieBreaker;
   }
 
   /**

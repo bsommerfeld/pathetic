@@ -21,6 +21,9 @@ import de.bsommerfeld.pathetic.api.provider.NavigationPoint;
 import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.api.wrapper.PathVector;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -899,6 +902,126 @@ class AStarPathfinderTest {
 
     assertNotNull(result);
     assertEquals(PathState.LENGTH_LIMITED, result.getPathState());
+  }
+
+  // --- ERROR-PATH TESTS ---
+
+  private IHeuristicStrategy nanHeuristicStrategy() {
+    return new IHeuristicStrategy() {
+      @Override
+      public double calculate(HeuristicContext context) {
+        return Double.NaN;
+      }
+
+      @Override
+      public double calculateTransitionCost(PathPosition from, PathPosition to) {
+        return 1.0;
+      }
+    };
+  }
+
+  /*
+   * A custom heuristic returning NaN must surface as a FAILED result (with the cause on stderr),
+   * not as a raw exception escaping through the future - async callers observing only the result
+   * path would otherwise never learn the search died.
+   */
+  @Test
+  void testNaNHeuristicFailsSearchInsteadOfThrowing() {
+    when(mockProvider.getNavigationPoint(any(PathPosition.class), any()))
+        .thenReturn(traversablePoint);
+
+    PathfinderConfiguration config =
+        PathfinderConfiguration.builder()
+            .provider(mockProvider)
+            .heuristicStrategy(nanHeuristicStrategy())
+            .maxIterations(100)
+            .async(false)
+            .build();
+    AStarPathfinder pf = new AStarPathfinder(config);
+
+    PrintStream originalErr = System.err;
+    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    System.setErr(new PrintStream(buffer, true, StandardCharsets.UTF_8));
+    PathfinderResult result;
+    try {
+      result = pf.findPath(start, target).resultBlocking();
+    } finally {
+      System.setErr(originalErr);
+    }
+
+    assertNotNull(result);
+    assertEquals(PathState.FAILED, result.getPathState());
+    String captured = buffer.toString(StandardCharsets.UTF_8);
+    assertTrue(
+        captured.contains("Non-finite F-cost"),
+        "stderr should name the non-finite F-cost as the cause - got: " + captured);
+  }
+
+  @Test
+  void testNaNHeuristicFailsAsyncSearchViaResultPath() {
+    when(mockProvider.getNavigationPoint(any(PathPosition.class), any()))
+        .thenReturn(traversablePoint);
+
+    PathfinderConfiguration config =
+        PathfinderConfiguration.builder()
+            .provider(mockProvider)
+            .heuristicStrategy(nanHeuristicStrategy())
+            .maxIterations(100)
+            .async(true)
+            .build();
+    AStarPathfinder pf = new AStarPathfinder(config);
+
+    PrintStream originalErr = System.err;
+    System.setErr(new PrintStream(new ByteArrayOutputStream(), true, StandardCharsets.UTF_8));
+    PathfinderResult result;
+    try {
+      result = pf.findPath(start, target).resultBlocking();
+    } finally {
+      System.setErr(originalErr);
+    }
+
+    assertNotNull(result);
+    assertEquals(PathState.FAILED, result.getPathState());
+  }
+
+  /*
+   * A throwing custom extension (here: a validator) must likewise surface as FAILED instead of
+   * escaping through the future.
+   */
+  @Test
+  void testThrowingValidatorFailsSearchInsteadOfThrowing() {
+    when(mockProvider.getNavigationPoint(any(PathPosition.class), any()))
+        .thenReturn(traversablePoint);
+
+    ValidationProcessor throwingValidator =
+        context -> {
+          throw new IllegalStateException("boom-validator");
+        };
+
+    PathfinderConfiguration config =
+        PathfinderConfiguration.builder()
+            .provider(mockProvider)
+            .validationProcessors(Collections.singletonList(throwingValidator))
+            .maxIterations(100)
+            .async(false)
+            .build();
+    AStarPathfinder pf = new AStarPathfinder(config);
+
+    PrintStream originalErr = System.err;
+    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    System.setErr(new PrintStream(buffer, true, StandardCharsets.UTF_8));
+    PathfinderResult result;
+    try {
+      result = pf.findPath(start, target).resultBlocking();
+    } finally {
+      System.setErr(originalErr);
+    }
+
+    assertNotNull(result);
+    assertEquals(PathState.FAILED, result.getPathState());
+    assertTrue(
+        buffer.toString(StandardCharsets.UTF_8).contains("boom-validator"),
+        "stderr should contain the original exception message");
   }
 
   @Test
