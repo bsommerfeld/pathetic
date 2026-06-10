@@ -3,6 +3,7 @@ package de.bsommerfeld.pathetic.api.pathing.processing;
 import de.bsommerfeld.pathetic.api.pathing.processing.context.EvaluationContext;
 import de.bsommerfeld.pathetic.api.pathing.processing.context.SearchContext; // Assuming this exists
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -149,14 +150,7 @@ public final class Validators {
 
   private static List<ValidationProcessor> requireAllNonNull(ValidationProcessor... validators) {
     Objects.requireNonNull(validators, "validators must not be null");
-    if (validators.length == 0) {
-      return Collections.emptyList();
-    }
-    List<ValidationProcessor> list = new ArrayList<>(validators.length);
-    for (int i = 0; i < validators.length; i++) {
-      list.add(Objects.requireNonNull(validators[i], "validators[" + i + "] must not be null"));
-    }
-    return list;
+    return requireAllNonNull(Arrays.asList(validators));
   }
 
   private static List<ValidationProcessor> requireAllNonNull(List<ValidationProcessor> validators) {
