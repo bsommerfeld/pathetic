@@ -30,6 +30,21 @@ public final class RegionKey {
 
   private RegionKey() {}
 
+  /**
+   * Checks whether the given coordinates fit into the packed layout, i.e. whether {@link
+   * #pack(int, int, int)} would accept them. Callers iterating positions that may leave the
+   * supported range (e.g. neighbor expansion near the boundary) should use this to skip such
+   * positions instead of letting {@code pack} throw.
+   */
+  public static boolean isInRange(int x, int y, int z) {
+    return x >= MIN_XZ && x <= MAX_XZ && z >= MIN_XZ && z <= MAX_XZ && y >= MIN_Y && y <= MAX_Y;
+  }
+
+  /** Checks whether the floored coordinates of the given position fit into the packed layout. */
+  public static boolean isInRange(PathPosition pos) {
+    return isInRange(pos.getFlooredX(), pos.getFlooredY(), pos.getFlooredZ());
+  }
+
   /** Packs a PathPosition into a primitive long key. */
   public static long pack(PathPosition pos) {
     return pack(pos.getFlooredX(), pos.getFlooredY(), pos.getFlooredZ());

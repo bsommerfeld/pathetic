@@ -1,8 +1,10 @@
 package de.bsommerfeld.pathetic.engine.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -29,6 +31,22 @@ class RegionKeyTest {
     assertThrows(IllegalArgumentException.class, () -> RegionKey.pack(0, 0, MAX_XZ + 1));
     assertThrows(IllegalArgumentException.class, () -> RegionKey.pack(0, MAX_Y + 1, 0));
     assertThrows(IllegalArgumentException.class, () -> RegionKey.pack(0, MIN_Y - 1, 0));
+  }
+
+  @Test
+  void isInRangeMatchesPackAcceptance() {
+    /* isInRange must accept exactly what pack accepts: the boundary values pass... */
+    assertTrue(RegionKey.isInRange(MIN_XZ, MIN_Y, MIN_XZ));
+    assertTrue(RegionKey.isInRange(MAX_XZ, MAX_Y, MAX_XZ));
+    assertTrue(RegionKey.isInRange(0, 0, 0));
+
+    /* ...and one past each boundary is rejected, mirroring outOfRangeCoordinatesThrow. */
+    assertFalse(RegionKey.isInRange(MAX_XZ + 1, 0, 0));
+    assertFalse(RegionKey.isInRange(MIN_XZ - 1, 0, 0));
+    assertFalse(RegionKey.isInRange(0, 0, MAX_XZ + 1));
+    assertFalse(RegionKey.isInRange(0, 0, MIN_XZ - 1));
+    assertFalse(RegionKey.isInRange(0, MAX_Y + 1, 0));
+    assertFalse(RegionKey.isInRange(0, MIN_Y - 1, 0));
   }
 
   @Test

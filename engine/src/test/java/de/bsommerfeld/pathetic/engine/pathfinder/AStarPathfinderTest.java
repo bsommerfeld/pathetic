@@ -2,6 +2,7 @@ package de.bsommerfeld.pathetic.engine.pathfinder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -1022,6 +1023,44 @@ class AStarPathfinderTest {
     assertTrue(
         buffer.toString(StandardCharsets.UTF_8).contains("boom-validator"),
         "stderr should contain the original exception message");
+  }
+
+  // --- COORDINATE-RANGE TESTS ---
+
+  @Test
+  void testOutOfRangeStartAndTargetThrowAtApiBoundary() {
+    when(mockProvider.getNavigationPoint(any(PathPosition.class), any()))
+        .thenReturn(traversablePoint);
+
+    PathPosition outOfRangeXZ = new PathPosition(40_000_000, 0, 0);
+    PathPosition outOfRangeY = new PathPosition(0, 5000, 0);
+    PathPosition inRange = new PathPosition(0, 0, 0);
+
+    assertThrows(
+        IllegalArgumentException.class, () -> pathfinder.findPath(outOfRangeXZ, inRange));
+    assertThrows(
+        IllegalArgumentException.class, () -> pathfinder.findPath(inRange, outOfRangeXZ));
+    assertThrows(IllegalArgumentException.class, () -> pathfinder.findPath(outOfRangeY, inRange));
+    assertThrows(IllegalArgumentException.class, () -> pathfinder.findPath(inRange, outOfRangeY));
+  }
+
+  /*
+   * Neighbors beyond the packable coordinate range are skipped, so a search hugging the
+   * boundary still succeeds instead of aborting when an offset leaves the range.
+   */
+  @Test
+  void testSearchAtCoordinateBoundarySucceeds() {
+    when(mockProvider.getNavigationPoint(any(PathPosition.class), any()))
+        .thenReturn(traversablePoint);
+
+    int maxXZ = 33_554_431;
+    PathPosition boundaryStart = new PathPosition(maxXZ - 2, 0, 0);
+    PathPosition boundaryTarget = new PathPosition(maxXZ, 0, 0);
+
+    PathfinderResult result = pathfinder.findPath(boundaryStart, boundaryTarget).resultBlocking();
+
+    assertNotNull(result);
+    assertEquals(PathState.FOUND, result.getPathState());
   }
 
   @Test

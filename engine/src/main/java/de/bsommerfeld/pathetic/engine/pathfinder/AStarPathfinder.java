@@ -86,6 +86,14 @@ public final class AStarPathfinder extends AbstractPathfinder {
 
     for (PathVector offset : offsets) {
       PathPosition neighborPos = currentNode.getPosition().add(offset);
+
+      /*
+       * Positions outside the packable coordinate range are simply not navigable. Skipping them
+       * here lets searches near the boundary degrade gracefully instead of aborting the whole
+       * search when pack() rejects the coordinates.
+       */
+      if (!RegionKey.isInRange(neighborPos)) continue;
+
       long packedPos = RegionKey.pack(neighborPos);
 
       // Check if neighbor is in the open set
