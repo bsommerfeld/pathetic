@@ -114,7 +114,7 @@ Other libraries are like a \$20 bet in a casino, winning you \$10. We guarantee 
 </div>
 <br>
 
-**Now Doom isn't the only thing that runs everywhere.**
+**Doom isn't the only thing that runs everywhere.**
 
 We didn’t build this library to just "run." We trained Pathetic to subjugate your hardware, make your RAM cry, and then politely ask: *"Another round?"*
 
@@ -139,6 +139,8 @@ Strip the world away and you see what Pathetic truly is:
 
 Read that again. The pathfinding itself is basically free — most of those milliseconds are us waiting for Minecraft to hand over block data. The trashbins don’t have that excuse. They’re slow before the world is even involved.
 
+---
+
 ### We could’ve called it HyperQuantumPathUltra Enterprise God Mode Edition™
 
 We called it Pathetic instead. <br>
@@ -146,8 +148,6 @@ Because that’s what every other library became the moment we released this.
 
 Some say "this README reads like they belong in a hospital." <br>
 **And you're goddamn right.** <br>
-
----
 
 ### Hang out with us
 
