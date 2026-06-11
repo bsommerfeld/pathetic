@@ -16,12 +16,12 @@
 **It exists for one simple reason:** The rest of the Java pathfinding world collectively shits itself above a few hundred concurrent requests.
 
 | Scenario                 | Pathetic                | The "competition"            | Your tears                    |
-| ------------------------ | ----------------------- | ---------------------------- | ----------------------------- |
+| ------------------------ |-------------------------| ---------------------------- | ----------------------------- |
 | 10k concurrent paths     | ~7 ms                   | ~300 ms +                    | Priceless                     |
-| One 20k distance path    | ~60 ms                  | Minutes, timeout, or suicide | We measured twice             |
+| One 20k distance path    | ~43 ms                  | Minutes, timeout, or suicide | We measured twice             |
+| One 40k distance path    | ~62 ms                  | Heat death of the universe   | Linear scaling, btw           |
 | CPU when the world burns | <2% on 16 cores         | 20–100% or instant OOM       | Eco-mode                      |
 | Memory                   | Spark shows a flat line | Hundreds of MB of GC tears   | Spark thinks nothing happened |
-
 
 <div align="left">
     <img src="https://github.com/user-attachments/assets/74a14831-4ca5-4090-a569-b24aa6be06b6" width="800" alt="Showcase">
@@ -32,7 +32,7 @@ All demos from a real Paper server. <br>
 Minecraft is a pathfinding hell — Pathetic just walked in, pissed on Hades' leg, and asked for a lighter.
 
 > Most libraries need minutes or give up entirely on paths longer than 1000 positions.  
-> Pathetic does 20 000 in the time you need to blink twice.  
+> Pathetic does 20 000 before you finish a single blink.  
 > You're welcome.
 
 ---
@@ -44,13 +44,13 @@ Minecraft is a pathfinding hell — Pathetic just walked in, pissed on Hades' le
     <dependency>
         <groupId>de.bsommerfeld.pathetic</groupId>
         <artifactId>engine</artifactId>
-        <version>5.5.0</version>
+        <version>5.5.1</version>
     </dependency>
 </dependencies>
 ```
 
 ```kotlin
-implementation("de.bsommerfeld.pathetic:engine:5.5.0")
+implementation("de.bsommerfeld.pathetic:engine:5.5.1")
 ```
 
 ```java
@@ -58,7 +58,7 @@ Pathfinder pf = factory.createPathfinder(config);
 
 pf.findPath(start, goal, context)
 .ifPresent(result -> {
-    moveThatEntity(result.path())
+    moveThatEntity(result.getPath());
 }).orElse(result -> System.out.println("No path found!"));
 ```
 
@@ -99,7 +99,7 @@ Today it’s a quaternary min-heap on dense node ids: one hash lookup at the fro
 | Decrease-key           | Amortized excuses        | Hash-map update per sift level    | **One array write**
 | The numbers            | Baseline                 | ~3–4.5× faster than Fibonacci     | **2.5–3× faster than *that*** — end-to-end, measured, same worlds, same seeds
 
-Result: 10 000 concurrent pathfinds finish before you can **start to** blink.
+Result: 10 000 concurrent pathfinds finish before you even **start to** blink.
 
 The FibonacciHeap lives in a branch called `archaeology`. The binary heap is still in the codebase — as the participation trophy. We keep our mistakes where we can see them; that’s the difference between a library that grew and a library that rots.
 
@@ -109,6 +109,7 @@ Other libraries are like a \$20 bet in a casino, winning you \$10. We guarantee 
 
 ### Your hardware is just a sub 🥀
 
+<!-- TODO: re-screenshot the heap benchmark — this one still highlights PrimitiveMinHeap as the hero -->
 <div align="left">
     <img src="https://github.com/user-attachments/assets/5f49f4bf-6683-44e4-9851-d09557d443ea" width="800" alt="Benchmark Showcase">
 </div>
@@ -118,13 +119,26 @@ Other libraries are like a \$20 bet in a casino, winning you \$10. We guarantee 
 
 We didn’t build this library to just "run." We trained Pathetic to subjugate your hardware, make your RAM cry, and then politely ask: *"Another round?"*
 
-While other pathfinding libraries beg for more heap, more cores, and more mercy, while being sorry for being a *bad* pathfinder, Pathetic puts a belt around your scheduler and whispers: "You’re going to sit still and swallow 20,000 nodes in ~60ms — and you’re going to thank me for it."
+While other pathfinding libraries beg for more heap, more cores, and more mercy, while being sorry for being a *bad* pathfinder, Pathetic puts a belt around your scheduler and whispers: "You’re going to sit still and swallow 20,000 nodes in ~43ms — and you’re going to thank me for it."
 
-Pathetic doesn’t ask your hardware for permission. Your hardware needs permission from Pathetic to send a heartbeat. Welcome to the food chain.
-
-Fire 10,000 requests at once and the slowest part of the whole operation is your own for-loop submitting them. The paths are done before you finish asking.
+Beg for 10,000 paths in a single breath and the slowest thing in the room is your own for-loop. They all finish before you do — but you’re used to that, aren’t you?
 
 **Safe-word?** `OutOfMemoryError` — but you’ll never reach it.
+
+### Now remove Minecraft 🥀
+
+Everything above ran inside a real Paper server. Chunk access, block states, world checks — that’s Minecraft, and Minecraft is the bottleneck. The numbers were already ones no trashbin ("competition") out there can replicate, and we were *handicapped* the whole time.
+
+Strip the world away and you see what Pathetic truly is:
+
+| Workload                 | Real Paper server  | Pathetic raw (no world attached)
+| ------------------------ |--------------------| --------------------------------
+| One 20k distance path    | ~43 ms             | **~8 ms**
+| One 40k distance path    | ~62 ms             | **~16 ms**
+| 10k concurrent paths     | sustained, all day | **~6 ms wall — 0.6 µs per path**
+| Starting a search        | already included   | **0.11 µs**
+
+Read that again. The pathfinding itself is basically free — most of those milliseconds are us waiting for Minecraft to hand over block data. The trashbins don’t have that excuse. They’re slow before the world is even involved.
 
 ### We could’ve called it HyperQuantumPathUltra Enterprise God Mode Edition™
 
