@@ -2,6 +2,8 @@
 
 ### Added
 
+- Package-level JavaDoc for every `api` and `engine` package
+
 ### Changed
 
 - Searches complete 2.5-3x faster end-to-end than 5.5.0 and short searches start about 7x faster (measured with the bundled benchmarks)

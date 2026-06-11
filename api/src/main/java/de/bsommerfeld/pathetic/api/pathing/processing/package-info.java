@@ -1,33 +1,19 @@
 /**
- * Provides interfaces and classes for extending the core pathfinding logic of "pathetic" through a
- * customizable processor pipeline.
+ * The processor pipeline that extends per-neighbor evaluation.
  *
- * <p>The processor system allows users to inject custom logic for:
+ * <p>{@link de.bsommerfeld.pathetic.api.pathing.processing.ValidationProcessor} accepts or rejects
+ * a neighbor; {@link de.bsommerfeld.pathetic.api.pathing.processing.CostProcessor} contributes an
+ * additional {@link de.bsommerfeld.pathetic.api.pathing.processing.Cost} to its G-cost. Both
+ * extend {@link de.bsommerfeld.pathetic.api.pathing.processing.Processor}, whose {@code
+ * initializeSearch}/{@code finalizeSearch} lifecycle runs once per search. {@link
+ * de.bsommerfeld.pathetic.api.pathing.processing.Validators} provides boolean composites (allOf,
+ * anyOf, noneOf, not) that propagate the lifecycle to their children.
  *
- * <ul>
- *   <li><b>Node Validation ({@link
- *       de.bsommerfeld.pathetic.api.pathing.processing.ValidationProcessor}):</b> Determining
- *       whether a {@link de.bsommerfeld.pathetic.api.wrapper.PathPosition} is traversable or meets
- *       specific criteria. Users are responsible for implementing validators for fundamental checks
- *       like basic traversability (e.g., using a {@link
- *       de.bsommerfeld.pathetic.api.provider.NavigationPointProvider}) and world boundaries, as the
- *       core engine is designed to be highly generic.
- *   <li><b>Cost Calculation ({@link
- *       de.bsommerfeld.pathetic.api.pathing.processing.CostProcessor}):</b> Modifying the cost of
- *       traversing to a node, allowing for terrain-specific penalties, incentives, or other dynamic
- *       cost adjustments.
- * </ul>
- *
- * Processors operate within a defined lifecycle (see {@link
- * de.bsommerfeld.pathetic.api.pathing.processing.Processor}) and are provided with contextual
- * information for the current search ({@link
- * de.bsommerfeld.pathetic.api.pathing.processing.context.SearchContext}) and the specific node
- * being evaluated ({@link
- * de.bsommerfeld.pathetic.api.pathing.processing.context.EvaluationContext}).
- *
- * <p>Users can configure a list of validators and cost calculators via the {@link
- * de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration}. The engine will
- * execute these processors in the provided order.
+ * <p>Processors are configured as ordered lists on the {@link
+ * de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration} and run inside the
+ * search's hot loop, once per surviving neighbor; allocations and blocking calls in
+ * implementations directly affect search throughput. Exceptions thrown by a processor end the
+ * search with a failed result.
  *
  * @since 5.0.0
  */
