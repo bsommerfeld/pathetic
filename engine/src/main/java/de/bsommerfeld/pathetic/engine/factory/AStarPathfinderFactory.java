@@ -23,7 +23,15 @@ public class AStarPathfinderFactory implements PathfinderFactory {
     @Deprecated
     @Override
     public Pathfinder createPathfinder() {
-        return new AStarPathfinder(PathfinderConfiguration.builder().build()); // build with all defaults
+        /*
+         * Preserves this deprecated overload's documented behavior: an always-traversable
+         * provider, which routes through anything. Regular configurations must set a provider
+         * explicitly; build() rejects its absence.
+         */
+        return new AStarPathfinder(
+            PathfinderConfiguration.builder()
+                .provider((position, environmentContext) -> () -> true)
+                .build());
     }
 
     /**

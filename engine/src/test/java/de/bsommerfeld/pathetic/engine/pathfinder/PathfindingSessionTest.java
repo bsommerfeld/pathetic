@@ -21,7 +21,9 @@ class PathfindingSessionTest {
    */
   private static PathfindingSession sessionAt(double x, double y, double z) {
     return new PathfindingSession(
-        PathfinderConfiguration.builder().build(), new PathPosition(x, y, z), 16);
+        PathfinderConfiguration.builder().provider((position, context) -> () -> true).build(),
+        new PathPosition(x, y, z),
+        16);
   }
 
   /*
@@ -112,7 +114,10 @@ class PathfindingSessionTest {
   void closedGCostsDefaultToNaNAndAreRecordedPerId() {
     PathfindingSession session =
         new PathfindingSession(
-            PathfinderConfiguration.builder().reopenClosedNodes(true).build(),
+            PathfinderConfiguration.builder()
+                .provider((position, context) -> () -> true)
+                .reopenClosedNodes(true)
+                .build(),
             new PathPosition(0, 0, 0),
             16);
 

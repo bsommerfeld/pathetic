@@ -411,7 +411,12 @@ public class PathfinderConfiguration {
     private int maxLength;
     private boolean async;
     private boolean fallback = true;
-    private NavigationPointProvider provider = (position, environmentContext) -> () -> true;
+    /*
+     * Deliberately no default: a provider that cannot see the world reports everything as
+     * traversable and silently routes paths through anything. build() rejects the absence
+     * loudly instead.
+     */
+    private NavigationPointProvider provider;
     private HeuristicWeights heuristicWeights = HeuristicWeights.DEFAULT_WEIGHTS;
     private List<ValidationProcessor> validationProcessors = Collections.emptyList();
     private List<CostProcessor> costProcessors = Collections.emptyList();
@@ -584,6 +589,11 @@ public class PathfinderConfiguration {
     }
 
     public PathfinderConfiguration build() {
+      if (this.provider == null) {
+        throw new IllegalStateException(
+            "A NavigationPointProvider must be set via provider(...) before build()");
+      }
+
       ExecutorService resolvedExecutor = this.executorService;
       if (resolvedExecutor == null && this.async) {
         // Lazy-resolve the shared default only when actually needed (async dispatch).

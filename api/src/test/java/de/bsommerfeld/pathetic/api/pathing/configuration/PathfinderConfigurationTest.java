@@ -5,9 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import de.bsommerfeld.pathetic.api.pathing.hook.PathfinderHook;
+import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
 import de.bsommerfeld.pathetic.api.pathing.processing.Cost;
 import de.bsommerfeld.pathetic.api.pathing.processing.CostProcessor;
 import de.bsommerfeld.pathetic.api.pathing.processing.ValidationProcessor;
@@ -21,12 +23,27 @@ import org.junit.jupiter.api.Test;
 class PathfinderConfigurationTest {
 
   /*
+   * build() requires a provider; the tests here exercise unrelated configuration mechanics, so
+   * they share one trivial provider.
+   */
+  private static final NavigationPointProvider DUMMY_PROVIDER = (position, context) -> () -> true;
+
+  /*
+   * A provider that cannot see the world would silently route paths through anything, so its
+   * absence must fail at build time instead of producing a misconfigured pathfinder.
+   */
+  @Test
+  void buildWithoutProviderThrows() {
+    assertThrows(IllegalStateException.class, () -> PathfinderConfiguration.builder().build());
+  }
+
+  /*
    * The engine iterates these lists without null guards, so a default-built configuration must
    * expose empty (never null) processor and hook collections.
    */
   @Test
   void processorListsAreNeverNull() {
-    PathfinderConfiguration config = PathfinderConfiguration.builder().build();
+    PathfinderConfiguration config = PathfinderConfiguration.builder().provider(DUMMY_PROVIDER).build();
 
     assertNotNull(config.getNodeValidationProcessors());
     assertNotNull(config.getNodeCostProcessors());
@@ -47,7 +64,7 @@ class PathfinderConfigurationTest {
     List<ValidationProcessor> mutableSource = new ArrayList<>(Arrays.asList(v1));
 
     PathfinderConfiguration original =
-        PathfinderConfiguration.builder().validationProcessors(mutableSource).build();
+        PathfinderConfiguration.builder().provider(DUMMY_PROVIDER).validationProcessors(mutableSource).build();
     PathfinderConfiguration copy = PathfinderConfiguration.deepCopy(original);
 
     // Sanity: copy starts with the same elements
@@ -70,7 +87,7 @@ class PathfinderConfigurationTest {
     List<CostProcessor> mutableSource = new ArrayList<>(Arrays.asList(c1));
 
     PathfinderConfiguration original =
-        PathfinderConfiguration.builder().costProcessor(mutableSource).build();
+        PathfinderConfiguration.builder().provider(DUMMY_PROVIDER).costProcessor(mutableSource).build();
     PathfinderConfiguration copy = PathfinderConfiguration.deepCopy(original);
 
     mutableSource.add(c2);
@@ -86,7 +103,7 @@ class PathfinderConfigurationTest {
     List<PathfinderHook> mutableSource = new ArrayList<>(Arrays.asList(h1));
 
     PathfinderConfiguration original =
-        PathfinderConfiguration.builder().pathfindingHooks(mutableSource).build();
+        PathfinderConfiguration.builder().provider(DUMMY_PROVIDER).pathfindingHooks(mutableSource).build();
     PathfinderConfiguration copy = PathfinderConfiguration.deepCopy(original);
 
     mutableSource.add(h2);
@@ -98,7 +115,7 @@ class PathfinderConfigurationTest {
   @Test
   void deepCopyUsesFreshListContainers() {
     PathfinderConfiguration original =
-        PathfinderConfiguration.builder()
+        PathfinderConfiguration.builder().provider(DUMMY_PROVIDER)
             .validationProcessors(new ArrayList<>(Arrays.asList((ValidationProcessor) ctx -> true)))
             .build();
     PathfinderConfiguration copy = PathfinderConfiguration.deepCopy(original);
@@ -117,7 +134,7 @@ class PathfinderConfigurationTest {
      * interface implementations / external services. They have no clone contract and are
      * intentionally shared by reference.
      */
-    PathfinderConfiguration original = PathfinderConfiguration.builder().async(true).build();
+    PathfinderConfiguration original = PathfinderConfiguration.builder().provider(DUMMY_PROVIDER).async(true).build();
     PathfinderConfiguration copy = PathfinderConfiguration.deepCopy(original);
 
     assertSame(original.getProvider(), copy.getProvider());
@@ -133,21 +150,21 @@ class PathfinderConfigurationTest {
    */
   @Test
   void syncConfigurationHasNullExecutorByDefault() {
-    PathfinderConfiguration cfg = PathfinderConfiguration.builder().async(false).build();
+    PathfinderConfiguration cfg = PathfinderConfiguration.builder().provider(DUMMY_PROVIDER).async(false).build();
     assertNull(cfg.executorService(), "sync configs must leave executor null when none was supplied");
   }
 
   @Test
   void asyncConfigurationResolvesSharedExecutorLazily() {
-    PathfinderConfiguration cfg = PathfinderConfiguration.builder().async(true).build();
+    PathfinderConfiguration cfg = PathfinderConfiguration.builder().provider(DUMMY_PROVIDER).async(true).build();
     assertNotNull(
         cfg.executorService(), "async configs must resolve to the shared executor when none was supplied");
   }
 
   @Test
   void asyncConfigurationsShareTheSameDefaultExecutor() {
-    PathfinderConfiguration first = PathfinderConfiguration.builder().async(true).build();
-    PathfinderConfiguration second = PathfinderConfiguration.builder().async(true).build();
+    PathfinderConfiguration first = PathfinderConfiguration.builder().provider(DUMMY_PROVIDER).async(true).build();
+    PathfinderConfiguration second = PathfinderConfiguration.builder().provider(DUMMY_PROVIDER).async(true).build();
     assertSame(
         first.executorService(),
         second.executorService(),
@@ -159,9 +176,9 @@ class PathfinderConfigurationTest {
     ExecutorService custom = Executors.newSingleThreadExecutor();
     try {
       PathfinderConfiguration syncCfg =
-          PathfinderConfiguration.builder().async(false).executorService(custom).build();
+          PathfinderConfiguration.builder().provider(DUMMY_PROVIDER).async(false).executorService(custom).build();
       PathfinderConfiguration asyncCfg =
-          PathfinderConfiguration.builder().async(true).executorService(custom).build();
+          PathfinderConfiguration.builder().provider(DUMMY_PROVIDER).async(true).executorService(custom).build();
       assertSame(custom, syncCfg.executorService());
       assertSame(custom, asyncCfg.executorService());
     } finally {
@@ -171,7 +188,7 @@ class PathfinderConfigurationTest {
 
   @Test
   void deepCopyOfSyncConfigKeepsNullExecutor() {
-    PathfinderConfiguration original = PathfinderConfiguration.builder().async(false).build();
+    PathfinderConfiguration original = PathfinderConfiguration.builder().provider(DUMMY_PROVIDER).async(false).build();
     PathfinderConfiguration copy = PathfinderConfiguration.deepCopy(original);
     assertNull(copy.executorService());
   }
@@ -179,7 +196,7 @@ class PathfinderConfigurationTest {
   @Test
   void deepCopyPreservesPrimitiveFields() {
     PathfinderConfiguration original =
-        PathfinderConfiguration.builder()
+        PathfinderConfiguration.builder().provider(DUMMY_PROVIDER)
             .maxIterations(2500)
             .maxLength(17)
             .async(true)
