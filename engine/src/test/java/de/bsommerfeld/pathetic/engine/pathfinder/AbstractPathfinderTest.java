@@ -346,7 +346,7 @@ class AbstractPathfinderTest {
     }
 
     @Override
-    protected void initializeSearch() {
+    protected void initializeSearch(PathPosition start) {
       expandedNodes.clear();
       testNodeMap.clear();
     }
@@ -355,9 +355,18 @@ class AbstractPathfinderTest {
 
     @Override
     protected void insertStartNode(Node node, double fCost, MinHeap openSet) {
-      long packedPos = RegionKey.pack(node.getPosition());
+      long packedPos = packFloored(node.getPosition());
       openSet.insertOrUpdate(packedPos, fCost);
       testNodeMap.put(packedPos, node);
+    }
+
+    /*
+     * Test stand-in for the session-relative keying the real pathfinder uses; the test
+     * coordinates are small, so packing the absolute floored position is sufficient here.
+     */
+    private static long packFloored(PathPosition position) {
+      return RegionKey.pack(
+          position.getFlooredX(), position.getFlooredY(), position.getFlooredZ());
     }
 
     @Override
@@ -407,7 +416,7 @@ class AbstractPathfinderTest {
                 1);
         targetNode.setParent(currentNode);
 
-        long packedTarget = RegionKey.pack(targetNode.getPosition());
+        long packedTarget = packFloored(targetNode.getPosition());
         openSet.insertOrUpdate(packedTarget, targetNode.getFCost());
         testNodeMap.put(packedTarget, targetNode);
       }

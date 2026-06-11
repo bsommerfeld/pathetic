@@ -12,10 +12,10 @@ import org.junit.jupiter.api.Test;
 
 class RegionKeyTest {
 
-  private static final int MIN_XZ = -33554432;
-  private static final int MAX_XZ = 33554431;
-  private static final int MIN_Y = -2048;
-  private static final int MAX_Y = 2047;
+  private static final int MIN_XZ = -2097152;
+  private static final int MAX_XZ = 2097151;
+  private static final int MIN_Y = -524288;
+  private static final int MAX_Y = 524287;
 
   @Test
   void boundaryValuesAreAccepted() {

@@ -4,7 +4,6 @@ import com.google.common.hash.BloomFilter;
 import com.google.common.hash.Funnel;
 import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
-import de.bsommerfeld.pathetic.engine.util.RegionKey;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 
@@ -59,21 +58,29 @@ public class SpatialData {
    * Registers a given path position by adding it to the Bloom filter and marking it as examined
    * within the regional positions set.
    *
+   * <p>The packed key is supplied by the caller (it already computes it for the open and closed
+   * sets) so this class stays agnostic of the key space - keys are search-relative and only the
+   * owning session can derive them. Position and key must refer to the same location.
+   *
    * @param pathPosition The position in the path to be registered. It represents a specific
    *     location within the grid region.
+   * @param packedKey The position's packed key in the owning session's key space.
    */
-  public void register(PathPosition pathPosition) {
+  public void register(PathPosition pathPosition, long packedKey) {
     bloomFilter.put(pathPosition);
-    regionalExaminedPositions.add(RegionKey.pack(pathPosition));
+    regionalExaminedPositions.add(packedKey);
   }
 
   /**
    * First Line of Defence. This method first checks the bloom filter if it might contain the
-   * provided {@param pathPosition}. If true, it performs an expensive containment check on the
-   * examined positions.
+   * provided position. If true, it performs an expensive containment check on the examined
+   * positions.
+   *
+   * @param pathPosition The position to check.
+   * @param packedKey The position's packed key in the owning session's key space.
    */
-  public boolean flod(PathPosition pathPosition) {
+  public boolean flod(PathPosition pathPosition, long packedKey) {
     return bloomFilter.mightContain(pathPosition)
-        && regionalExaminedPositions.contains(RegionKey.pack(pathPosition));
+        && regionalExaminedPositions.contains(packedKey);
   }
 }

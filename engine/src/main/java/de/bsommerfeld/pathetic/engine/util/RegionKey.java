@@ -1,60 +1,58 @@
 package de.bsommerfeld.pathetic.engine.util;
 
-import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
-
 /**
- * Utility class to pack 3D grid coordinates (Region Indices or Block Positions) into a single
- * primitive long.
+ * Utility class to pack 3D grid coordinates into a single primitive long.
  *
- * <p>Layout: [X: 26 bit] [Z: 26 bit] [Y: 12 bit] <br>
- * Range X/Z: [-33,554,432, 33,554,431] (signed 26-bit) <br>
- * Range Y: [-2048, 2047] (signed 12-bit)
+ * <p>Layout: [X: 22 bit] [Z: 22 bit] [Y: 20 bit] <br>
+ * Range X/Z: [-2,097,152, 2,097,151] (signed 22-bit) <br>
+ * Range Y: [-524,288, 524,287] (signed 20-bit)
+ *
+ * <p><strong>Keys are search-relative, not absolute.</strong> The engine packs coordinates as
+ * offsets from the search origin (the floored start position, see {@code PathfindingSession}), so
+ * the ranges above bound the <em>exploration radius of a single search</em>, not world
+ * coordinates. Absolute positions may use the full {@code int} range. A search cannot expand
+ * positions farther from its start than the per-axis range; the pathfinder treats such positions
+ * as non-navigable. The radius is far beyond what a search can reach in practice: spanning it
+ * requires at least 2 million expansions in a straight line with unit offsets (bounded by {@code
+ * maxIterations} and, before that, by session memory), or a custom {@code INeighborStrategy} with
+ * very large offset vectors.
  *
  * <p>Each field is two's-complement and only injective within its range. Coordinates outside the
  * supported range are rejected with {@link IllegalArgumentException} rather than silently aliasing
  * through the bit mask (which would map distinct positions onto the same key and corrupt the closed
- * set and heap lookups).
+ * set and heap lookups). Callers iterating positions that may leave the range must check {@link
+ * #isInRange(int, int, int)} first.
  */
 public final class RegionKey {
 
-  private static final long MASK_Y = 0xFFFL; // 12 Bit
-  private static final long MASK_XZ = 0x3FFFFFFL; // 26 Bit
+  private static final long MASK_Y = 0xFFFFFL; // 20 Bit
+  private static final long MASK_XZ = 0x3FFFFFL; // 22 Bit
 
-  private static final int SHIFT_Z = 12;
-  private static final int SHIFT_X = 38; // 12 + 26
+  private static final int SHIFT_Z = 20;
+  private static final int SHIFT_X = 42; // 20 + 22
 
-  private static final int MIN_XZ = -(1 << 25); // -33,554,432
-  private static final int MAX_XZ = (1 << 25) - 1; //  33,554,431
-  private static final int MIN_Y = -(1 << 11); // -2,048
-  private static final int MAX_Y = (1 << 11) - 1; //   2,047
+  private static final int MIN_XZ = -(1 << 21); // -2,097,152
+  private static final int MAX_XZ = (1 << 21) - 1; //  2,097,151
+  private static final int MIN_Y = -(1 << 19); // -524,288
+  private static final int MAX_Y = (1 << 19) - 1; //  524,287
 
   private RegionKey() {}
 
   /**
-   * Checks whether the given coordinates fit into the packed layout, i.e. whether {@link
-   * #pack(int, int, int)} would accept them. Callers iterating positions that may leave the
-   * supported range (e.g. neighbor expansion near the boundary) should use this to skip such
-   * positions instead of letting {@code pack} throw.
+   * Checks whether the given (search-relative) coordinates fit into the packed layout, i.e.
+   * whether {@link #pack(int, int, int)} would accept them. Callers iterating positions that may
+   * leave the supported range (e.g. neighbor expansion at the edge of the exploration radius)
+   * should use this to skip such positions instead of letting {@code pack} throw.
    */
   public static boolean isInRange(int x, int y, int z) {
     return x >= MIN_XZ && x <= MAX_XZ && z >= MIN_XZ && z <= MAX_XZ && y >= MIN_Y && y <= MAX_Y;
-  }
-
-  /** Checks whether the floored coordinates of the given position fit into the packed layout. */
-  public static boolean isInRange(PathPosition pos) {
-    return isInRange(pos.getFlooredX(), pos.getFlooredY(), pos.getFlooredZ());
-  }
-
-  /** Packs a PathPosition into a primitive long key. */
-  public static long pack(PathPosition pos) {
-    return pack(pos.getFlooredX(), pos.getFlooredY(), pos.getFlooredZ());
   }
 
   /**
    * Packs raw integer coordinates into a primitive long key.
    *
    * @throws IllegalArgumentException if any coordinate is outside the supported range (X/Z in
-   *     [-33,554,432, 33,554,431], Y in [-2048, 2047])
+   *     [-2097152, 2097151], Y in [-524288, 524287])
    */
   public static long pack(int x, int y, int z) {
     if (x < MIN_XZ || x > MAX_XZ) throw outOfRange("x", x, MIN_XZ, MAX_XZ);

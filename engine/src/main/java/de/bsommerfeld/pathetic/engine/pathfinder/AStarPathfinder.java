@@ -29,6 +29,11 @@ import de.bsommerfeld.pathetic.engine.util.RegionKey;
  *
  * <p>Thread-safety: Each pathfinding operation gets its own {@link PathfindingSession}, ensuring
  * thread-safety for concurrent requests.
+ *
+ * <p>Exploration radius: node keys are packed relative to the search start (see {@link
+ * RegionKey}), so absolute world coordinates are unconstrained. A single search can expand
+ * positions up to roughly two million blocks (X/Z) and half a million blocks (Y) away from its
+ * start; positions beyond that radius are treated as non-navigable.
  */
 public final class AStarPathfinder extends AbstractPathfinder {
 
@@ -41,7 +46,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
   @Override
   protected void insertStartNode(Node node, double fCost, MinHeap openSet) {
     PathfindingSession session = getSessionOrThrow();
-    long packedPos = RegionKey.pack(node.getPosition());
+    long packedPos = session.pack(node.getPosition());
 
     openSet.insertOrUpdate(packedPos, fCost);
     session.openSetNodes.put(packedPos, node);
@@ -59,8 +64,8 @@ public final class AStarPathfinder extends AbstractPathfinder {
   }
 
   @Override
-  protected void initializeSearch() {
-    currentSession.set(new PathfindingSession(pathfinderConfiguration));
+  protected void initializeSearch(PathPosition start) {
+    currentSession.set(new PathfindingSession(pathfinderConfiguration, start));
   }
 
   /**
@@ -88,13 +93,13 @@ public final class AStarPathfinder extends AbstractPathfinder {
       PathPosition neighborPos = currentNode.getPosition().add(offset);
 
       /*
-       * Positions outside the packable coordinate range are simply not navigable. Skipping them
-       * here lets searches near the boundary degrade gracefully instead of aborting the whole
-       * search when pack() rejects the coordinates.
+       * Positions outside this search's exploration radius (see RegionKey) are simply not
+       * navigable. Skipping them here lets searches at the edge of the radius degrade gracefully
+       * instead of aborting the whole search when pack() rejects the relative coordinates.
        */
-      if (!RegionKey.isInRange(neighborPos)) continue;
+      if (!session.isInRange(neighborPos)) continue;
 
-      long packedPos = RegionKey.pack(neighborPos);
+      long packedPos = session.pack(neighborPos);
 
       // Check if neighbor is in the open set
       if (openSet.contains(packedPos)) {
@@ -124,7 +129,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
 
       // Check if neighbor is in the closed set
       SpatialData spatialData = session.getOrCreateSpatialData(neighborPos);
-      if (spatialData.flod(neighborPos)) {
+      if (spatialData.flod(neighborPos, packedPos)) {
 
         /*
          * This block handles the edge case where we find a path to a node,
@@ -308,14 +313,14 @@ public final class AStarPathfinder extends AbstractPathfinder {
     PathfindingSession session = getSessionOrThrow();
     PathPosition position = node.getPosition();
 
-    long packedPos = RegionKey.pack(position);
+    long packedPos = session.pack(position);
     session.openSetNodes.remove(packedPos);
 
     if (pathfinderConfiguration.shouldReopenClosedNodes())
       session.closedSetGCosts.put(packedPos, node.getGCost());
 
     SpatialData spatialData = session.getOrCreateSpatialData(position);
-    spatialData.register(position);
+    spatialData.register(position, packedPos);
   }
 
   @Override

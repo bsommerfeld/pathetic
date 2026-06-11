@@ -26,7 +26,6 @@ import de.bsommerfeld.pathetic.engine.pathfinder.processing.SearchContextImpl;
 import de.bsommerfeld.pathetic.engine.result.PathImpl;
 import de.bsommerfeld.pathetic.engine.result.PathfinderResultImpl;
 import de.bsommerfeld.pathetic.engine.util.Iterables;
-import de.bsommerfeld.pathetic.engine.util.RegionKey;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -111,26 +110,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
       PathPosition start, PathPosition target, EnvironmentContext environmentContext) {
     Objects.requireNonNull(start, "start PathPosition must not be null");
     Objects.requireNonNull(target, "target PathPosition must not be null");
-    requirePackableRange("start", start);
-    requirePackableRange("target", target);
     return initiatePathing(start, target, environmentContext);
-  }
-
-  /*
-   * Request positions are validated once at the API boundary so that an out-of-range request
-   * fails synchronously with a descriptive exception instead of surfacing later as a packing
-   * error from deep inside the search loop.
-   */
-  private static void requirePackableRange(String name, PathPosition position) {
-    PathPosition floored = position.floor();
-    if (!RegionKey.isInRange(floored)) {
-      throw new IllegalArgumentException(
-          name
-              + " position "
-              + position
-              + " is outside the supported coordinate range (X/Z in [-33554432, 33554431], Y in"
-              + " [-2048, 2047])");
-    }
   }
 
   @Override
@@ -178,7 +158,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
       PathPosition target,
       EnvironmentContext environmentContext,
       AtomicBoolean abortFlag) {
-    initializeSearch();
+    initializeSearch(start);
 
     SearchContext searchContext =
         new SearchContextImpl(
@@ -451,8 +431,11 @@ public abstract class AbstractPathfinder implements Pathfinder {
    * This method is designed to be overridden by subclasses to implement their respective
    * initialization logic, such as setting up data structures, precomputing values, or resetting
    * internal state. It is called at the beginning of a pathfinding request.
+   *
+   * @param start The effective (floored) start position of the request; implementations that key
+   *     their per-search state relative to the search origin derive that origin from it.
    */
-  protected abstract void initializeSearch();
+  protected abstract void initializeSearch(PathPosition start);
 
   /**
    * Marks the given node as expanded (i.e., added to the "closed set"). Subclasses should implement

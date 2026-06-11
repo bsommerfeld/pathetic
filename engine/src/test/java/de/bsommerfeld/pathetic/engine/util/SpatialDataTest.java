@@ -21,6 +21,15 @@ class SpatialDataTest {
   private PathPosition position2;
   private PathPosition position3;
 
+  /*
+   * In production the owning PathfindingSession derives keys relative to the search origin. For
+   * these tests an origin of (0,0,0) is assumed, so the key is simply the packed floored position.
+   */
+  private static long key(PathPosition position) {
+    return RegionKey.pack(
+        position.getFlooredX(), position.getFlooredY(), position.getFlooredZ());
+  }
+
   @BeforeEach
   void setUp() {
     spatialData = new SpatialData(1000, 0.01);
@@ -50,73 +59,73 @@ class SpatialDataTest {
 
   @Test
   void testRegisterAddsPositionToDataStructures() {
-    spatialData.register(position1);
+    spatialData.register(position1, key(position1));
 
     // After registering, flod should return true for the same position
-    assertTrue(spatialData.flod(position1));
+    assertTrue(spatialData.flod(position1, key(position1)));
   }
 
   @Test
   void testFlodReturnsFalseForUnregisteredPosition() {
     // Without registering, flod should return false
-    assertFalse(spatialData.flod(position1));
+    assertFalse(spatialData.flod(position1, key(position1)));
   }
 
   @Test
   void testFlodReturnsTrueAfterRegistration() {
-    spatialData.register(position1);
-    assertTrue(spatialData.flod(position1));
+    spatialData.register(position1, key(position1));
+    assertTrue(spatialData.flod(position1, key(position1)));
   }
 
   @Test
   void testMultipleRegistrations() {
-    spatialData.register(position1);
-    spatialData.register(position2);
-    spatialData.register(position3);
+    spatialData.register(position1, key(position1));
+    spatialData.register(position2, key(position2));
+    spatialData.register(position3, key(position3));
 
-    assertTrue(spatialData.flod(position1));
-    assertTrue(spatialData.flod(position2));
-    assertTrue(spatialData.flod(position3));
+    assertTrue(spatialData.flod(position1, key(position1)));
+    assertTrue(spatialData.flod(position2, key(position2)));
+    assertTrue(spatialData.flod(position3, key(position3)));
   }
 
   @Test
   void testFlodWithDifferentPositions() {
-    spatialData.register(position1);
+    spatialData.register(position1, key(position1));
 
-    assertTrue(spatialData.flod(position1));
-    assertFalse(spatialData.flod(position2));
-    assertFalse(spatialData.flod(position3));
+    assertTrue(spatialData.flod(position1, key(position1)));
+    assertFalse(spatialData.flod(position2, key(position2)));
+    assertFalse(spatialData.flod(position3, key(position3)));
   }
 
   @Test
   void testRegisterSamePositionMultipleTimes() {
-    spatialData.register(position1);
-    spatialData.register(position1);
-    spatialData.register(position1);
+    spatialData.register(position1, key(position1));
+    spatialData.register(position1, key(position1));
+    spatialData.register(position1, key(position1));
 
     // Should still return true even after multiple registrations
-    assertTrue(spatialData.flod(position1));
+    assertTrue(spatialData.flod(position1, key(position1)));
   }
 
   @Test
   void testFlodWithNegativeCoordinates() {
-    spatialData.register(position3);
-    assertTrue(spatialData.flod(position3));
+    spatialData.register(position3, key(position3));
+    assertTrue(spatialData.flod(position3, key(position3)));
   }
 
   @Test
   void testFlodWithZeroCoordinates() {
     PathPosition zeroPosition = new PathPosition(0, 0, 0);
-    spatialData.register(zeroPosition);
-    assertTrue(spatialData.flod(zeroPosition));
+    spatialData.register(zeroPosition, key(zeroPosition));
+    assertTrue(spatialData.flod(zeroPosition, key(zeroPosition)));
   }
 
   @Test
   void testFlodWithLargeCoordinates() {
-    // Boundary of the supported RegionKey range: X/Z at the 26-bit max, Y at the 12-bit max.
-    PathPosition largePosition = new PathPosition(33554431, 2047, 33554431);
-    spatialData.register(largePosition);
-    assertTrue(spatialData.flod(largePosition));
+    // Boundary of the supported RegionKey range: X/Z at the 22-bit max, Y at the 20-bit max.
+    PathPosition largePosition = new PathPosition(2097151, 524287, 2097151);
+    spatialData.register(largePosition, key(largePosition));
+    assertTrue(spatialData.flod(largePosition, key(largePosition)));
   }
 
   @Test
@@ -124,18 +133,18 @@ class SpatialDataTest {
     // Register multiple positions
     for (int i = 0; i < 100; i++) {
       PathPosition pos = new PathPosition(i, i * 2, i * 3);
-      spatialData.register(pos);
+      spatialData.register(pos, key(pos));
     }
 
     // Verify all registered positions are found
     for (int i = 0; i < 100; i++) {
       PathPosition pos = new PathPosition(i, i * 2, i * 3);
-      assertTrue(spatialData.flod(pos));
+      assertTrue(spatialData.flod(pos, key(pos)));
     }
 
     // Verify unregistered positions are not found
     PathPosition unregistered = new PathPosition(999, 999, 999);
-    assertFalse(spatialData.flod(unregistered));
+    assertFalse(spatialData.flod(unregistered, key(unregistered)));
   }
 
   @Test
@@ -144,14 +153,14 @@ class SpatialDataTest {
     SpatialData spyData = spy(new SpatialData(1000, 0.01));
 
     // Register a position
-    spyData.register(position1);
+    spyData.register(position1, key(position1));
 
     // Call flod - should check bloom filter first, then examined positions
-    boolean result = spyData.flod(position1);
+    boolean result = spyData.flod(position1, key(position1));
     assertTrue(result);
 
     // Verify flod was called
-    verify(spyData).flod(position1);
+    verify(spyData).flod(position1, key(position1));
   }
 
   @Test
@@ -159,10 +168,10 @@ class SpatialDataTest {
     PathPosition pos1 = new PathPosition(10, 20, 30);
     PathPosition pos2 = new PathPosition(10, 20, 31); // Only z differs by 1
 
-    spatialData.register(pos1);
+    spatialData.register(pos1, key(pos1));
 
-    assertTrue(spatialData.flod(pos1));
-    assertFalse(spatialData.flod(pos2));
+    assertTrue(spatialData.flod(pos1, key(pos1)));
+    assertFalse(spatialData.flod(pos2, key(pos2)));
   }
 
   @Test
@@ -170,10 +179,10 @@ class SpatialDataTest {
     PathPosition pos1 = new PathPosition(50, 60, 70);
     PathPosition pos2 = new PathPosition(50, 60, 70); // Same coordinates, different instance
 
-    spatialData.register(pos1);
+    spatialData.register(pos1, key(pos1));
 
     // Should return true for pos2 since it has the same coordinates
-    assertTrue(spatialData.flod(pos2));
+    assertTrue(spatialData.flod(pos2, key(pos2)));
   }
 
   @Test
@@ -183,7 +192,7 @@ class SpatialDataTest {
       for (int y = 0; y < 10; y++) {
         for (int z = 0; z < 10; z++) {
           PathPosition pos = new PathPosition(x, y, z);
-          spatialData.register(pos);
+          spatialData.register(pos, key(pos));
         }
       }
     }
@@ -193,7 +202,7 @@ class SpatialDataTest {
       for (int y = 0; y < 10; y++) {
         for (int z = 0; z < 10; z++) {
           PathPosition pos = new PathPosition(x, y, z);
-          assertTrue(spatialData.flod(pos));
+          assertTrue(spatialData.flod(pos, key(pos)));
         }
       }
     }
@@ -205,14 +214,14 @@ class SpatialDataTest {
     // but the second check (examined positions) should filter them out
     SpatialData smallFilterData = new SpatialData(10, 0.5); // Small size, high FPP
 
-    smallFilterData.register(position1);
+    smallFilterData.register(position1, key(position1));
 
     // The registered position should definitely be found
-    assertTrue(smallFilterData.flod(position1));
+    assertTrue(smallFilterData.flod(position1, key(position1)));
 
     // Even with potential bloom filter false positives,
     // unregistered positions should not be found due to the second check
-    assertFalse(smallFilterData.flod(position2));
+    assertFalse(smallFilterData.flod(position2, key(position2)));
   }
 
   @Test
@@ -224,8 +233,8 @@ class SpatialDataTest {
     SpatialData data = new SpatialData(config);
 
     // Test that the data structure works correctly
-    data.register(position1);
-    assertTrue(data.flod(position1));
+    data.register(position1, key(position1));
+    assertTrue(data.flod(position1, key(position1)));
 
     verify(config).getBloomFilterSize();
     verify(config).getBloomFilterFpp();

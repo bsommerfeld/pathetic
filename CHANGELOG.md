@@ -4,7 +4,8 @@
 
 ### Changed
 
-- `findPath` now rejects start/target positions outside the packable coordinate range with `IllegalArgumentException`
+- Pack node keys relative to the search start, lifting all absolute coordinate limits (formerly X/Z in [-33554432, 33554431], Y in [-2048, 2047])
+- A single search explores at most +-2097151 blocks (X/Z) and +-524287 blocks (Y) around its start; positions beyond this radius are treated as non-navigable
 
 ### Fixed
 
@@ -12,6 +13,5 @@
 - A reopen attempt vetoed by a validator no longer lowers the recorded closed-set G-cost
 - Runtime exceptions from custom extensions during a search now produce a `FAILED` result instead of escaping through the future
 - A non-finite heuristic or cost now fails the search with a descriptive error instead of corrupting the open-set ordering
-- Neighbors outside the packable coordinate range are skipped instead of aborting the search
 
 ### Removed

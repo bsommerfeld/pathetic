@@ -2,7 +2,6 @@ package de.bsommerfeld.pathetic.engine.pathfinder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -1027,37 +1026,39 @@ class AStarPathfinderTest {
 
   // --- COORDINATE-RANGE TESTS ---
 
+  /*
+   * Node keys are packed relative to the search start, so absolute world coordinates are
+   * unconstrained. These coordinates exceed the former absolute limits (X/Z +-33.5M, Y +-2048)
+   * by orders of magnitude and must path normally.
+   */
   @Test
-  void testOutOfRangeStartAndTargetThrowAtApiBoundary() {
+  void testFarAbsoluteCoordinatesSucceed() {
     when(mockProvider.getNavigationPoint(any(PathPosition.class), any()))
         .thenReturn(traversablePoint);
 
-    PathPosition outOfRangeXZ = new PathPosition(40_000_000, 0, 0);
-    PathPosition outOfRangeY = new PathPosition(0, 5000, 0);
-    PathPosition inRange = new PathPosition(0, 0, 0);
+    PathPosition farStart = new PathPosition(1_000_000_000, 100_000, -1_000_000_000);
+    PathPosition farTarget = new PathPosition(1_000_000_002, 100_000, -1_000_000_000);
 
-    assertThrows(
-        IllegalArgumentException.class, () -> pathfinder.findPath(outOfRangeXZ, inRange));
-    assertThrows(
-        IllegalArgumentException.class, () -> pathfinder.findPath(inRange, outOfRangeXZ));
-    assertThrows(IllegalArgumentException.class, () -> pathfinder.findPath(outOfRangeY, inRange));
-    assertThrows(IllegalArgumentException.class, () -> pathfinder.findPath(inRange, outOfRangeY));
+    PathfinderResult result = pathfinder.findPath(farStart, farTarget).resultBlocking();
+
+    assertNotNull(result);
+    assertEquals(PathState.FOUND, result.getPathState());
+    assertEquals(3, result.getPath().length(), "Path should span the three positions");
   }
 
   /*
-   * Neighbors beyond the packable coordinate range are skipped, so a search hugging the
-   * boundary still succeeds instead of aborting when an offset leaves the range.
+   * Negative far coordinates exercise the origin subtraction in the other direction, including
+   * a Y far below the former absolute floor of -2048.
    */
   @Test
-  void testSearchAtCoordinateBoundarySucceeds() {
+  void testFarNegativeAbsoluteCoordinatesSucceed() {
     when(mockProvider.getNavigationPoint(any(PathPosition.class), any()))
         .thenReturn(traversablePoint);
 
-    int maxXZ = 33_554_431;
-    PathPosition boundaryStart = new PathPosition(maxXZ - 2, 0, 0);
-    PathPosition boundaryTarget = new PathPosition(maxXZ, 0, 0);
+    PathPosition farStart = new PathPosition(-2_000_000_000, -1_000_000, 2_000_000_000);
+    PathPosition farTarget = new PathPosition(-1_999_999_998, -1_000_000, 2_000_000_000);
 
-    PathfinderResult result = pathfinder.findPath(boundaryStart, boundaryTarget).resultBlocking();
+    PathfinderResult result = pathfinder.findPath(farStart, farTarget).resultBlocking();
 
     assertNotNull(result);
     assertEquals(PathState.FOUND, result.getPathState());
