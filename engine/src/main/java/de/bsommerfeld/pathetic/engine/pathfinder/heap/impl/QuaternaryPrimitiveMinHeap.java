@@ -4,6 +4,7 @@ import de.bsommerfeld.pathetic.engine.pathfinder.heap.MinHeap;
 import de.bsommerfeld.pathetic.engine.pathfinder.heap.Resizable;
 import de.bsommerfeld.pathetic.engine.pathfinder.heap.Siftable;
 import java.util.Arrays;
+import java.util.NoSuchElementException;
 
 /**
  * A quaternary (4-ary) min-heap implementation optimized for pathfinding algorithms.
@@ -23,6 +24,13 @@ import java.util.Arrays;
  * <p>This implementation uses 0-based indexing and automatically resizes when capacity is exceeded
  * (see {@link Resizable}). Implements {@link Siftable} for heap property maintenance through sift
  * operations with quaternary parent/child relationships.
+ *
+ * <p><strong>Dense-id contract:</strong> node ids index the {@code idToPos} array directly, so
+ * they must be non-negative ints, and the array grows to the largest id ever inserted. This heap
+ * is therefore only suitable for callers that assign small, densely increasing ids (0, 1, 2,
+ * ...). Sparse 64-bit keys such as packed coordinates must not be used: {@code insertOrUpdate}
+ * rejects them, since truncating them to an index would alias distinct nodes onto the same slot
+ * or allocate an array sized by the key value.
  *
  * @since 5.4.2
  * @see MinHeap
@@ -75,6 +83,7 @@ public class QuaternaryPrimitiveMinHeap implements MinHeap, Siftable, Resizable 
   @Override
   public void insertOrUpdate(long nodeId, double cost) {
     MinHeap.requireOrderableCost(nodeId, cost);
+    requireDenseId(nodeId);
 
     int nodeIdInt = (int) nodeId;
     ensureNodeIdCapacity(nodeIdInt);
@@ -94,6 +103,18 @@ public class QuaternaryPrimitiveMinHeap implements MinHeap, Siftable, Resizable 
       heap[size] = nodeId;
       idToPos[nodeIdInt] = size;
       siftUp(size++);
+    }
+  }
+
+  /*
+   * Ids outside the non-negative int range cannot index idToPos: negative values would crash and
+   * larger values would silently truncate, aliasing distinct nodes. Reject them loudly per the
+   * dense-id contract documented on the class.
+   */
+  private static void requireDenseId(long nodeId) {
+    if ((nodeId & ~0x7FFFFFFFL) != 0) {
+      throw new IllegalArgumentException(
+          "Node id must be a non-negative int (dense id), was " + nodeId);
     }
   }
 
@@ -144,15 +165,14 @@ public class QuaternaryPrimitiveMinHeap implements MinHeap, Siftable, Resizable 
 
   @Override
   public boolean contains(long nodeId) {
-    int nodeIdInt = (int) nodeId;
-    return nodeIdInt < idToPos.length && idToPos[nodeIdInt] != -1;
+    if (nodeId < 0 || nodeId >= idToPos.length) return false;
+    return idToPos[(int) nodeId] != -1;
   }
 
   @Override
   public double cost(long nodeId) {
-    int nodeIdInt = (int) nodeId;
-    if (nodeIdInt >= idToPos.length) return Double.MAX_VALUE;
-    int pos = idToPos[nodeIdInt];
+    if (nodeId < 0 || nodeId >= idToPos.length) return Double.MAX_VALUE;
+    int pos = idToPos[(int) nodeId];
     return pos == -1 ? Double.MAX_VALUE : costs[pos];
   }
 
@@ -169,6 +189,8 @@ public class QuaternaryPrimitiveMinHeap implements MinHeap, Siftable, Resizable 
 
   @Override
   public long extractMin() {
+    if (size == 0) throw new NoSuchElementException();
+
     long minId = heap[0];
     // Mark the extracted node as no longer in the heap
     idToPos[(int) minId] = -1;
