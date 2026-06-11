@@ -42,8 +42,11 @@ public class QuaternaryPrimitiveMinHeap implements MinHeap, Siftable, Resizable 
   /** Initial capacity for the heap when no capacity is specified. */
   private static final int INITIAL_CAPACITY = 1024;
 
-  /** Array storing node IDs in heap order. */
-  private long[] heap;
+  /*
+   * Node ids in heap order. Stored as int: the dense-id contract bounds ids to non-negative
+   * ints, and the narrower array halves the memory traffic of every sift swap.
+   */
+  private int[] heap;
 
   /** Array storing the cost associated with each node in the heap. */
   private double[] costs;
@@ -73,7 +76,7 @@ public class QuaternaryPrimitiveMinHeap implements MinHeap, Siftable, Resizable 
    * @since 5.4.1
    */
   public QuaternaryPrimitiveMinHeap(int initialCapacity) {
-    this.heap = new long[initialCapacity];
+    this.heap = new int[initialCapacity];
     this.costs = new double[initialCapacity];
     this.idToPos = new int[initialCapacity];
     // Initialize all positions to -1 to indicate nodes are not in the heap
@@ -100,7 +103,7 @@ public class QuaternaryPrimitiveMinHeap implements MinHeap, Siftable, Resizable 
       // Node is not in the heap, insert it at the end
       ensureHeapCapacity();
       costs[size] = cost;
-      heap[size] = nodeId;
+      heap[size] = nodeIdInt;
       idToPos[nodeIdInt] = size;
       siftUp(size++);
     }
@@ -191,15 +194,15 @@ public class QuaternaryPrimitiveMinHeap implements MinHeap, Siftable, Resizable 
   public long extractMin() {
     if (size == 0) throw new NoSuchElementException();
 
-    long minId = heap[0];
+    int minId = heap[0];
     // Mark the extracted node as no longer in the heap
-    idToPos[(int) minId] = -1;
+    idToPos[minId] = -1;
     size--;
     if (size > 0) {
       // Move the last element to the root and restore heap property
       heap[0] = heap[size];
       costs[0] = costs[size];
-      idToPos[(int) heap[0]] = 0;
+      idToPos[heap[0]] = 0;
       siftDown(0);
     }
     return minId;
@@ -219,7 +222,7 @@ public class QuaternaryPrimitiveMinHeap implements MinHeap, Siftable, Resizable 
    */
   @Override
   public void siftUp(int index) {
-    long id = heap[index];
+    int id = heap[index];
     double cost = costs[index];
     while (index > 0) {
       // Calculate parent index using unsigned right shift: (index - 1) / 4
@@ -230,13 +233,13 @@ public class QuaternaryPrimitiveMinHeap implements MinHeap, Siftable, Resizable 
       // Move parent down
       heap[index] = heap[parent];
       costs[index] = costs[parent];
-      idToPos[(int) heap[index]] = index;
+      idToPos[heap[index]] = index;
       index = parent;
     }
     // Place the node in its final position
     heap[index] = id;
     costs[index] = cost;
-    idToPos[(int) id] = index;
+    idToPos[id] = index;
   }
 
   /**
@@ -254,7 +257,7 @@ public class QuaternaryPrimitiveMinHeap implements MinHeap, Siftable, Resizable 
    */
   @Override
   public void siftDown(int index) {
-    long id = heap[index];
+    int id = heap[index];
     double cost = costs[index];
     while (true) {
       // Calculate index of first child: 4 * index + 1
@@ -281,12 +284,12 @@ public class QuaternaryPrimitiveMinHeap implements MinHeap, Siftable, Resizable 
       // Move the minimum child up
       heap[index] = heap[minChild];
       costs[index] = minCost;
-      idToPos[(int) heap[index]] = index;
+      idToPos[heap[index]] = index;
       index = minChild;
     }
     // Place the node in its final position
     heap[index] = id;
     costs[index] = cost;
-    idToPos[(int) id] = index;
+    idToPos[id] = index;
   }
 }

@@ -120,7 +120,12 @@ public final class AStarPathfinder extends AbstractPathfinder {
         }
       }
 
-      Node neighbor = createNeighborNode(neighborPos, start, target, currentNode);
+      /*
+       * Node construction (and the heuristic computation inside it) is deferred until a branch
+       * actually needs the node. Closed neighbors that are not reopened - the most common skip
+       * with reopening disabled - therefore allocate nothing.
+       */
+      Node neighbor = null;
 
       /*
        * Reused across the reopen check and the "process as new node" branch below. The reopen
@@ -159,6 +164,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
         if (pathfinderConfiguration.shouldReopenClosedNodes()) {
           double oldCost = session.closedGCost(id);
 
+          neighbor = createNeighborNode(neighborPos, start, target, currentNode);
           context =
               new EvaluationContextImpl(
                   searchContext,
@@ -182,6 +188,9 @@ public final class AStarPathfinder extends AbstractPathfinder {
       }
 
       // Process as a new node
+      if (neighbor == null) {
+        neighbor = createNeighborNode(neighborPos, start, target, currentNode);
+      }
       neighbor.setParent(currentNode);
       if (context == null) {
         context =
@@ -313,7 +322,9 @@ public final class AStarPathfinder extends AbstractPathfinder {
 
     for (CostProcessor processor : costProcessors) {
       Cost contribution = processor.calculateCostContribution(context);
-      additionalCost += (contribution != null) ? contribution.getValue() : Cost.ZERO.getValue();
+      if (contribution != null) {
+        additionalCost += contribution.value();
+      }
     }
 
     double transitionCost = baseCost + additionalCost;

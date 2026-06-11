@@ -9,6 +9,7 @@
 - Switch the engine's open set to the quaternary min-heap, keyed by dense per-search node ids
 - Open-set, closed-set, and reopen G-cost lookups are id-indexed array accesses behind a single hash map per neighbor
 - Deprecate the `gridCellSize`/`bloomFilterSize`/`bloomFilterFpp` options (marked for removal); the closed set no longer uses bloom-filtered grid regions
+- Defer neighbor node construction until after the closed-set check, skipping allocation and heuristic work for closed neighbors
 
 ### Fixed
 
