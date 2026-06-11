@@ -64,40 +64,46 @@ pf.findPath(start, goal, context)
 
 ### Features that hurt other libraries' feelings
 
-- **Hand-rolled primitive binary min-heap that makes FibonacciHeap look like a participation trophy**  
+- **Hand-rolled primitive quaternary min-heap that makes FibonacciHeap look like a participation trophy**  
   → Zero allocations, perfect cache locality, O(log n) decrease-key that’s faster in practice than every “amortized O(1)” heap in the Java ecosystem.  
-  → Two contiguous primitive arrays + fastutil Long2IntOpenHashMap. Your CPU prefetcher just sent us a thank-you note.
-- **Bloomfilter first-line-of-defense** → closed-set lookups go from "lemme check"(O(n)) to "done"(O(1))
-- **Composite Heuristics from Hell™** – Manhattan + Octile + real perpendicular deviation + height penalty, all weighted, all running in parallel. Choose linear (accurate as fuck) or squared (2–3× faster, still consistent). One heuristic? Adorable.
+  → Three contiguous primitive arrays, position tracking by plain array index — not a single hash-map call inside the heap. Your CPU prefetcher just sent us a thank-you note.
+- **Dense node ids** → exactly one hash lookup per neighbor, then *everything* — open set, closed set, G-costs, heap position — is a primitive array access. Closed-set check? `closed[id]`. Done.
+- **Composite Heuristics from Hell™** – Manhattan + Octile + real perpendicular deviation + height penalty, all weighted, all running in parallel. Choose linear (accurate as fuck) or squared (2–3× faster, greedy at range — speed has a price). One heuristic? Adorable.
 - **Perpendicular tie-breaking** → paths so straight your NPCs look like they're cheating
 - **Processor pipeline** → walking, swimming, flying, restricted areas - just drop a lambda, peasant 
 - **Pure Java 8+** → works on your grandma's server and still murders modern rigs
 - **100 % async & concurrent** → because blocking the main thread is for libraries that hate their users
-- **[X: 26 bit] [Z: 26 bit] [Y: 12 bit]** → One primitive long. No more millions of BlockPos objects crying for GC. Supports coordinates up to ±33,000,000. Zero allocations, zero tears.
-- **We use LongOpenHashSet.** That means ~6 bytes per closed node instead of 64+ bytes of boxed Java sadness. At 500k nodes, that’s 30-40 MB of saved heap that the "competition" just hands straight to the Garbage Collector.
+- **[X: 22 bit] [Z: 22 bit] [Y: 20 bit], packed relative to the search start** → One primitive long. No more millions of BlockPos objects crying for GC. Absolute coordinates? **Unlimited.** Full int range, no world border required, borderless-world-proof. A single search roams ±2,000,000 blocks around its start — try exceeding that without running out of RAM first. Zero allocations, zero tears.
+- **We don’t even box the closed set.** A dense-id boolean array instead of 64+ bytes of boxed Java sadness per node. At 500k nodes, that’s tens of MB of saved heap that the "competition" just hands straight to the Garbage Collector.
 
 ### Yeah but how is it actually this fast?
 
-We used to use FibonacciHeaps like all the other “serious” libraries.  
+We made stupid decisions. Just like every other pathfinding library out there. But we **grew** — unlike the "competition".
+
+It started with FibonacciHeaps, like all the other “serious” libraries.  
 It was fine.  
 It was fast enough.  
 It was also allocating objects like a crypto miner on Christmas.
 
-So we took it out back and replaced it with a hand-rolled, array-backed, zero-allocation primitive binary heap.
+So we replaced it with a hand-rolled primitive binary heap and felt superior — until we caught it paying a hash-map update on every single sift step.
+First Fibonacci, then Primitive... We decided to pull a hat-trick.
 
-What changed?
+Today it’s a quaternary min-heap on dense node ids: one hash lookup at the front door when a neighbor shows up — and that’s the last hash anything computes. Open set, closed set, G-costs, heap position.. all plain array accesses. The heap itself doesn’t even know what a hash map is.
 
-| Metric                     | Old FibonacciHeap       | New PrimitiveMinHeap               | Your server now
-|----------------------------|--------------------------|------------------------------------|-------------------
-| Allocations per run        | Objects everywhere       | **0** (Zero. Zilch. Nada.)         | GC went on vacation
-| Cache efficiency           | Pointer chasing hell     | Contiguous array bliss             | CPU utilization dropped 50 %
-| Benchmark (1k nodes)       | Baseline                 | **~4.5× faster** | Teleportation enabled
-| Benchmark (10k nodes)      | Baseline                 | **~3× faster** | Your players noticed
-| Large Scale (50k nodes)    | Exponential degradation  | **Linearly stable** | The dragon never stood a chance
+“Just use a HashMap” passes every job interview on the planet — and here we are, ripping them out like rotten floorboards. You must think we’re crazy. The numbers think otherwise:
 
-Result: 10 000 concurrent pathfinds now finish before you can blink.
+| Metric                 | FibonacciHeap            | PrimitiveMinHeap                  | Quaternary + dense ids (today)
+|------------------------|--------------------------|-----------------------------------|-------------------
+| Allocations per run    | Objects everywhere       | **0** (Zero. Zilch. Nada.)        | Still **0**. Tradition.
+| Cache efficiency       | Pointer chasing hell     | Contiguous array bliss            | Contiguous bliss, half the tree depth
+| Decrease-key           | Amortized excuses        | Hash-map update per sift level    | **One array write**
+| The numbers            | Baseline                 | ~3–4.5× faster than Fibonacci     | **2.5–3× faster than *that*** — end-to-end, measured, same worlds, same seeds
 
-We kept the old FibonacciHeap code in a branch called `archaeology`.
+Result: 10 000 concurrent pathfinds finish before you can **start to** blink.
+
+The FibonacciHeap lives in a branch called `archaeology`. The binary heap is still in the codebase — as the participation trophy. We keep our mistakes where we can see them; that’s the difference between a library that grew and a library that rots.
+
+Other libraries are like a \$20 bet in a casino, winning you \$10. We guarantee you the jackpot. **Every. Fucking. Time.**
 
 ---
 
@@ -115,6 +121,8 @@ We didn’t build this library to just "run." We trained Pathetic to subjugate y
 While other pathfinding libraries beg for more heap, more cores, and more mercy, while being sorry for being a *bad* pathfinder, Pathetic puts a belt around your scheduler and whispers: "You’re going to sit still and swallow 20,000 nodes in ~60ms — and you’re going to thank me for it."
 
 Pathetic doesn’t ask your hardware for permission. Your hardware needs permission from Pathetic to send a heartbeat. Welcome to the food chain.
+
+Fire 10,000 requests at once and the slowest part of the whole operation is your own for-loop submitting them. The paths are done before you finish asking.
 
 **Safe-word?** `OutOfMemoryError` — but you’ll never reach it.
 
