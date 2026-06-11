@@ -37,6 +37,9 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
  *
  * <ul>
  *   <li>{@code distance}: straight-line offset between start and target on the X and Z axes.
+ *       {@code 0} measures the fixed per-request setup cost (the search ends on the start node);
+ *       very long paths can be measured via a CLI override, e.g. {@code -p distance=20000 -p
+ *       walls=false}.
  *   <li>{@code walls}: an open field versus a deterministic wall grid with sparse gaps, which
  *       forces a wide search frontier instead of a straight diagonal walk.
  *   <li>{@code originOffset}: the same searches anchored near the world origin versus far outside
@@ -52,7 +55,7 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 @Fork(1)
 public class PathfinderEndToEndBenchmark {
 
-  @Param({"100", "400"})
+  @Param({"0", "8", "100", "400"})
   private int distance;
 
   @Param({"false", "true"})
