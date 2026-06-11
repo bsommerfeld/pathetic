@@ -4,9 +4,11 @@
 
 ### Changed
 
+- Searches complete 2.5-3x faster end-to-end than 5.5.0 and short searches start about 7x faster (measured with the bundled benchmarks)
 - Pack node keys relative to the search start, lifting all absolute coordinate limits (formerly X/Z in [-33554432, 33554431], Y in [-2048, 2047])
 - A single search explores at most +-2097151 blocks (X/Z) and +-524287 blocks (Y) around its start; positions beyond this radius are treated as non-navigable
 - Switch the engine's open set to the quaternary min-heap, keyed by dense per-search node ids
+- `AbstractPathfinder.initializeSearch` now receives the start position and expected node count; subclasses must key the open set by dense non-negative ids
 - Open-set, closed-set, and reopen G-cost lookups are id-indexed array accesses behind a single hash map per neighbor
 - Deprecate the `gridCellSize`/`bloomFilterSize`/`bloomFilterFpp` options (marked for removal); the closed set no longer uses bloom-filtered grid regions
 - Defer neighbor node construction until after the closed-set check, skipping allocation and heuristic work for closed neighbors
