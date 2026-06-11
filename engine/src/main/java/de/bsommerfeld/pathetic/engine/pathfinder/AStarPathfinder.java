@@ -214,9 +214,10 @@ public final class AStarPathfinder extends AbstractPathfinder {
        *
        * Note on numerics:
        * -----------------
-       * To handle floating-point inaccuracies or problematic values (like NaN/Infinity),
-       * we include a safety check and use Math.ulp for precise comparisons that adapt
-       * to the magnitude of the values.
+       * Comparisons use Math.ulp so the tolerance adapts to the magnitude of the values.
+       * Non-finite F-costs (a NaN/Infinity heuristic or cost) are rejected inside
+       * calculateHeapKey before they can reach the heap; the search loop reports that
+       * as a FAILED result.
        * --------------------------------------------------------------------------------
        */
       double gCost = reopening ? reopenGCost : calculateGCost(context);

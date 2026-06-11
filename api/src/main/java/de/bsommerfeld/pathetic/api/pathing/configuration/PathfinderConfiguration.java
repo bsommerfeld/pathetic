@@ -94,26 +94,29 @@ public class PathfinderConfiguration {
    */
   private final INeighborStrategy neighborStrategy;
 
+  /*
+   * The three fields below configured the bloom-filtered grid regions of earlier engines. The
+   * bundled engine's closed set is id-indexed and no longer reads them; they are retained so
+   * existing configurations keep building and copying unchanged.
+   */
+
   /**
-   * The size of grid cells used in the closed set optimization for pathfinding algorithms. This
-   * parameter affects how positions are grouped into regions for efficient lookup.
+   * The size of grid cells used by the former bloom-filtered closed-set regions.
    *
    * <p>Default: 12
    */
   private final int gridCellSize;
 
   /**
-   * The size of the Bloom filter used in the GridRegionData. A larger size will reduce the false
-   * positive probability of the Bloom filter, but will also increase the memory usage.
+   * The size of the Bloom filter used by the former bloom-filtered closed-set regions.
    *
    * <p>Default: 1000
    */
   private final int bloomFilterSize;
 
   /**
-   * The false positive probability of the Bloom filter used in the GridRegionData. A lower FPP
-   * means a smaller chance of incorrectly identifying a position as being in the region, but it
-   * also requires a larger Bloom filter.
+   * The false positive probability of the Bloom filter used by the former bloom-filtered
+   * closed-set regions.
    *
    * <p>Default: 0.01 (1%)
    */
