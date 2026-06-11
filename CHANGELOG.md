@@ -8,7 +8,7 @@
 - A single search explores at most +-2097151 blocks (X/Z) and +-524287 blocks (Y) around its start; positions beyond this radius are treated as non-navigable
 - Switch the engine's open set to the quaternary min-heap, keyed by dense per-search node ids
 - Open-set, closed-set, and reopen G-cost lookups are id-indexed array accesses behind a single hash map per neighbor
-- Deprecate `SpatialData` and the `gridCellSize`/`bloomFilterSize`/`bloomFilterFpp` options; the closed set no longer uses bloom-filtered grid regions
+- Deprecate the `gridCellSize`/`bloomFilterSize`/`bloomFilterFpp` options (marked for removal); the closed set no longer uses bloom-filtered grid regions
 
 ### Fixed
 
@@ -20,3 +20,6 @@
 - `QuaternaryPrimitiveMinHeap` rejects ids outside the non-negative int range instead of truncating and aliasing them
 
 ### Removed
+
+- Remove `SpatialData`; the engine's closed set is id-indexed and no longer bloom-filtered
+- Remove the shaded Guava dependency and the checkerframework/javax.annotation relocations from the engine artifact

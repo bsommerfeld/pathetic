@@ -278,9 +278,9 @@ public class PathfinderConfiguration {
   }
 
   /**
-   * @deprecated The bundled A* engine no longer buckets its closed set into bloom-filtered grid
-   *     regions; per-node state is id-indexed instead. The value is retained in the configuration
-   *     for compatibility but unused by the bundled engine.
+   * @deprecated Marked for removal. The bundled A* engine no longer buckets its closed set into
+   *     bloom-filtered grid regions; per-node state is id-indexed instead. The value is unused by
+   *     the bundled engine and will be removed in a future release.
    */
   @Deprecated
   public int getGridCellSize() {
@@ -288,9 +288,9 @@ public class PathfinderConfiguration {
   }
 
   /**
-   * @deprecated The bundled A* engine no longer uses bloom filters for its closed set; per-node
-   *     state is id-indexed instead. The value is retained in the configuration for compatibility
-   *     but unused by the bundled engine.
+   * @deprecated Marked for removal. The bundled A* engine no longer uses bloom filters for its
+   *     closed set; per-node state is id-indexed instead. The value is unused by the bundled
+   *     engine and will be removed in a future release.
    */
   @Deprecated
   public int getBloomFilterSize() {
@@ -298,9 +298,9 @@ public class PathfinderConfiguration {
   }
 
   /**
-   * @deprecated The bundled A* engine no longer uses bloom filters for its closed set; per-node
-   *     state is id-indexed instead. The value is retained in the configuration for compatibility
-   *     but unused by the bundled engine.
+   * @deprecated Marked for removal. The bundled A* engine no longer uses bloom filters for its
+   *     closed set; per-node state is id-indexed instead. The value is unused by the bundled
+   *     engine and will be removed in a future release.
    */
   @Deprecated
   public double getBloomFilterFpp() {
@@ -512,8 +512,9 @@ public class PathfinderConfiguration {
     }
 
     /**
-     * @deprecated The bundled A* engine no longer buckets its closed set into bloom-filtered grid
-     *     regions; the value is accepted but unused by the bundled engine.
+     * @deprecated Marked for removal. The bundled A* engine no longer buckets its closed set into
+     *     bloom-filtered grid regions; the value is accepted but unused and will be removed in a
+     *     future release.
      */
     @Deprecated
     public PathfinderConfiguration.PathfinderConfigurationBuilder gridCellSize(int gridCellSize) {
@@ -526,8 +527,8 @@ public class PathfinderConfiguration {
     }
 
     /**
-     * @deprecated The bundled A* engine no longer uses bloom filters for its closed set; the
-     *     value is accepted but unused by the bundled engine.
+     * @deprecated Marked for removal. The bundled A* engine no longer uses bloom filters for its
+     *     closed set; the value is accepted but unused and will be removed in a future release.
      */
     @Deprecated
     public PathfinderConfiguration.PathfinderConfigurationBuilder bloomFilterSize(
@@ -541,8 +542,8 @@ public class PathfinderConfiguration {
     }
 
     /**
-     * @deprecated The bundled A* engine no longer uses bloom filters for its closed set; the
-     *     value is accepted but unused by the bundled engine.
+     * @deprecated Marked for removal. The bundled A* engine no longer uses bloom filters for its
+     *     closed set; the value is accepted but unused and will be removed in a future release.
      */
     @Deprecated
     public PathfinderConfiguration.PathfinderConfigurationBuilder bloomFilterFpp(

@@ -70,18 +70,6 @@
 
                     <relocations>
                         <relocation>
-                            <pattern>org.checkerframework</pattern>
-                            <shadedPattern>de.bsommerfeld.pathetic.shaded.checkerframework</shadedPattern>
-                        </relocation>
-                        <relocation>
-                            <pattern>javax.annotation</pattern>
-                            <shadedPattern>de.bsommerfeld.pathetic.shaded.javax</shadedPattern>
-                        </relocation>
-                        <relocation>
-                            <pattern>com.google</pattern>
-                            <shadedPattern>de.bsommerfeld.pathetic.shaded.google</shadedPattern>
-                        </relocation>
-                        <relocation>
                             <pattern>it.unimi.dsi.fastutil</pattern>
                             <shadedPattern>de.bsommerfeld.pathetic.shaded.fastutil</shadedPattern>
                         </relocation>
@@ -145,53 +133,6 @@
                                 <include>it/unimi/dsi/fastutil/ints/AbstractIntIterator*</include>
                             </includes>
                         </filter>
-                        <filter>
-                            <artifact>com.google.guava:guava</artifact>
-                            <includes>
-                                <include>com/google/common/hash/BloomFilter.class</include>
-                                <include>com/google/common/hash/BloomFilterStrategies.class</include>
-                                <include>com/google/common/hash/BloomFilter$Strategy.class</include>
-                                <include>com/google/common/hash/BloomFilterStrategies$1.class</include>
-                                <include>com/google/common/hash/BloomFilterStrategies$2.class</include>
-                                <include>com/google/common/hash/BloomFilterStrategies$LockFreeBitArray.class</include>
-                                <include>com/google/common/hash/Funnel.class</include>
-                                <include>com/google/common/hash/PrimitiveSink.class</include>
-
-                                <include>com/google/common/base/Predicate.class</include>
-                                <include>com/google/common/base/Supplier.class</include>
-                                <include>com/google/common/base/Objects.class</include>
-
-                                <include>com/google/common/base/Preconditions.class</include>
-                                <include>com/google/common/math/LongMath.class</include>
-                                <include>com/google/common/math/LongMath$1.class</include>
-                                <include>com/google/common/primitives/Ints.class</include>
-                                <include>com/google/common/primitives/UnsignedBytes.class</include>
-                                <include>com/google/common/primitives/IntsMethodsForWeb.class</include>
-                                <include>com/google/common/primitives/Longs.class</include>
-                                <include>com/google/common/hash/Hashing.class</include>
-                                <include>com/google/common/hash/Murmur3_32HashFunction.class</include>
-                                <include>com/google/common/hash/Murmur3_128HashFunction.class</include>
-                                <include>com/google/common/hash/AbstractCompositeHashFunction.class</include>
-                                <include>com/google/common/hash/Striped64.class</include>
-                                <include>com/google/common/hash/LongAddable.class</include>
-                                <include>com/google/common/hash/LongAddables.class</include>
-                                <include>com/google/common/hash/LongAddables$PureJavaLongAddable.class</include>
-                                <include>com/google/common/hash/LongAddables$2.class</include>
-                                <include>com/google/common/hash/LongAdder.class</include>
-                                <include>com/google/common/hash/HashFunction.class</include>
-                                <include>com/google/common/hash/Hasher.class</include>
-                                <include>com/google/common/hash/HashCode.class</include>
-                                <include>com/google/common/hash/HashCode$BytesHashCode.class</include>
-                                <include>com/google/common/hash/HashCode$IntHashCode.class</include>
-                                <include>com/google/common/hash/HashCode$LongHashCode.class</include>
-                                <include>com/google/common/hash/AbstractHasher.class</include>
-                                <include>com/google/common/hash/AbstractHashFunction.class</include>
-                                <include>com/google/common/hash/AbstractStreamingHasher.class</include>
-                                <include>com/google/common/hash/Murmur3_128HashFunction$Murmur3_128Hasher.class
-                                </include>
-                                <include>com/google/common/hash/Java8Compatibility.class</include>
-                            </includes>
-                        </filter>
                     </filters>
                     <transformers>
                         <transformer
@@ -215,12 +156,6 @@
             <groupId>it.unimi.dsi</groupId>
             <artifactId>fastutil</artifactId>
             <version>8.5.18</version>
-        </dependency>
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>33.6.0-jre</version>
-            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>de.bsommerfeld.pathetic</groupId>
