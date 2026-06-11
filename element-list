@@ -17,6 +17,5 @@ de.bsommerfeld.pathetic.engine.pathfinder
 de.bsommerfeld.pathetic.engine.pathfinder.heap
 de.bsommerfeld.pathetic.engine.pathfinder.heap.impl
 de.bsommerfeld.pathetic.engine.pathfinder.processing
-de.bsommerfeld.pathetic.engine.pathfinder.spatial
 de.bsommerfeld.pathetic.engine.result
 de.bsommerfeld.pathetic.engine.util
