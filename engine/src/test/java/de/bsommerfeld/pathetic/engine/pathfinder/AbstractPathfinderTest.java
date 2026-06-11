@@ -354,7 +354,7 @@ class AbstractPathfinderTest {
     }
 
     @Override
-    protected void initializeSearch(PathPosition start) {
+    protected void initializeSearch(PathPosition start, int expectedNodes) {
       expandedNodes.clear();
       keyToId.clear();
       testNodeMap.clear();

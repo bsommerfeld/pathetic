@@ -10,6 +10,7 @@
 - Open-set, closed-set, and reopen G-cost lookups are id-indexed array accesses behind a single hash map per neighbor
 - Deprecate the `gridCellSize`/`bloomFilterSize`/`bloomFilterFpp` options (marked for removal); the closed set no longer uses bloom-filtered grid regions
 - Defer neighbor node construction until after the closed-set check, skipping allocation and heuristic work for closed neighbors
+- Size per-search session structures from the same node estimate as the open-set heap; short searches set up in a fraction of the time
 
 ### Fixed
 

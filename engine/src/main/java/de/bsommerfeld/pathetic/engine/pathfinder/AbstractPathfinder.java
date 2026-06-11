@@ -158,7 +158,14 @@ public abstract class AbstractPathfinder implements Pathfinder {
       PathPosition target,
       EnvironmentContext environmentContext,
       AtomicBoolean abortFlag) {
-    initializeSearch(start);
+    /*
+     * Computed once and shared by the heap and the session so short searches allocate small
+     * structures; per-search setup cost is what dominates workloads issuing many small requests
+     * (e.g. hierarchical pathfinding on top of this engine).
+     */
+    int expectedNodes = estimateInitialHeapCapacity(start, target);
+
+    initializeSearch(start, expectedNodes);
 
     SearchContext searchContext =
         new SearchContextImpl(
@@ -197,7 +204,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
        * provides; in exchange its decrease-key position tracking is a plain array access
        * instead of a hash-map update per sift level.
        */
-      MinHeap openSet = new QuaternaryPrimitiveMinHeap(estimateInitialHeapCapacity(start, target));
+      MinHeap openSet = new QuaternaryPrimitiveMinHeap(expectedNodes);
 
       double startKey = calculateHeapKey(startNode, startNode.getFCost());
       insertStartNode(startNode, startKey, openSet);
@@ -439,8 +446,11 @@ public abstract class AbstractPathfinder implements Pathfinder {
    *
    * @param start The effective (floored) start position of the request; implementations that key
    *     their per-search state relative to the search origin derive that origin from it.
+   * @param expectedNodes Estimated number of nodes the search will touch (same estimate that
+   *     sizes the open-set heap); implementations should size their per-search structures from
+   *     it so small requests pay small setup costs.
    */
-  protected abstract void initializeSearch(PathPosition start);
+  protected abstract void initializeSearch(PathPosition start, int expectedNodes);
 
   /**
    * Marks the given node as expanded (i.e., added to the "closed set"). Subclasses should implement

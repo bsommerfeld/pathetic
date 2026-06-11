@@ -67,8 +67,8 @@ public final class AStarPathfinder extends AbstractPathfinder {
   }
 
   @Override
-  protected void initializeSearch(PathPosition start) {
-    currentSession.set(new PathfindingSession(pathfinderConfiguration, start));
+  protected void initializeSearch(PathPosition start, int expectedNodes) {
+    currentSession.set(new PathfindingSession(pathfinderConfiguration, start, expectedNodes));
   }
 
   /**

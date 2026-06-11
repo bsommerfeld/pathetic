@@ -15,9 +15,13 @@ import org.mockito.Mockito;
 
 class PathfindingSessionTest {
 
+  /*
+   * A small capacity hint so the growth path of the id-indexed arrays is exercised by the tests
+   * that assign more ids than the initial capacity.
+   */
   private static PathfindingSession sessionAt(double x, double y, double z) {
     return new PathfindingSession(
-        PathfinderConfiguration.builder().build(), new PathPosition(x, y, z));
+        PathfinderConfiguration.builder().build(), new PathPosition(x, y, z), 16);
   }
 
   /*
@@ -109,7 +113,8 @@ class PathfindingSessionTest {
     PathfindingSession session =
         new PathfindingSession(
             PathfinderConfiguration.builder().reopenClosedNodes(true).build(),
-            new PathPosition(0, 0, 0));
+            new PathPosition(0, 0, 0),
+            16);
 
     int id = session.assignId(session.pack(new PathPosition(1, 0, 0)));
 

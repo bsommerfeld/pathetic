@@ -33,16 +33,23 @@ class PathfindingSession {
   /** Marker returned by {@link #idOf(long)} for cells that never entered the open set. */
   static final int NO_ID = -1;
 
-  private static final int INITIAL_ID_CAPACITY = 1024;
+  /*
+   * Bounds for sizing the per-search structures from the caller's node estimate. The floor keeps
+   * degenerate estimates usable; the ceiling caps the upfront allocation for huge requests, whose
+   * growth then amortizes. Setup cost is dominated by zeroing these structures, so short searches
+   * (the common case in workloads issuing many small requests) must not pay for large arrays.
+   */
+  private static final int MIN_ID_CAPACITY = 16;
+  private static final int MAX_INITIAL_ID_CAPACITY = 16384;
 
-  private final Long2IntOpenHashMap keyToId = new Long2IntOpenHashMap(INITIAL_ID_CAPACITY);
+  private final Long2IntOpenHashMap keyToId;
   private int nextId = 0;
 
   /** Open-set node per id; {@code null} when the id is not currently in the open set. */
-  private Node[] openNodes = new Node[INITIAL_ID_CAPACITY];
+  private Node[] openNodes;
 
   /** Closed-set membership per id. */
-  private boolean[] closed = new boolean[INITIAL_ID_CAPACITY];
+  private boolean[] closed;
 
   /*
    * Recorded G-cost at close time per id, used by the reopen comparison. Only allocated when
@@ -54,13 +61,19 @@ class PathfindingSession {
   private final int originY;
   private final int originZ;
 
-  PathfindingSession(PathfinderConfiguration pathfinderConfiguration, PathPosition start) {
+  PathfindingSession(
+      PathfinderConfiguration pathfinderConfiguration, PathPosition start, int expectedNodes) {
     this.originX = start.getFlooredX();
     this.originY = start.getFlooredY();
     this.originZ = start.getFlooredZ();
+
+    int capacity = Math.max(MIN_ID_CAPACITY, Math.min(expectedNodes, MAX_INITIAL_ID_CAPACITY));
+    this.keyToId = new Long2IntOpenHashMap(capacity);
     this.keyToId.defaultReturnValue(NO_ID);
+    this.openNodes = new Node[capacity];
+    this.closed = new boolean[capacity];
     if (pathfinderConfiguration.shouldReopenClosedNodes()) {
-      this.closedGCosts = newGCostArray(INITIAL_ID_CAPACITY);
+      this.closedGCosts = newGCostArray(capacity);
     }
   }
 
