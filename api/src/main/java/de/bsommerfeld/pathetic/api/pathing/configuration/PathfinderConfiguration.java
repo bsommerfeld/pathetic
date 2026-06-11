@@ -274,14 +274,32 @@ public class PathfinderConfiguration {
     return neighborStrategy;
   }
 
+  /**
+   * @deprecated The bundled A* engine no longer buckets its closed set into bloom-filtered grid
+   *     regions; per-node state is id-indexed instead. The value is retained in the configuration
+   *     for compatibility but unused by the bundled engine.
+   */
+  @Deprecated
   public int getGridCellSize() {
     return gridCellSize;
   }
 
+  /**
+   * @deprecated The bundled A* engine no longer uses bloom filters for its closed set; per-node
+   *     state is id-indexed instead. The value is retained in the configuration for compatibility
+   *     but unused by the bundled engine.
+   */
+  @Deprecated
   public int getBloomFilterSize() {
     return bloomFilterSize;
   }
 
+  /**
+   * @deprecated The bundled A* engine no longer uses bloom filters for its closed set; per-node
+   *     state is id-indexed instead. The value is retained in the configuration for compatibility
+   *     but unused by the bundled engine.
+   */
+  @Deprecated
   public double getBloomFilterFpp() {
     return bloomFilterFpp;
   }
@@ -490,6 +508,11 @@ public class PathfinderConfiguration {
       return this;
     }
 
+    /**
+     * @deprecated The bundled A* engine no longer buckets its closed set into bloom-filtered grid
+     *     regions; the value is accepted but unused by the bundled engine.
+     */
+    @Deprecated
     public PathfinderConfiguration.PathfinderConfigurationBuilder gridCellSize(int gridCellSize) {
       if (gridCellSize <= 0) {
         throw new IllegalArgumentException(
@@ -499,6 +522,11 @@ public class PathfinderConfiguration {
       return this;
     }
 
+    /**
+     * @deprecated The bundled A* engine no longer uses bloom filters for its closed set; the
+     *     value is accepted but unused by the bundled engine.
+     */
+    @Deprecated
     public PathfinderConfiguration.PathfinderConfigurationBuilder bloomFilterSize(
         int bloomFilterSize) {
       if (bloomFilterSize <= 0) {
@@ -509,6 +537,11 @@ public class PathfinderConfiguration {
       return this;
     }
 
+    /**
+     * @deprecated The bundled A* engine no longer uses bloom filters for its closed set; the
+     *     value is accepted but unused by the bundled engine.
+     */
+    @Deprecated
     public PathfinderConfiguration.PathfinderConfigurationBuilder bloomFilterFpp(
         double bloomFilterFpp) {
       if (!(bloomFilterFpp > 0.0 && bloomFilterFpp < 1.0)) {

@@ -335,8 +335,15 @@ class AbstractPathfinderTest {
   private static class TestPathfinder extends AbstractPathfinder {
 
     private final List<Node> expandedNodes = new ArrayList<>();
-    // Simple test map to simulate what PathfindingSession does in AStarPathfinder
-    private final Map<Long, Node> testNodeMap = new HashMap<>();
+
+    /*
+     * Test stand-in for the dense-id keying the real pathfinder's session provides: the base
+     * class constructs the quaternary heap, which only accepts small dense ids, so positions
+     * are mapped to sequential ids via their packed cell key.
+     */
+    private final Map<Long, Integer> keyToId = new HashMap<>();
+    private final Map<Integer, Node> testNodeMap = new HashMap<>();
+    private int nextId = 0;
 
     private final Set<PathfinderHook> testHooks = new HashSet<>();
     private boolean simulateDelay = false;
@@ -348,33 +355,34 @@ class AbstractPathfinderTest {
     @Override
     protected void initializeSearch(PathPosition start) {
       expandedNodes.clear();
+      keyToId.clear();
       testNodeMap.clear();
+      nextId = 0;
     }
-
-    // --- NEUE ABSTRAKTE METHODEN IMPLEMENTIEREN ---
 
     @Override
     protected void insertStartNode(Node node, double fCost, MinHeap openSet) {
-      long packedPos = packFloored(node.getPosition());
-      openSet.insertOrUpdate(packedPos, fCost);
-      testNodeMap.put(packedPos, node);
+      int id = idFor(node.getPosition());
+      openSet.insertOrUpdate(id, fCost);
+      testNodeMap.put(id, node);
     }
 
-    /*
-     * Test stand-in for the session-relative keying the real pathfinder uses; the test
-     * coordinates are small, so packing the absolute floored position is sufficient here.
-     */
-    private static long packFloored(PathPosition position) {
-      return RegionKey.pack(
-          position.getFlooredX(), position.getFlooredY(), position.getFlooredZ());
+    private int idFor(PathPosition position) {
+      long key =
+          RegionKey.pack(
+              position.getFlooredX(), position.getFlooredY(), position.getFlooredZ());
+      Integer id = keyToId.get(key);
+      if (id == null) {
+        id = nextId++;
+        keyToId.put(key, id);
+      }
+      return id;
     }
 
     @Override
     protected Node extractBestNode(MinHeap openSet) {
-      long packedPos = openSet.extractMin();
-      Node node = testNodeMap.get(packedPos);
-      testNodeMap.remove(packedPos);
-      return node;
+      int id = (int) openSet.extractMin();
+      return testNodeMap.remove(id);
     }
 
     // ----------------------------------------------
@@ -416,9 +424,9 @@ class AbstractPathfinderTest {
                 1);
         targetNode.setParent(currentNode);
 
-        long packedTarget = packFloored(targetNode.getPosition());
-        openSet.insertOrUpdate(packedTarget, targetNode.getFCost());
-        testNodeMap.put(packedTarget, targetNode);
+        int targetId = idFor(targetNode.getPosition());
+        openSet.insertOrUpdate(targetId, targetNode.getFCost());
+        testNodeMap.put(targetId, targetNode);
       }
     }
 

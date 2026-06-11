@@ -20,7 +20,7 @@ import de.bsommerfeld.pathetic.api.wrapper.Depth;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.engine.Node;
 import de.bsommerfeld.pathetic.engine.pathfinder.heap.MinHeap;
-import de.bsommerfeld.pathetic.engine.pathfinder.heap.impl.PrimitiveMinHeap;
+import de.bsommerfeld.pathetic.engine.pathfinder.heap.impl.QuaternaryPrimitiveMinHeap;
 import de.bsommerfeld.pathetic.engine.pathfinder.processing.EvaluationContextImpl;
 import de.bsommerfeld.pathetic.engine.pathfinder.processing.SearchContextImpl;
 import de.bsommerfeld.pathetic.engine.result.PathImpl;
@@ -192,7 +192,12 @@ public abstract class AbstractPathfinder implements Pathfinder {
         }
       }
 
-      MinHeap openSet = new PrimitiveMinHeap(estimateInitialHeapCapacity(start, target));
+      /*
+       * The quaternary heap requires dense ids, which the session's key-to-id assignment
+       * provides; in exchange its decrease-key position tracking is a plain array access
+       * instead of a hash-map update per sift level.
+       */
+      MinHeap openSet = new QuaternaryPrimitiveMinHeap(estimateInitialHeapCapacity(start, target));
 
       double startKey = calculateHeapKey(startNode, startNode.getFCost());
       insertStartNode(startNode, startKey, openSet);

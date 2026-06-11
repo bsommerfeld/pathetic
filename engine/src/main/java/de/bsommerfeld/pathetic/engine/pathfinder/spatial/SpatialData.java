@@ -11,7 +11,13 @@ import it.unimi.dsi.fastutil.longs.LongSet;
  * The SpatialData class represents the data associated with a grid region. This data includes a
  * Bloom filter used to quickly check if a position is within the region and a set of positions that
  * have been examined by the pathfinder.
+ *
+ * @deprecated The bundled A* engine no longer buckets its closed set into bloom-filtered grid
+ *     regions: closed-set membership is a dense-id-indexed array lookup, which is both cheaper
+ *     than the bloom-filter probe and exact. The class is retained for consumers that use it
+ *     standalone.
  */
+@Deprecated
 public class SpatialData {
 
   /**

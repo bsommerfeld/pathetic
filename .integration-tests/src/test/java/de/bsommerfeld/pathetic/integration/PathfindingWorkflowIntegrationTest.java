@@ -20,6 +20,8 @@ import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.engine.factory.AStarPathfinderFactory;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -576,11 +578,29 @@ class PathfindingWorkflowIntegrationTest {
   @DisplayName("Should abort pathfinding when requested")
   void testAbortPathfinding() throws InterruptedException {
     // Given
+    CountDownLatch searchStarted = new CountDownLatch(1);
+
+    /*
+     * Throttles every neighbor evaluation so the search is guaranteed to still be running when
+     * the abort is issued; a fixed sleep before aborting races against engine speed instead.
+     */
+    ValidationProcessor throttlingValidator =
+        context -> {
+          searchStarted.countDown();
+          try {
+            Thread.sleep(1);
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+          }
+          return true;
+        };
+
     PathfinderConfiguration config =
         PathfinderConfiguration.builder()
             .provider(simpleProvider)
             .async(true)
             .maxIterations(50000) // Allow enough iterations for the abort to be effective
+            .validationProcessors(Collections.singletonList(throttlingValidator))
             .build();
 
     Pathfinder pathfinder = factory.createPathfinder(config);
@@ -589,18 +609,14 @@ class PathfindingWorkflowIntegrationTest {
     PathPosition target = new PathPosition(1000, 0, 1000); // Very far target
 
     // When
-    AtomicReference<PathState> aborted = new AtomicReference<>();
     PathfindingSearch search = pathfinder.findPath(start, target);
-    search.orElse((result) -> aborted.set(result.getPathState()));
-
-    // Give it a moment to start, then abort
-    Thread.sleep(10);
+    assertTrue(searchStarted.await(5, TimeUnit.SECONDS), "Search should have started");
     search.abort();
 
-    // Wait for completion
-    Thread.sleep(100);
+    PathfinderResult result = search.resultBlocking();
 
-    assertEquals(PathState.ABORTED, aborted.get(), "Pathfinding should be aborted");
+    // Then
+    assertEquals(PathState.ABORTED, result.getPathState(), "Pathfinding should be aborted");
   }
 
   @Test

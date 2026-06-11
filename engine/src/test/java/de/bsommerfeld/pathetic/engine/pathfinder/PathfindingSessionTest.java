@@ -2,13 +2,16 @@ package de.bsommerfeld.pathetic.engine.pathfinder;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
+import de.bsommerfeld.pathetic.engine.Node;
 import de.bsommerfeld.pathetic.engine.util.RegionKey;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 class PathfindingSessionTest {
 
@@ -58,14 +61,60 @@ class PathfindingSessionTest {
     assertFalse(session.isInRange(new PathPosition(1_000_000_000, 600_000, 0)));
   }
 
-  /** Region bucketing must work in the origin-relative space for far absolute coordinates. */
+  /*
+   * Dense ids start at 0, increase by one per assignment, and stay stable; cells that never
+   * entered the open set report NO_ID.
+   */
   @Test
-  void spatialDataIsCreatedForFarAbsoluteCoordinates() {
-    PathfindingSession session = sessionAt(-2_000_000_000, 500_000, 2_000_000_000);
+  void idAssignmentIsDenseAndStable() {
+    PathfindingSession session = sessionAt(0, 0, 0);
+    long keyA = session.pack(new PathPosition(1, 2, 3));
+    long keyB = session.pack(new PathPosition(4, 5, 6));
 
-    assertNotNull(
-        session.getOrCreateSpatialData(new PathPosition(-2_000_000_000, 500_000, 2_000_000_000)));
-    assertNotNull(
-        session.getOrCreateSpatialData(new PathPosition(-1_999_999_990, 500_010, 1_999_999_990)));
+    assertEquals(PathfindingSession.NO_ID, session.idOf(keyA));
+
+    assertEquals(0, session.assignId(keyA));
+    assertEquals(1, session.assignId(keyB));
+    assertEquals(0, session.idOf(keyA));
+    assertEquals(1, session.idOf(keyB));
+  }
+
+  @Test
+  void openAndClosedStateAreIdIndexedAndGrow() {
+    PathfindingSession session = sessionAt(0, 0, 0);
+    Node node = Mockito.mock(Node.class);
+
+    /* Assign past the initial capacity so the backing arrays must grow. */
+    int lastId = -1;
+    for (int i = 0; i < 5000; i++) {
+      lastId = session.assignId(session.pack(new PathPosition(i, 0, 0)));
+    }
+
+    session.setOpenNode(lastId, node);
+    assertSame(node, session.openNode(lastId));
+    session.clearOpenNode(lastId);
+    assertNull(session.openNode(lastId));
+
+    assertFalse(session.isClosed(lastId));
+    session.markClosed(lastId);
+    assertTrue(session.isClosed(lastId));
+  }
+
+  /*
+   * The recorded close-time G-cost backs the reopen comparison: NaN marks "never recorded" and
+   * the array is only available when reopening is enabled.
+   */
+  @Test
+  void closedGCostsDefaultToNaNAndAreRecordedPerId() {
+    PathfindingSession session =
+        new PathfindingSession(
+            PathfinderConfiguration.builder().reopenClosedNodes(true).build(),
+            new PathPosition(0, 0, 0));
+
+    int id = session.assignId(session.pack(new PathPosition(1, 0, 0)));
+
+    assertTrue(Double.isNaN(session.closedGCost(id)));
+    session.recordClosedGCost(id, 42.5);
+    assertEquals(42.5, session.closedGCost(id));
   }
 }
