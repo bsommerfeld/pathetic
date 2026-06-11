@@ -1,4 +1,3 @@
-
 # Pathetic 🥀
 
 **The pathfinding library that's too good for this pathetic world.**
@@ -25,7 +24,7 @@
 
 <div align="left">
     <img src="https://github.com/user-attachments/assets/74a14831-4ca5-4090-a569-b24aa6be06b6" width="800" alt="Showcase">
-    <img src="https://github.com/user-attachments/assets/69ca0f04-4add-485e-837e-a0a82b63a003" width="800" alt="Showcase">
+    <img src="https://github.com/user-attachments/assets/f8db228b-748f-4f35-bd1b-9ddb56d64fa7" width="800" alt="Showcase">
 </div>
 
 All demos from a real Paper server. <br>
