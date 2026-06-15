@@ -99,6 +99,39 @@ public class PathfinderHeapBenchmark {
   }
 
   @Benchmark
+  public void benchOctaryPrimitiveMinHeap(Blackhole bh) {
+    DaryPrimitiveMinHeap heap = new DaryPrimitiveMinHeap(operations, 8);
+    for (int i = 0; i < operations; i++) {
+      heap.insertOrUpdate(packedNodes[i], costs[i]);
+      if (i % 5 == 0 && !heap.isEmpty()) {
+        bh.consume(heap.extractMin());
+      }
+    }
+  }
+
+  @Benchmark
+  public void benchBucketMinHeapCoarse(Blackhole bh) {
+    BucketMinHeap heap = new BucketMinHeap(operations, 100.0, 1.0);
+    for (int i = 0; i < operations; i++) {
+      heap.insertOrUpdate(packedNodes[i], costs[i]);
+      if (i % 5 == 0 && !heap.isEmpty()) {
+        bh.consume(heap.extractMin());
+      }
+    }
+  }
+
+  @Benchmark
+  public void benchBucketMinHeapFine(Blackhole bh) {
+    BucketMinHeap heap = new BucketMinHeap(operations, 100.0, 0.1);
+    for (int i = 0; i < operations; i++) {
+      heap.insertOrUpdate(packedNodes[i], costs[i]);
+      if (i % 5 == 0 && !heap.isEmpty()) {
+        bh.consume(heap.extractMin());
+      }
+    }
+  }
+
+  @Benchmark
   public void benchBaritoneHeap(Blackhole bh) {
     BinaryHeapOpenSet heap = new BinaryHeapOpenSet(operations);
     for (int i = 0; i < operations; i++) {
