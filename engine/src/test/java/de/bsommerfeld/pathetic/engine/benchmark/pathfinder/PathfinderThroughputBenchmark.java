@@ -23,9 +23,10 @@ import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
 import org.openjdk.jmh.annotations.Warmup;
 import org.openjdk.jmh.infra.Blackhole;
+import org.openjdk.jmh.profile.GCProfiler;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
-import org.openjdk.jmh.runner.options.Options;
+import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 /**
@@ -52,13 +53,31 @@ public class PathfinderThroughputBenchmark {
   private Pathfinder pathfinder;
 
   public static void main(String[] args) throws RunnerException {
-    Options opt =
+    new Runner(configureFromSystemProperties().build()).run();
+  }
+
+  /*
+   * Command-line overrides (no source edit required):
+   *
+   *   -Djmh.forks=N   override fork count (0 runs in-process, needed under exec:java whose child
+   *                   JVM cannot locate JMH's ForkedMain)
+   *   -Djmh.wi=N      warmup iterations    -Djmh.i=N   measurement iterations
+   *   -Djmh.gc=true   attach the Gc profiler, reporting gc.alloc.rate.norm (bytes allocated per op)
+   */
+  private static ChainedOptionsBuilder configureFromSystemProperties() {
+    ChainedOptionsBuilder builder =
         new OptionsBuilder()
             .include(PathfinderThroughputBenchmark.class.getSimpleName())
-            .forks(1)
-            .build();
+            .forks(Integer.getInteger("jmh.forks", 1));
 
-    new Runner(opt).run();
+    Integer warmupIterations = Integer.getInteger("jmh.wi");
+    if (warmupIterations != null) builder.warmupIterations(warmupIterations);
+    Integer measurementIterations = Integer.getInteger("jmh.i");
+    if (measurementIterations != null) builder.measurementIterations(measurementIterations);
+
+    if (Boolean.getBoolean("jmh.gc")) builder.addProfiler(GCProfiler.class);
+
+    return builder;
   }
 
   @Setup

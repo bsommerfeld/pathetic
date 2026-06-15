@@ -13,9 +13,10 @@ import org.jheaps.AddressableHeap;
 import org.jheaps.tree.FibonacciHeap;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
+import org.openjdk.jmh.profile.GCProfiler;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
-import org.openjdk.jmh.runner.options.Options;
+import org.openjdk.jmh.runner.options.ChainedOptionsBuilder;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 @State(Scope.Benchmark)
@@ -36,13 +37,32 @@ public class PathfinderHeapBenchmark {
   private PathNode[] baritoneNodes;
 
   public static void main(String[] args) throws RunnerException {
-    Options opt =
-        new OptionsBuilder()
-            .include(PathfinderHeapBenchmark.class.getSimpleName())
-            .forks(1)
-            .build();
+    new Runner(configureFromSystemProperties(PathfinderHeapBenchmark.class).build()).run();
+  }
 
-    new Runner(opt).run();
+  /*
+   * Lets the benchmark be driven from the command line without editing the source:
+   *
+   *   -Djmh.forks=N   override the fork count (use 0 to run in-process, e.g. under exec:java
+   *                   whose child JVM cannot locate JMH's ForkedMain on the classpath)
+   *   -Djmh.wi=N      warmup iterations    -Djmh.i=N   measurement iterations
+   *   -Djmh.gc=true   attach the Gc profiler, reporting gc.alloc.rate.norm (bytes allocated per
+   *                   op) - the arbiter for any allocation-reduction work
+   */
+  static ChainedOptionsBuilder configureFromSystemProperties(Class<?> benchmark) {
+    ChainedOptionsBuilder builder =
+        new OptionsBuilder()
+            .include(benchmark.getSimpleName())
+            .forks(Integer.getInteger("jmh.forks", 1));
+
+    Integer warmupIterations = Integer.getInteger("jmh.wi");
+    if (warmupIterations != null) builder.warmupIterations(warmupIterations);
+    Integer measurementIterations = Integer.getInteger("jmh.i");
+    if (measurementIterations != null) builder.measurementIterations(measurementIterations);
+
+    if (Boolean.getBoolean("jmh.gc")) builder.addProfiler(GCProfiler.class);
+
+    return builder;
   }
 
   @Setup(Level.Invocation)
