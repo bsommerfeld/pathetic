@@ -1,5 +1,6 @@
 package de.bsommerfeld.pathetic.api.pathing.hook;
 
+import de.bsommerfeld.pathetic.api.pathing.context.EnvironmentContext;
 import de.bsommerfeld.pathetic.api.wrapper.Depth;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 
@@ -10,10 +11,18 @@ public final class PathfindingContext {
 
     private final PathPosition currentPosition;
     private final Depth depth;
+    private final PathPosition target;
+    private final EnvironmentContext environmentContext;
 
-    public PathfindingContext(PathPosition position, Depth depth) {
+    public PathfindingContext(
+        PathPosition position,
+        Depth depth,
+        PathPosition target,
+        EnvironmentContext environmentContext) {
         this.currentPosition = position;
         this.depth = depth;
+        this.target = target;
+        this.environmentContext = environmentContext;
     }
 
     /**
@@ -28,6 +37,23 @@ public final class PathfindingContext {
      */
     public Depth getDepth() {
         return this.depth;
+    }
+
+    /**
+     * The target position of the search. Invariant for the entire search: the same reference is
+     * supplied to every callback, so only {@link #currentPosition()} and {@link #getDepth()} change
+     * between steps.
+     */
+    public PathPosition target() {
+        return target;
+    }
+
+    /**
+     * The environment context supplied to the search, or {@code null} if none was provided. Like
+     * {@link #target()}, this is invariant for the entire search.
+     */
+    public EnvironmentContext environmentContext() {
+        return environmentContext;
     }
 
     public boolean equals(final Object o) {
