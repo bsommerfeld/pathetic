@@ -45,6 +45,13 @@ class PathfindingSession {
   private final Long2IntOpenHashMap keyToId;
   private int nextId = 0;
 
+  /*
+   * Id of the node most recently returned by the engine's extract step. The expand step that
+   * immediately follows reads it instead of re-packing the node's position and re-hashing to
+   * recover the id it already had in hand.
+   */
+  private int lastExtractedId = NO_ID;
+
   /** Open-set node per id; {@code null} when the id is not currently in the open set. */
   private Node[] openNodes;
 
@@ -111,6 +118,16 @@ class PathfindingSession {
     keyToId.put(packedKey, id);
     ensureIdCapacity(id);
     return id;
+  }
+
+  /** Returns the id most recently passed to {@link #setLastExtractedId(int)}. */
+  int lastExtractedId() {
+    return lastExtractedId;
+  }
+
+  /** Records the id of the node just extracted from the open set for the following expand step. */
+  void setLastExtractedId(int id) {
+    this.lastExtractedId = id;
   }
 
   Node openNode(int id) {

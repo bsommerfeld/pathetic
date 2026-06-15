@@ -767,6 +767,53 @@ class AStarPathfinderTest {
     assertTrue(result.getPath().length() > 0);
   }
 
+  /*
+   * With no validation or cost processors configured, the engine skips allocating an
+   * EvaluationContext per neighbor and computes the G-cost directly. That fast path must produce
+   * the exact same path as an equivalent search whose only processor is a zero-cost contribution
+   * (which forces the context-based path). Same costs in, same path out.
+   */
+  @Test
+  void noProcessorFastPathMatchesContextPath() {
+    when(mockProvider.getNavigationPoint(any(PathPosition.class), any()))
+        .thenReturn(traversablePoint);
+
+    PathfinderConfiguration noProcessors =
+        PathfinderConfiguration.builder()
+            .provider(mockProvider)
+            .maxIterations(1000)
+            .maxLength(100)
+            .async(false)
+            .build();
+
+    CostProcessor zeroCost = context -> Cost.ZERO;
+    PathfinderConfiguration withContextProcessor =
+        PathfinderConfiguration.builder()
+            .provider(mockProvider)
+            .maxIterations(1000)
+            .maxLength(100)
+            .async(false)
+            .nodeCostProcessors(Collections.singletonList(zeroCost))
+            .build();
+
+    List<PathPosition> fastPath = positionsOf(new AStarPathfinder(noProcessors));
+    List<PathPosition> contextPath = positionsOf(new AStarPathfinder(withContextProcessor));
+
+    assertEquals(
+        contextPath,
+        fastPath,
+        "the no-processor fast path must produce the same path as the context-based path");
+  }
+
+  private List<PathPosition> positionsOf(AStarPathfinder pf) {
+    AtomicReference<PathfinderResult> resultRef = new AtomicReference<>();
+    pf.findPath(start, target).ifPresent(resultRef::set);
+    PathfinderResult result = resultRef.get();
+    assertNotNull(result);
+    assertEquals(PathState.FOUND, result.getPathState());
+    return new ArrayList<>(result.getPath().collect());
+  }
+
   @Test
   void testFindPathBlocked() {
     PathfinderConfiguration noFallbackConfig =

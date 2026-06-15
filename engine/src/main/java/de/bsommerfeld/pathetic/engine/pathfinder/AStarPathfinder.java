@@ -63,6 +63,12 @@ public final class AStarPathfinder extends AbstractPathfinder {
     Node node = session.openNode(id);
     session.clearOpenNode(id);
 
+    /*
+     * The expand step (markNodeAsExpanded) runs on this same node immediately after and would
+     * otherwise re-pack the position and re-hash to recover this id; hand it over directly.
+     */
+    session.setLastExtractedId(id);
+
     return node;
   }
 
@@ -165,14 +171,18 @@ public final class AStarPathfinder extends AbstractPathfinder {
           double oldCost = session.closedGCost(id);
 
           neighbor = createNeighborNode(neighborPos, start, target, currentNode);
-          context =
-              new EvaluationContextImpl(
-                  searchContext,
-                  neighbor,
-                  currentNode,
-                  pathfinderConfiguration.getHeuristicStrategy());
 
-          reopenGCost = calculateGCost(context);
+          if (hasCustomProcessors) {
+            context =
+                new EvaluationContextImpl(
+                    searchContext,
+                    neighbor,
+                    currentNode,
+                    pathfinderConfiguration.getHeuristicStrategy());
+            reopenGCost = calculateGCost(context);
+          } else {
+            reopenGCost = calculateGCostFast(currentNode, neighborPos);
+          }
 
           // Is this path significantly better?
           if (Double.isNaN(oldCost) || reopenGCost + Math.ulp(reopenGCost) < oldCost) {
@@ -192,15 +202,6 @@ public final class AStarPathfinder extends AbstractPathfinder {
         neighbor = createNeighborNode(neighborPos, start, target, currentNode);
       }
       neighbor.setParent(currentNode);
-      if (context == null) {
-        context =
-            new EvaluationContextImpl(
-                searchContext, neighbor, currentNode, pathfinderConfiguration.getHeuristicStrategy());
-      }
-
-      if (!isValidByCustomProcessors(context)) {
-        continue;
-      }
 
       /*
        * --------------------------------------------------------------------------------
@@ -229,7 +230,25 @@ public final class AStarPathfinder extends AbstractPathfinder {
        * as a FAILED result.
        * --------------------------------------------------------------------------------
        */
-      double gCost = reopening ? reopenGCost : calculateGCost(context);
+      double gCost;
+      if (hasCustomProcessors) {
+        if (context == null) {
+          context =
+              new EvaluationContextImpl(
+                  searchContext, neighbor, currentNode, pathfinderConfiguration.getHeuristicStrategy());
+        }
+        if (!isValidByCustomProcessors(context)) {
+          continue;
+        }
+        gCost = reopening ? reopenGCost : calculateGCost(context);
+      } else {
+        /*
+         * No validation or cost processors: the neighbor is always valid and the G-cost reduces to
+         * the parent's accumulated cost plus the base transition cost, so we skip allocating an
+         * EvaluationContext for it.
+         */
+        gCost = reopening ? reopenGCost : calculateGCostFast(currentNode, neighborPos);
+      }
 
       /*
        * Recorded only after validation so that a vetoed reopen attempt does not lower the stored
@@ -260,14 +279,19 @@ public final class AStarPathfinder extends AbstractPathfinder {
       MinHeap openSet) {
 
     EvaluationContext context =
-        new EvaluationContextImpl(
-            searchContext, existing, currentNode, pathfinderConfiguration.getHeuristicStrategy());
+        hasCustomProcessors
+            ? new EvaluationContextImpl(
+                searchContext, existing, currentNode, pathfinderConfiguration.getHeuristicStrategy())
+            : null;
 
-    double newG = calculateGCost(context);
+    double newG =
+        hasCustomProcessors
+            ? calculateGCost(context)
+            : calculateGCostFast(currentNode, existing.getPosition());
     double tol = Math.ulp(Math.max(Math.abs(newG), Math.abs(existing.getGCost())));
     if (newG + tol >= existing.getGCost()) return;
 
-    if (!isValidByCustomProcessors(context)) {
+    if (hasCustomProcessors && !isValidByCustomProcessors(context)) {
       return;
     }
 
@@ -316,6 +340,26 @@ public final class AStarPathfinder extends AbstractPathfinder {
     return true;
   }
 
+  /**
+   * G-cost for a transition when no validation or cost processors are configured. Equivalent to
+   * {@link #calculateGCost(EvaluationContext)} with empty processor lists - it is the parent's
+   * accumulated G-cost plus the base transition cost - but computed without allocating an {@link
+   * EvaluationContext}. Mirrors the base-cost handling of {@code EvaluationContextImpl}: non-finite
+   * transition costs are rejected and negative costs are clamped to zero.
+   */
+  private double calculateGCostFast(Node parent, PathPosition to) {
+    double baseCost =
+        pathfinderConfiguration.getHeuristicStrategy().calculateTransitionCost(parent.getPosition(), to);
+    if (Double.isNaN(baseCost) || Double.isInfinite(baseCost)) {
+      throw new IllegalStateException(
+          "Heuristic transition cost produced an invalid numeric value: " + baseCost);
+    }
+    if (baseCost < 0) {
+      baseCost = 0;
+    }
+    return parent.getGCost() + baseCost;
+  }
+
   private double calculateGCost(EvaluationContext context) {
     double baseCost = context.getBaseTransitionCost();
     double additionalCost = 0.0;
@@ -338,8 +382,11 @@ public final class AStarPathfinder extends AbstractPathfinder {
   protected void markNodeAsExpanded(Node node) {
     PathfindingSession session = getSessionOrThrow();
 
-    // Expanded nodes always came out of the open set, so their id is guaranteed to exist.
-    int id = session.idOf(session.pack(node.getPosition()));
+    /*
+     * The node was just returned by extractBestNode, which recorded its id; reuse it instead of
+     * re-packing the position and re-hashing the key.
+     */
+    int id = session.lastExtractedId();
     session.markClosed(id);
 
     if (pathfinderConfiguration.shouldReopenClosedNodes())

@@ -61,6 +61,19 @@ public abstract class AbstractPathfinder implements Pathfinder {
   protected final INeighborStrategy neighborStrategy;
   protected final ExecutorService executorService;
 
+  /*
+   * Combined validation + cost processors, built once at construction. The two lists are immutable
+   * for the pathfinder's lifetime, so there is no reason to reallocate this every search.
+   */
+  private final List<Processor> processors;
+
+  /*
+   * True when at least one validation or cost processor is configured. When false, the per-neighbor
+   * evaluation needs neither validation nor a cost contribution, so subclasses can compute the
+   * G-cost directly and skip allocating an EvaluationContext for every neighbor.
+   */
+  protected final boolean hasCustomProcessors;
+
   private final Set<PathfinderHook> pathfinderHooks = Collections.synchronizedSet(new HashSet<>());
 
   protected AbstractPathfinder(PathfinderConfiguration pathfinderConfiguration) {
@@ -76,6 +89,13 @@ public abstract class AbstractPathfinder implements Pathfinder {
     this.costProcessors = pathfinderConfiguration.getNodeCostProcessors();
     this.neighborStrategy = pathfinderConfiguration.getNeighborStrategy();
     this.pathfinderHooks.addAll(pathfinderConfiguration.pathfindingHooks());
+
+    List<Processor> combinedProcessors =
+        new ArrayList<>(this.validationProcessors.size() + this.costProcessors.size());
+    combinedProcessors.addAll(this.validationProcessors);
+    combinedProcessors.addAll(this.costProcessors);
+    this.processors = Collections.unmodifiableList(combinedProcessors);
+    this.hasCustomProcessors = !this.processors.isEmpty();
     /*
      * Only async configurations need an executor. Sync configurations are allowed to leave it
      * null so that the shared default thread pool is never instantiated when nobody will use it.
@@ -176,7 +196,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
             this.navigationPointProvider,
             environmentContext);
 
-    List<Processor> processors = getProcessors();
+    List<Processor> processors = this.processors;
 
     try {
       for (Processor processor : processors) {
@@ -344,20 +364,6 @@ public abstract class AbstractPathfinder implements Pathfinder {
     int branching = Math.max(1, Iterables.size(neighborStrategy.getOffsets(start)));
     return computeInitialHeapCapacity(
         start, target, branching, pathfinderConfiguration.getMaxIterations());
-  }
-
-  /**
-   * Retrieves a combined list of all applicable processors for pathfinding. Combines processors
-   * from both node validation and node cost categories, if available.
-   *
-   * @return A list of {@link Processor} instances that will participate in the pathfinding
-   *     operation. The list can be empty if no processors are configured.
-   */
-  private List<Processor> getProcessors() {
-    List<Processor> processors = new ArrayList<>();
-    processors.addAll(validationProcessors);
-    processors.addAll(costProcessors);
-    return processors;
   }
 
   /**
