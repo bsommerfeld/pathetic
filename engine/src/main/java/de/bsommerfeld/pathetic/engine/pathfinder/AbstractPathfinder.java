@@ -42,9 +42,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * for pathfinding algorithms.
  *
  * <p>This pathfinder operates by iteratively processing nodes from an open set (priority queue)
- * until the target is reached or other termination conditions are met. It supports asynchronous
- * execution and customizable hooks for observing the pathfinding steps. The "tick-wise" nature
- * mentioned previously refers to each main loop iteration processing one node.
+ * until the target is reached or other termination conditions are met. The main loop runs
+ * uninterrupted at full speed; each iteration expands exactly one node, and there is no timed
+ * scheduling or per-iteration delay of any kind. It supports asynchronous execution and
+ * customizable hooks for observing the pathfinding steps.
  */
 public abstract class AbstractPathfinder implements Pathfinder {
 
@@ -221,6 +222,15 @@ public abstract class AbstractPathfinder implements Pathfinder {
             pathfinderHooks.isEmpty() ? Collections.emptyList() : new ArrayList<>(pathfinderHooks);
       }
 
+      if (!hookSnapshot.isEmpty()) {
+        PathfindingContext startContext =
+            new PathfindingContext(
+                startNode.getPosition(), Depth.of(0), target, environmentContext);
+        for (PathfinderHook hook : hookSnapshot) {
+          hook.onPathfindingStart(startContext);
+        }
+      }
+
       int iteration = 0;
       Node bestFallbackNode = startNode;
 
@@ -238,7 +248,8 @@ public abstract class AbstractPathfinder implements Pathfinder {
 
         if (!hookSnapshot.isEmpty()) {
           PathfindingContext hookContext =
-              new PathfindingContext(currentNode.getPosition(), Depth.of(iteration));
+              new PathfindingContext(
+                  currentNode.getPosition(), Depth.of(iteration), target, environmentContext);
           for (PathfinderHook hook : hookSnapshot) {
             hook.onPathfindingStep(hookContext);
           }

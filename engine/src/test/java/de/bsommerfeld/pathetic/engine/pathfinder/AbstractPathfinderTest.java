@@ -13,12 +13,14 @@ import de.bsommerfeld.pathetic.api.pathing.PathfindingSearch;
 import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration;
 import de.bsommerfeld.pathetic.api.pathing.context.EnvironmentContext;
 import de.bsommerfeld.pathetic.api.pathing.hook.PathfinderHook;
+import de.bsommerfeld.pathetic.api.pathing.hook.PathfindingContext;
 import de.bsommerfeld.pathetic.api.pathing.processing.ValidationProcessor;
 import de.bsommerfeld.pathetic.api.pathing.processing.context.EvaluationContext;
 import de.bsommerfeld.pathetic.api.pathing.processing.context.SearchContext;
 import de.bsommerfeld.pathetic.api.pathing.result.PathfinderResult;
 import de.bsommerfeld.pathetic.api.provider.NavigationPoint;
 import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
+import de.bsommerfeld.pathetic.api.wrapper.Depth;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.engine.Node;
 import de.bsommerfeld.pathetic.engine.pathfinder.heap.MinHeap;
@@ -38,6 +40,7 @@ import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -119,6 +122,97 @@ class AbstractPathfinderTest {
 
     assertNotNull(result);
     assertTrue(hookCalled.get());
+  }
+
+  /*
+   * onPathfindingStart fires exactly once, before the loop expands any node, so its depth is zero
+   * and it precedes every onPathfindingStep callback.
+   */
+  @Test
+  void onPathfindingStartFiresOnceBeforeAnyStep() {
+    NavigationPoint mockNavigationPoint = Mockito.mock(NavigationPoint.class);
+    when(mockNavigationPoint.isTraversable()).thenReturn(true);
+    when(mockProvider.getNavigationPoint(any(PathPosition.class), any()))
+        .thenReturn(mockNavigationPoint);
+
+    AtomicInteger startCount = new AtomicInteger(0);
+    AtomicInteger stepCount = new AtomicInteger(0);
+    AtomicReference<Depth> startDepth = new AtomicReference<>();
+    AtomicBoolean startCameBeforeAnyStep = new AtomicBoolean(true);
+
+    PathfinderHook hook =
+        new PathfinderHook() {
+          @Override
+          public void onPathfindingStep(PathfindingContext context) {
+            stepCount.incrementAndGet();
+          }
+
+          @Override
+          public void onPathfindingStart(PathfindingContext context) {
+            startCount.incrementAndGet();
+            startDepth.set(context.getDepth());
+            if (stepCount.get() != 0) {
+              startCameBeforeAnyStep.set(false);
+            }
+          }
+        };
+    pathfinder.registerPathfindingHook(hook);
+
+    pathfinder.findPath(start, target).resultBlocking();
+
+    assertEquals(1, startCount.get(), "onPathfindingStart must fire exactly once per search");
+    assertTrue(startCameBeforeAnyStep.get(), "onPathfindingStart must precede every step");
+    assertEquals(Depth.of(0), startDepth.get(), "the start context must carry depth zero");
+  }
+
+  /*
+   * target() and environmentContext() are search-wide invariants: every callback (start and each
+   * step) must observe the same target value and the very same EnvironmentContext instance, so the
+   * only thing that varies between contexts is currentPosition and depth.
+   */
+  @Test
+  void contextExposesInvariantTargetAndEnvironment() {
+    NavigationPoint mockNavigationPoint = Mockito.mock(NavigationPoint.class);
+    when(mockNavigationPoint.isTraversable()).thenReturn(true);
+    when(mockProvider.getNavigationPoint(any(PathPosition.class), any()))
+        .thenReturn(mockNavigationPoint);
+
+    EnvironmentContext mockContext = Mockito.mock(EnvironmentContext.class);
+
+    AtomicReference<PathPosition> startTarget = new AtomicReference<>();
+    AtomicReference<EnvironmentContext> startEnvironment = new AtomicReference<>();
+    AtomicBoolean targetStayedConstant = new AtomicBoolean(true);
+    AtomicBoolean environmentStayedSame = new AtomicBoolean(true);
+
+    PathfinderHook hook =
+        new PathfinderHook() {
+          @Override
+          public void onPathfindingStart(PathfindingContext context) {
+            startTarget.set(context.target());
+            startEnvironment.set(context.environmentContext());
+          }
+
+          @Override
+          public void onPathfindingStep(PathfindingContext context) {
+            if (!context.target().equals(startTarget.get())) {
+              targetStayedConstant.set(false);
+            }
+            if (context.environmentContext() != startEnvironment.get()) {
+              environmentStayedSame.set(false);
+            }
+          }
+        };
+    pathfinder.registerPathfindingHook(hook);
+
+    pathfinder.findPath(start, target, mockContext).resultBlocking();
+
+    assertEquals(target, startTarget.get(), "the start context must expose the search target");
+    assertSame(
+        mockContext,
+        startEnvironment.get(),
+        "the start context must expose the supplied environment context");
+    assertTrue(targetStayedConstant.get(), "target() must not change between steps");
+    assertTrue(environmentStayedSame.get(), "environmentContext() must stay the same instance");
   }
 
   /*
