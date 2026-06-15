@@ -23,17 +23,12 @@ import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
 import de.bsommerfeld.pathetic.api.wrapper.Depth;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.engine.Node;
-import de.bsommerfeld.pathetic.engine.pathfinder.heap.MinHeap;
-import de.bsommerfeld.pathetic.engine.util.RegionKey;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.AbstractExecutorService;
@@ -427,18 +422,7 @@ class AbstractPathfinderTest {
   }
 
   /** A concrete implementation of AbstractPathfinder for testing. */
-  private static class TestPathfinder extends AbstractPathfinder {
-
-    private final List<Node> expandedNodes = new ArrayList<>();
-
-    /*
-     * Test stand-in for the dense-id keying the real pathfinder's session provides: the base
-     * class constructs the quaternary heap, which only accepts small dense ids, so positions
-     * are mapped to sequential ids via their packed cell key.
-     */
-    private final Map<Long, Integer> keyToId = new HashMap<>();
-    private final Map<Integer, Node> testNodeMap = new HashMap<>();
-    private int nextId = 0;
+  private static class TestPathfinder extends AbstractPathfinder<AStarSearchState> {
 
     private final Set<PathfinderHook> testHooks = new HashSet<>();
     private boolean simulateDelay = false;
@@ -447,49 +431,14 @@ class AbstractPathfinderTest {
       super(pathfinderConfiguration);
     }
 
+    /*
+     * Reuses the real A* search state: it exposes the SearchState protocol (insert / extractBest /
+     * markExpanded) the base loop drives, which is all this test needs to exercise the loop, hooks,
+     * and executor handling independently of the A* successor logic.
+     */
     @Override
-    protected void initializeSearch(PathPosition start, int expectedNodes) {
-      expandedNodes.clear();
-      keyToId.clear();
-      testNodeMap.clear();
-      nextId = 0;
-    }
-
-    @Override
-    protected void insertStartNode(Node node, double fCost, MinHeap openSet) {
-      int id = idFor(node.getPosition());
-      openSet.insertOrUpdate(id, fCost);
-      testNodeMap.put(id, node);
-    }
-
-    private int idFor(PathPosition position) {
-      long key =
-          RegionKey.pack(
-              position.getFlooredX(), position.getFlooredY(), position.getFlooredZ());
-      Integer id = keyToId.get(key);
-      if (id == null) {
-        id = nextId++;
-        keyToId.put(key, id);
-      }
-      return id;
-    }
-
-    @Override
-    protected Node extractBestNode(MinHeap openSet) {
-      int id = (int) openSet.extractMin();
-      return testNodeMap.remove(id);
-    }
-
-    // ----------------------------------------------
-
-    @Override
-    protected void markNodeAsExpanded(Node node) {
-      expandedNodes.add(node);
-    }
-
-    @Override
-    protected void performAlgorithmCleanup() {
-      testNodeMap.clear();
+    protected AStarSearchState createSearchState(PathPosition start, int expectedNodes) {
+      return new AStarSearchState(pathfinderConfiguration, start, expectedNodes);
     }
 
     @Override
@@ -497,7 +446,7 @@ class AbstractPathfinderTest {
         PathPosition requestStart,
         PathPosition requestTarget,
         Node currentNode,
-        MinHeap openSet, // Typ angepasst!
+        AStarSearchState state,
         SearchContext searchContext) {
       if (simulateDelay) {
         try {
@@ -518,10 +467,7 @@ class AbstractPathfinderTest {
                 pathfinderConfiguration.getHeuristicStrategy(),
                 1);
         targetNode.setParent(currentNode);
-
-        int targetId = idFor(targetNode.getPosition());
-        openSet.insertOrUpdate(targetId, targetNode.getFCost());
-        testNodeMap.put(targetId, targetNode);
+        state.insert(targetNode, targetNode.getFCost());
       }
     }
 

@@ -13,14 +13,14 @@ import de.bsommerfeld.pathetic.engine.util.RegionKey;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-class PathfindingSessionTest {
+class AStarSearchStateTest {
 
   /*
    * A small capacity hint so the growth path of the id-indexed arrays is exercised by the tests
    * that assign more ids than the initial capacity.
    */
-  private static PathfindingSession sessionAt(double x, double y, double z) {
-    return new PathfindingSession(
+  private static AStarSearchState sessionAt(double x, double y, double z) {
+    return new AStarSearchState(
         PathfinderConfiguration.builder().provider((position, context) -> () -> true).build(),
         new PathPosition(x, y, z),
         16);
@@ -32,7 +32,7 @@ class PathfindingSessionTest {
    */
   @Test
   void packIsRelativeToOrigin() {
-    PathfindingSession session = sessionAt(1_000_000_000, 100_000, -1_000_000_000);
+    AStarSearchState session = sessionAt(1_000_000_000, 100_000, -1_000_000_000);
 
     assertEquals(
         RegionKey.pack(0, 0, 0),
@@ -44,8 +44,8 @@ class PathfindingSessionTest {
 
   @Test
   void sessionsWithDifferentOriginsProduceEqualKeysForEqualOffsets() {
-    PathfindingSession near = sessionAt(0, 0, 0);
-    PathfindingSession far = sessionAt(2_000_000_000, -1_000_000, -2_000_000_000);
+    AStarSearchState near = sessionAt(0, 0, 0);
+    AStarSearchState far = sessionAt(2_000_000_000, -1_000_000, -2_000_000_000);
 
     long nearKey = near.pack(new PathPosition(7, 8, 9));
     long farKey = far.pack(new PathPosition(2_000_000_007, -999_992, -1_999_999_991));
@@ -60,7 +60,7 @@ class PathfindingSessionTest {
    */
   @Test
   void isInRangeBoundsTheRadiusAroundTheOrigin() {
-    PathfindingSession session = sessionAt(1_000_000_000, 0, 0);
+    AStarSearchState session = sessionAt(1_000_000_000, 0, 0);
 
     assertTrue(session.isInRange(new PathPosition(1_000_000_001, 10, -10)));
     assertFalse(session.isInRange(new PathPosition(1_003_000_000, 0, 0)));
@@ -73,11 +73,11 @@ class PathfindingSessionTest {
    */
   @Test
   void idAssignmentIsDenseAndStable() {
-    PathfindingSession session = sessionAt(0, 0, 0);
+    AStarSearchState session = sessionAt(0, 0, 0);
     long keyA = session.pack(new PathPosition(1, 2, 3));
     long keyB = session.pack(new PathPosition(4, 5, 6));
 
-    assertEquals(PathfindingSession.NO_ID, session.idOf(keyA));
+    assertEquals(AStarSearchState.NO_ID, session.idOf(keyA));
 
     assertEquals(0, session.assignId(keyA));
     assertEquals(1, session.assignId(keyB));
@@ -87,7 +87,7 @@ class PathfindingSessionTest {
 
   @Test
   void openAndClosedStateAreIdIndexedAndGrow() {
-    PathfindingSession session = sessionAt(0, 0, 0);
+    AStarSearchState session = sessionAt(0, 0, 0);
     Node node = Mockito.mock(Node.class);
 
     /* Assign past the initial capacity so the backing arrays must grow. */
@@ -112,8 +112,8 @@ class PathfindingSessionTest {
    */
   @Test
   void closedGCostsDefaultToNaNAndAreRecordedPerId() {
-    PathfindingSession session =
-        new PathfindingSession(
+    AStarSearchState session =
+        new AStarSearchState(
             PathfinderConfiguration.builder()
                 .provider((position, context) -> () -> true)
                 .reopenClosedNodes(true)

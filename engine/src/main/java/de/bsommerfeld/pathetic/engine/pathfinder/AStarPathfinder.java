@@ -9,7 +9,6 @@ import de.bsommerfeld.pathetic.api.pathing.processing.context.SearchContext;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.api.wrapper.PathVector;
 import de.bsommerfeld.pathetic.engine.Node;
-import de.bsommerfeld.pathetic.engine.pathfinder.heap.MinHeap;
 import de.bsommerfeld.pathetic.engine.pathfinder.processing.EvaluationContextImpl;
 import de.bsommerfeld.pathetic.engine.util.RegionKey;
 
@@ -23,58 +22,28 @@ import de.bsommerfeld.pathetic.engine.util.RegionKey;
  *   <li>A quaternary primitive min-heap for the open set (priority queue), keyed by dense node
  *       ids so decrease-key position tracking is a plain array access.
  *   <li>A single per-search hash map from packed position keys to dense ids; open-set nodes, the
- *       closed set, and recorded G-costs are all id-indexed arrays ({@link PathfindingSession}).
+ *       closed set, and recorded G-costs are all id-indexed arrays ({@link AStarSearchState}).
  * </ul>
  *
- * <p>Thread-safety: Each pathfinding operation gets its own {@link PathfindingSession}, ensuring
- * thread-safety for concurrent requests.
+ * <p>Thread-safety: each pathfinding operation gets its own {@link AStarSearchState}, created as a
+ * stack local in the base loop and passed explicitly into the template methods. Concurrent requests
+ * on a single pathfinder are therefore isolated by the call stack; no per-search state is stored on
+ * the pathfinder itself.
  *
  * <p>Exploration radius: node keys are packed relative to the search start (see {@link
  * RegionKey}), so absolute world coordinates are unconstrained. A single search can expand
  * positions up to roughly two million blocks (X/Z) and half a million blocks (Y) away from its
  * start; positions beyond that radius are treated as non-navigable.
  */
-public final class AStarPathfinder extends AbstractPathfinder {
-
-  private final ThreadLocal<PathfindingSession> currentSession = new ThreadLocal<>();
+public final class AStarPathfinder extends AbstractPathfinder<AStarSearchState> {
 
   public AStarPathfinder(PathfinderConfiguration configuration) {
     super(configuration);
   }
 
   @Override
-  protected void insertStartNode(Node node, double fCost, MinHeap openSet) {
-    PathfindingSession session = getSessionOrThrow();
-
-    // The session is fresh at this point, so the start always receives the first id.
-    int id = session.assignId(session.pack(node.getPosition()));
-    openSet.insertOrUpdate(id, fCost);
-    session.setOpenNode(id, node);
-  }
-
-  @Override
-  protected Node extractBestNode(MinHeap openSet) {
-    PathfindingSession session = getSessionOrThrow();
-
-    /*
-     * Heap keys are dense session ids assigned via assignId, so the narrowing cast is lossless.
-     */
-    int id = (int) openSet.extractMin();
-    Node node = session.openNode(id);
-    session.clearOpenNode(id);
-
-    /*
-     * The expand step (markNodeAsExpanded) runs on this same node immediately after and would
-     * otherwise re-pack the position and re-hash to recover this id; hand it over directly.
-     */
-    session.setLastExtractedId(id);
-
-    return node;
-  }
-
-  @Override
-  protected void initializeSearch(PathPosition start, int expectedNodes) {
-    currentSession.set(new PathfindingSession(pathfinderConfiguration, start, expectedNodes));
+  protected AStarSearchState createSearchState(PathPosition start, int expectedNodes) {
+    return new AStarSearchState(pathfinderConfiguration, start, expectedNodes);
   }
 
   /**
@@ -84,7 +53,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
    * @param start The starting position of the pathfinding request.
    * @param target The target position of the pathfinding request.
    * @param currentNode The node being expanded.
-   * @param openSet The priority queue holding nodes to explore.
+   * @param state The per-search state holding the open and closed sets.
    * @param searchContext The context for the current search.
    */
   @Override
@@ -92,10 +61,9 @@ public final class AStarPathfinder extends AbstractPathfinder {
       PathPosition start,
       PathPosition target,
       Node currentNode,
-      MinHeap openSet,
+      AStarSearchState state,
       SearchContext searchContext) {
 
-    PathfindingSession session = getSessionOrThrow();
     Iterable<PathVector> offsets = neighborStrategy.getOffsets(currentNode.getPosition());
 
     for (PathVector offset : offsets) {
@@ -106,22 +74,22 @@ public final class AStarPathfinder extends AbstractPathfinder {
        * navigable. Skipping them here lets searches at the edge of the radius degrade gracefully
        * instead of aborting the whole search when pack() rejects the relative coordinates.
        */
-      if (!session.isInRange(neighborPos)) continue;
+      if (!state.isInRange(neighborPos)) continue;
 
-      long packedPos = session.pack(neighborPos);
+      long packedPos = state.pack(neighborPos);
 
       /*
        * The single hash lookup per neighbor: cells that never entered the open set have no id
        * and are therefore neither open nor closed. All further per-node state checks below are
        * id-indexed array accesses.
        */
-      int id = session.idOf(packedPos);
+      int id = state.idOf(packedPos);
 
       // Check if neighbor is in the open set
-      if (id != PathfindingSession.NO_ID) {
-        Node existing = session.openNode(id);
+      if (id != AStarSearchState.NO_ID) {
+        Node existing = state.openNode(id);
         if (existing != null) {
-          updateExistingNode(existing, id, currentNode, searchContext, openSet);
+          updateExistingNode(existing, id, currentNode, searchContext, state);
           continue;
         }
       }
@@ -151,7 +119,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
       boolean reopening = false;
 
       // Check if neighbor is in the closed set
-      if (id != PathfindingSession.NO_ID && session.isClosed(id)) {
+      if (id != AStarSearchState.NO_ID && state.isClosed(id)) {
 
         /*
          * This block handles the edge case where we find a path to a node,
@@ -168,7 +136,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
          */
 
         if (pathfinderConfiguration.shouldReopenClosedNodes()) {
-          double oldCost = session.closedGCost(id);
+          double oldCost = state.closedGCost(id);
 
           neighbor = createNeighborNode(neighborPos, start, target, currentNode);
 
@@ -256,18 +224,18 @@ public final class AStarPathfinder extends AbstractPathfinder {
        * could no longer reopen this node.
        */
       if (reopening) {
-        session.recordClosedGCost(id, gCost);
+        state.recordClosedGCost(id, gCost);
       }
 
       neighbor.setGCost(gCost);
       double fCost = neighbor.getFCost();
       double heapKey = calculateHeapKey(neighbor, fCost);
 
-      if (id == PathfindingSession.NO_ID) {
-        id = session.assignId(packedPos);
+      if (id == AStarSearchState.NO_ID) {
+        id = state.assignId(packedPos);
       }
-      openSet.insertOrUpdate(id, heapKey);
-      session.setOpenNode(id, neighbor);
+      state.openInsert(id, heapKey);
+      state.setOpenNode(id, neighbor);
     }
   }
 
@@ -276,7 +244,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
       int nodeId,
       Node currentNode,
       SearchContext searchContext,
-      MinHeap openSet) {
+      AStarSearchState state) {
 
     EvaluationContext context =
         hasCustomProcessors
@@ -301,12 +269,12 @@ public final class AStarPathfinder extends AbstractPathfinder {
     double newF = existing.getFCost();
     double newKey = calculateHeapKey(existing, newF);
 
-    double oldKey = openSet.cost(nodeId);
+    double oldKey = state.openKey(nodeId);
 
     // We only call the heap once the key actually decreased
     if (newKey + Math.ulp(newKey) < oldKey) {
       // O(log n)
-      openSet.insertOrUpdate(nodeId, newKey);
+      state.openInsert(nodeId, newKey);
     }
     // edge-case handling
     else if (Math.abs(newKey - oldKey) <= Math.ulp(newKey)) {
@@ -316,7 +284,7 @@ public final class AStarPathfinder extends AbstractPathfinder {
        *
        * Since our heap strictly checks <, we can force it here
        */
-      openSet.insertOrUpdate(nodeId, oldKey - Math.ulp(oldKey));
+      state.openInsert(nodeId, oldKey - Math.ulp(oldKey));
     }
   }
 
@@ -376,39 +344,5 @@ public final class AStarPathfinder extends AbstractPathfinder {
       transitionCost = 0;
     }
     return context.getPathCostToPreviousPosition() + transitionCost;
-  }
-
-  @Override
-  protected void markNodeAsExpanded(Node node) {
-    PathfindingSession session = getSessionOrThrow();
-
-    /*
-     * The node was just returned by extractBestNode, which recorded its id; reuse it instead of
-     * re-packing the position and re-hashing the key.
-     */
-    int id = session.lastExtractedId();
-    session.markClosed(id);
-
-    if (pathfinderConfiguration.shouldReopenClosedNodes())
-      session.recordClosedGCost(id, node.getGCost());
-  }
-
-  @Override
-  protected void performAlgorithmCleanup() {
-    /*
-     * Single source of truth for per-search cleanup: dropping the ThreadLocal entry makes the
-     * PathfindingSession unreferenced, and the next GC cycle implicitly reclaims its full state
-     * (key-to-id map and the id-indexed open-set, closed-set, and G-cost arrays) in one sweep.
-     */
-    currentSession.remove();
-  }
-
-  private PathfindingSession getSessionOrThrow() {
-    PathfindingSession session = currentSession.get();
-    if (session == null) {
-      throw new IllegalStateException(
-          "Pathfinding session not initialized. Call initializeSearch() first.");
-    }
-    return session;
   }
 }

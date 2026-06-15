@@ -3,12 +3,14 @@ package de.bsommerfeld.pathetic.engine.pathfinder;
 import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.engine.Node;
+import de.bsommerfeld.pathetic.engine.pathfinder.heap.MinHeap;
+import de.bsommerfeld.pathetic.engine.pathfinder.heap.impl.QuaternaryPrimitiveMinHeap;
 import de.bsommerfeld.pathetic.engine.util.RegionKey;
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import java.util.Arrays;
 
 /**
- * Manages state for a single pathfinding operation, ensuring thread-safety via isolation.
+ * A* per-search state: the open set (a {@link MinHeap}) and the closed set for a single search.
  *
  * <p>Per-node state is held in two layers:
  *
@@ -17,18 +19,18 @@ import java.util.Arrays;
  *       (the floored start position), so absolute world coordinates are unconstrained (full
  *       {@code int} range) and the {@link RegionKey} ranges bound only the exploration radius of
  *       this one search. The engine never unpacks keys; they exist purely as injective
- *       identities. Keys from different sessions are never compared, so the per-session origin
+ *       identities. Keys from different searches are never compared, so the per-search origin
  *       needs no global consistency.
  *   <li><strong>Dense ids</strong> (0, 1, 2, ...) are assigned to a cell when it first enters the
  *       open set. The single key-to-id hash map below is the only hash lookup per node; every
- *       other per-node access (open-set node, closed flag, recorded G-cost, and the heap's
- *       position index) is a plain array access indexed by id.
+ *       other per-node access (the heap's position index, open-set node, closed flag, recorded
+ *       G-cost) is a plain array access indexed by id.
  * </ul>
  *
- * @apiNote This class is not thread-safe and is used within a ThreadLocal. If used elsewhere,
- *     developers must synchronize access to shared resources.
+ * @apiNote This class is not thread-safe; one instance belongs to exactly one running search. It is
+ *     created as a stack local and passed explicitly into the pathfinder's template methods.
  */
-class PathfindingSession {
+class AStarSearchState implements SearchState {
 
   /** Marker returned by {@link #idOf(long)} for cells that never entered the open set. */
   static final int NO_ID = -1;
@@ -42,13 +44,20 @@ class PathfindingSession {
   private static final int MIN_ID_CAPACITY = 16;
   private static final int MAX_INITIAL_ID_CAPACITY = 16384;
 
+  /*
+   * The open set. Keyed by dense ids, so its decrease-key position tracking is a plain array access
+   * instead of a hash-map update per sift level.
+   */
+  private final MinHeap openSet;
+
   private final Long2IntOpenHashMap keyToId;
   private int nextId = 0;
 
   /*
-   * Id of the node most recently returned by the engine's extract step. The expand step that
-   * immediately follows reads it instead of re-packing the node's position and re-hashing to
-   * recover the id it already had in hand.
+   * Id of the node most recently returned by extractBest. markExpanded runs on that same node
+   * immediately afterwards and would otherwise re-pack the position and re-hash to recover the id;
+   * handing it over directly keeps the per-expansion hash lookups at exactly one (the idOf in
+   * processSuccessors).
    */
   private int lastExtractedId = NO_ID;
 
@@ -64,30 +73,87 @@ class PathfindingSession {
    */
   private double[] closedGCosts;
 
+  private final boolean reopenEnabled;
+
   private final int originX;
   private final int originY;
   private final int originZ;
 
-  PathfindingSession(
+  AStarSearchState(
       PathfinderConfiguration pathfinderConfiguration, PathPosition start, int expectedNodes) {
     this.originX = start.getFlooredX();
     this.originY = start.getFlooredY();
     this.originZ = start.getFlooredZ();
+    this.reopenEnabled = pathfinderConfiguration.shouldReopenClosedNodes();
+
+    /*
+     * The heap follows the raw node estimate; the id-indexed arrays are clamped so a single huge
+     * request does not pay a large upfront zeroing cost (the arrays grow on demand past the cap).
+     */
+    this.openSet = new QuaternaryPrimitiveMinHeap(expectedNodes);
 
     int capacity = Math.max(MIN_ID_CAPACITY, Math.min(expectedNodes, MAX_INITIAL_ID_CAPACITY));
     this.keyToId = new Long2IntOpenHashMap(capacity);
     this.keyToId.defaultReturnValue(NO_ID);
     this.openNodes = new Node[capacity];
     this.closed = new boolean[capacity];
-    if (pathfinderConfiguration.shouldReopenClosedNodes()) {
+    if (reopenEnabled) {
       this.closedGCosts = newGCostArray(capacity);
     }
   }
 
+  /* ----------------------------------------------------------------------------------------------
+   * SearchState protocol: the algorithm-independent open/closed-set operations the main loop calls.
+   * -------------------------------------------------------------------------------------------- */
+
+  @Override
+  public boolean hasOpenNodes() {
+    return !openSet.isEmpty();
+  }
+
+  @Override
+  public void insert(Node node, double heapKey) {
+    long packed = pack(node.getPosition());
+    int id = idOf(packed);
+    if (id == NO_ID) {
+      id = assignId(packed);
+    }
+    openSet.insertOrUpdate(id, heapKey);
+    openNodes[id] = node;
+  }
+
+  @Override
+  public Node extractBest() {
+    /* Heap keys are dense ids assigned via assignId, so the narrowing cast is lossless. */
+    int id = (int) openSet.extractMin();
+    Node node = openNodes[id];
+    openNodes[id] = null;
+    lastExtractedId = id;
+    return node;
+  }
+
+  @Override
+  public void markExpanded(Node node) {
+    /*
+     * The node was just returned by extractBest, which recorded its id; reuse it instead of
+     * re-packing the position and re-hashing the key.
+     */
+    int id = lastExtractedId;
+    closed[id] = true;
+    if (reopenEnabled) {
+      closedGCosts[id] = node.getGCost();
+    }
+  }
+
+  /* ----------------------------------------------------------------------------------------------
+   * A*-specific per-neighbor API used inside processSuccessors. The single hash lookup per neighbor
+   * is idOf; everything else below is an id-indexed array or heap access.
+   * -------------------------------------------------------------------------------------------- */
+
   /**
-   * Packs the given position into this session's key space, relative to the search origin. The
-   * start position itself packs to key 0. Callers must check {@link #isInRange(PathPosition)}
-   * first for positions that may lie outside the exploration radius.
+   * Packs the given position into this search's key space, relative to the search origin. The start
+   * position itself packs to key 0. Callers must check {@link #isInRange(PathPosition)} first for
+   * positions that may lie outside the exploration radius.
    */
   long pack(PathPosition position) {
     return RegionKey.pack(
@@ -111,23 +177,13 @@ class PathfindingSession {
 
   /**
    * Assigns the next dense id to the given key. Must only be called when {@link #idOf(long)}
-   * returned {@link #NO_ID} for it; ids are stable for the session lifetime.
+   * returned {@link #NO_ID} for it; ids are stable for the search lifetime.
    */
   int assignId(long packedKey) {
     int id = nextId++;
     keyToId.put(packedKey, id);
     ensureIdCapacity(id);
     return id;
-  }
-
-  /** Returns the id most recently passed to {@link #setLastExtractedId(int)}. */
-  int lastExtractedId() {
-    return lastExtractedId;
-  }
-
-  /** Records the id of the node just extracted from the open set for the following expand step. */
-  void setLastExtractedId(int id) {
-    this.lastExtractedId = id;
   }
 
   Node openNode(int id) {
@@ -140,6 +196,16 @@ class PathfindingSession {
 
   void clearOpenNode(int id) {
     openNodes[id] = null;
+  }
+
+  /** Inserts or decrease-keys the given id in the open set. */
+  void openInsert(int id, double heapKey) {
+    openSet.insertOrUpdate(id, heapKey);
+  }
+
+  /** Returns the current heap key of the given open-set id. */
+  double openKey(int id) {
+    return openSet.cost(id);
   }
 
   boolean isClosed(int id) {

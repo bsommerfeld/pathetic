@@ -19,8 +19,6 @@ import de.bsommerfeld.pathetic.api.provider.NavigationPointProvider;
 import de.bsommerfeld.pathetic.api.wrapper.Depth;
 import de.bsommerfeld.pathetic.api.wrapper.PathPosition;
 import de.bsommerfeld.pathetic.engine.Node;
-import de.bsommerfeld.pathetic.engine.pathfinder.heap.MinHeap;
-import de.bsommerfeld.pathetic.engine.pathfinder.heap.impl.QuaternaryPrimitiveMinHeap;
 import de.bsommerfeld.pathetic.engine.pathfinder.processing.EvaluationContextImpl;
 import de.bsommerfeld.pathetic.engine.pathfinder.processing.SearchContextImpl;
 import de.bsommerfeld.pathetic.engine.result.PathImpl;
@@ -47,7 +45,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * scheduling or per-iteration delay of any kind. It supports asynchronous execution and
  * customizable hooks for observing the pathfinding steps.
  */
-public abstract class AbstractPathfinder implements Pathfinder {
+public abstract class AbstractPathfinder<S extends SearchState> implements Pathfinder {
 
   protected static final Set<PathPosition> EMPTY_PATH_POSITIONS =
       Collections.unmodifiableSet(new LinkedHashSet<>(0));
@@ -180,13 +178,11 @@ public abstract class AbstractPathfinder implements Pathfinder {
       EnvironmentContext environmentContext,
       AtomicBoolean abortFlag) {
     /*
-     * Computed once and shared by the heap and the session so short searches allocate small
-     * structures; per-search setup cost is what dominates workloads issuing many small requests
-     * (e.g. hierarchical pathfinding on top of this engine).
+     * Computed once and shared by the heap and the id-indexed arrays so short searches allocate
+     * small structures; per-search setup cost is what dominates workloads issuing many small
+     * requests (e.g. hierarchical pathfinding on top of this engine).
      */
     int expectedNodes = estimateInitialHeapCapacity(start, target);
-
-    initializeSearch(start, expectedNodes);
 
     SearchContext searchContext =
         new SearchContextImpl(
@@ -221,14 +217,13 @@ public abstract class AbstractPathfinder implements Pathfinder {
       }
 
       /*
-       * The quaternary heap requires dense ids, which the session's key-to-id assignment
-       * provides; in exchange its decrease-key position tracking is a plain array access
-       * instead of a hash-map update per sift level.
+       * Per-search open/closed-set state lives on this stack-local; concurrent searches on a
+       * single pathfinder are isolated by the call stack, not by any per-instance side channel.
        */
-      MinHeap openSet = new QuaternaryPrimitiveMinHeap(expectedNodes);
+      S state = createSearchState(start, expectedNodes);
 
       double startKey = calculateHeapKey(startNode, startNode.getFCost());
-      insertStartNode(startNode, startKey, openSet);
+      state.insert(startNode, startKey);
 
       /*
        * Snapshot the registered hooks once per search so the hot loop never contends on the
@@ -254,7 +249,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
       int iteration = 0;
       Node bestFallbackNode = startNode;
 
-      while (!openSet.isEmpty() && iteration < pathfinderConfiguration.getMaxIterations()) {
+      while (state.hasOpenNodes() && iteration < pathfinderConfiguration.getMaxIterations()) {
 
         if (abortFlag.get()) {
           return new PathfinderResultImpl(
@@ -263,8 +258,8 @@ public abstract class AbstractPathfinder implements Pathfinder {
 
         iteration++;
 
-        Node currentNode = extractBestNode(openSet);
-        markNodeAsExpanded(currentNode);
+        Node currentNode = state.extractBest();
+        state.markExpanded(currentNode);
 
         if (!hookSnapshot.isEmpty()) {
           PathfindingContext hookContext =
@@ -289,7 +284,7 @@ public abstract class AbstractPathfinder implements Pathfinder {
               PathState.FOUND, reconstructPath(start, target, currentNode));
         }
 
-        processSuccessors(start, target, currentNode, openSet, searchContext);
+        processSuccessors(start, target, currentNode, state, searchContext);
       }
 
       return determinePostLoopResult(iteration, start, target, bestFallbackNode);
@@ -320,7 +315,10 @@ public abstract class AbstractPathfinder implements Pathfinder {
           e.printStackTrace();
         }
       }
-      performAlgorithmCleanup();
+      /*
+       * No per-search cleanup needed: the SearchState is a stack local, so it (and its open/closed
+       * arrays) becomes unreferenced when this method returns and is reclaimed by the next GC.
+       */
     }
   }
 
@@ -446,42 +444,18 @@ public abstract class AbstractPathfinder implements Pathfinder {
     return path;
   }
 
-  /** Inserts the start node into the open set and updates any internal mapping. */
-  protected abstract void insertStartNode(Node node, double fCost, MinHeap openSet);
-
   /**
-   * Extracts the node with the lowest cost from the open set and retrieves the corresponding Node
-   * object.
-   */
-  protected abstract Node extractBestNode(MinHeap openSet);
-
-  /**
-   * Prepares the algorithm-specific initial setup required before executing the pathfinding logic.
-   * This method is designed to be overridden by subclasses to implement their respective
-   * initialization logic, such as setting up data structures, precomputing values, or resetting
-   * internal state. It is called at the beginning of a pathfinding request.
+   * Creates the per-search state holding this algorithm's open and closed sets. Called once at the
+   * start of every request; the returned instance lives as a stack local and is passed back into
+   * {@link #processSuccessors}, so it never needs to be stored on the pathfinder.
    *
    * @param start The effective (floored) start position of the request; implementations that key
    *     their per-search state relative to the search origin derive that origin from it.
-   * @param expectedNodes Estimated number of nodes the search will touch (same estimate that
-   *     sizes the open-set heap); implementations should size their per-search structures from
-   *     it so small requests pay small setup costs.
+   * @param expectedNodes Estimated number of nodes the search will touch; implementations should
+   *     size their per-search structures from it so small requests pay small setup costs.
+   * @return a fresh, empty search state for this request.
    */
-  protected abstract void initializeSearch(PathPosition start, int expectedNodes);
-
-  /**
-   * Marks the given node as expanded (i.e., added to the "closed set"). Subclasses should implement
-   * this to update their specific closed set mechanism.
-   *
-   * @param node The node that has been taken from the open set and is being expanded.
-   */
-  protected abstract void markNodeAsExpanded(Node node);
-
-  /**
-   * Abstract method for algorithm-specific cleanup, called after pathfinding execution. To be
-   * implemented by subclasses like {@link AStarPathfinder}.
-   */
-  protected abstract void performAlgorithmCleanup();
+  protected abstract S createSearchState(PathPosition start, int expectedNodes);
 
   /**
    * Abstract method representing the core logic of processing successor nodes for a given {@code
@@ -493,18 +467,18 @@ public abstract class AbstractPathfinder implements Pathfinder {
    *   <li>Validate these nodes (e.g., traversability, bounds, visited status). This is where
    *       processors will hook in.
    *   <li>Calculate their G and H costs. G-costs will be influenced by cost processors.
-   *   <li>Add valid successor nodes with their F-costs to the {@code openSet}.
+   *   <li>Add valid successor nodes with their F-costs to the open set held by {@code state}.
    * </ol>
    *
    * @param requestStart The original start {@link PathPosition} of the pathfinding request.
    * @param requestTarget The original target {@link PathPosition} of the pathfinding request.
    * @param currentNode The current {@link Node} being expanded.
-   * @param openSet The priority queue (open set) to add new successor nodes to.
+   * @param state The per-search state holding the open and closed sets.
    */
   protected abstract void processSuccessors(
       PathPosition requestStart,
       PathPosition requestTarget,
       Node currentNode,
-      MinHeap openSet,
+      S state,
       SearchContext searchContext);
 }

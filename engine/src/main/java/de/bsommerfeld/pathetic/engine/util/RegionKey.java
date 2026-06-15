@@ -8,13 +8,13 @@ package de.bsommerfeld.pathetic.engine.util;
  * Range Y: [-524,288, 524,287] (signed 20-bit)
  *
  * <p><strong>Keys are search-relative, not absolute.</strong> The engine packs coordinates as
- * offsets from the search origin (the floored start position, see {@code PathfindingSession}), so
+ * offsets from the search origin (the floored start position, see {@code AStarSearchState}), so
  * the ranges above bound the <em>exploration radius of a single search</em>, not world
  * coordinates. Absolute positions may use the full {@code int} range. A search cannot expand
  * positions farther from its start than the per-axis range; the pathfinder treats such positions
  * as non-navigable. The radius is far beyond what a search can reach in practice: spanning it
  * requires at least 2 million expansions in a straight line with unit offsets (bounded by {@code
- * maxIterations} and, before that, by session memory), or a custom {@code INeighborStrategy} with
+ * maxIterations} and, before that, by search-state memory), or a custom {@code INeighborStrategy} with
  * very large offset vectors.
  *
  * <p>Each field is two's-complement and only injective within its range. Coordinates outside the
