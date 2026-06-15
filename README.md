@@ -132,9 +132,9 @@ Strip the world away and you see what Pathetic truly is:
 
 | Workload                 | Real Paper server  | Pathetic raw (no world attached)
 | ------------------------ |--------------------| --------------------------------
-| One 20k distance path    | ~43 ms             | **~8 ms**
-| One 40k distance path    | ~62 ms             | **~16 ms**
-| 10k concurrent paths     | sustained, all day | **~6 ms wall — 0.6 µs per path**
+| One 20k distance path    | ~43 ms             | **~16 ms**
+| One 40k distance path    | ~62 ms             | **~34 ms**
+| 10k concurrent paths     | sustained, all day | **~4.5 ms wall — 0.45 µs per path**
 | Starting a search        | already included   | **0.11 µs**
 
 Read that again. The pathfinding itself is basically free — most of those milliseconds are us waiting for Minecraft to hand over block data. The trashbins don’t have that excuse. They’re slow before the world is even involved.
