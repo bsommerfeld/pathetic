@@ -58,20 +58,17 @@ public abstract class AbstractPathfinder<S extends SearchState> implements Pathf
   protected final List<CostProcessor> costProcessors;
   protected final INeighborStrategy neighborStrategy;
   protected final ExecutorService executorService;
-
-  /*
-   * Combined validation + cost processors, built once at construction. The two lists are immutable
-   * for the pathfinder's lifetime, so there is no reason to reallocate this every search.
-   */
-  private final List<Processor> processors;
-
   /*
    * True when at least one validation or cost processor is configured. When false, the per-neighbor
    * evaluation needs neither validation nor a cost contribution, so subclasses can compute the
    * G-cost directly and skip allocating an EvaluationContext for every neighbor.
    */
   protected final boolean hasCustomProcessors;
-
+  /*
+   * Combined validation + cost processors, built once at construction. The two lists are immutable
+   * for the pathfinder's lifetime, so there is no reason to reallocate this every search.
+   */
+  private final List<Processor> processors;
   private final Set<PathfinderHook> pathfinderHooks = Collections.synchronizedSet(new HashSet<>());
 
   protected AbstractPathfinder(PathfinderConfiguration pathfinderConfiguration) {
@@ -340,7 +337,8 @@ public abstract class AbstractPathfinder<S extends SearchState> implements Pathf
 
     double heuristic = neighbor.getHeuristic();
     double tieBreaker = TIE_BREAKER_WEIGHT * (heuristic / (Math.abs(fCost) + 1));
-    return fCost - tieBreaker;
+    // among equal F-costs the node closer to the target (lower H) sorts first.
+    return fCost + tieBreaker;
   }
 
   /**

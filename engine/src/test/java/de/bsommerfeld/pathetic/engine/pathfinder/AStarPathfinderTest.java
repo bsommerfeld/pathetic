@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import de.bsommerfeld.pathetic.api.pathing.INeighborStrategy;
+import de.bsommerfeld.pathetic.api.pathing.NeighborStrategies;
 import de.bsommerfeld.pathetic.api.pathing.PathfindingSearch;
 import de.bsommerfeld.pathetic.api.pathing.configuration.PathfinderConfiguration;
 import de.bsommerfeld.pathetic.api.pathing.heuristic.HeuristicContext;
@@ -877,6 +878,51 @@ class AStarPathfinderTest {
       }
     }
     assertTrue(hasIntermediate, "Path should go through (1,1,0) for smoothness");
+  }
+
+  @Test
+  void testTieBreakerWalksEqualCostPlateauInsteadOfFloodingIt() {
+    /*
+     * With an exact heuristic in an open axis-aligned grid, every monotone route to the target has
+     * the same F-cost. Preferring the lower H among equal F-costs walks straight through that
+     * plateau in roughly path-length expansions; preferring the higher H floods the whole
+     * start-target rectangle (~900 cells here) and runs out of iterations.
+     */
+    IHeuristicStrategy exactManhattan =
+        new IHeuristicStrategy() {
+          @Override
+          public double calculate(HeuristicContext context) {
+            PathPosition p = context.position();
+            PathPosition t = context.targetPosition();
+            return Math.abs(p.getFlooredX() - t.getFlooredX())
+                + Math.abs(p.getFlooredY() - t.getFlooredY())
+                + Math.abs(p.getFlooredZ() - t.getFlooredZ());
+          }
+
+          @Override
+          public double calculateTransitionCost(PathPosition from, PathPosition to) {
+            return 1.0;
+          }
+        };
+    ValidationProcessor planar = context -> context.getCurrentPathPosition().getFlooredY() == 0;
+    PathfinderConfiguration config =
+        PathfinderConfiguration.builder()
+            .provider(mockProvider)
+            .maxIterations(200)
+            .async(false)
+            .fallback(false)
+            .neighborStrategy(NeighborStrategies.VERTICAL_AND_HORIZONTAL)
+            .heuristicStrategy(exactManhattan)
+            .nodeValidationProcessors(Collections.singletonList(planar))
+            .build();
+
+    PathfinderResult result =
+        new AStarPathfinder(config)
+            .findPath(new PathPosition(0, 0, 0), new PathPosition(30, 0, 30))
+            .resultBlocking();
+
+    assertEquals(PathState.FOUND, result.getPathState());
+    assertEquals(61, result.getPath().length());
   }
 
   @Test
