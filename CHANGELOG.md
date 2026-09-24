@@ -2,6 +2,8 @@
 
 ### Added
 
+- `HeuristicStrategies.OCTILE` and `HeuristicStrategies.MANHATTAN`, admissible heuristics for optimal paths with a weight-bounded detour by @bsommerfeld
+
 ### Changed
 
 ### Fixed

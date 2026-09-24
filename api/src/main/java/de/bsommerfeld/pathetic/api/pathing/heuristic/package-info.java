@@ -6,7 +6,9 @@
  * base transition cost between two positions. {@link
  * de.bsommerfeld.pathetic.api.pathing.heuristic.HeuristicStrategies} exposes the bundled
  * implementations: {@code LINEAR} (sqrt-based, near-optimal in practice) and {@code SQUARED}
- * (faster, but its overestimation grows with distance, so paths can be suboptimal at range).
+ * (faster, but its overestimation grows with distance, so paths can be suboptimal at range), plus
+ * the admissible {@code OCTILE} (diagonal movement) and {@code MANHATTAN} (axis-aligned movement),
+ * which return optimal paths and bound the detour by their weight when it is raised above 1.
  * {@link de.bsommerfeld.pathetic.api.pathing.heuristic.HeuristicWeights} weights the composite's
  * components (Manhattan, octile, perpendicular deviation, height difference).
  */
