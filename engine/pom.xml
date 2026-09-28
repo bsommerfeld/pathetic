@@ -211,7 +211,7 @@
         <dependency>
             <groupId>org.jheaps</groupId>
             <artifactId>jheaps</artifactId>
-            <version>0.15</version>
+            <version>0.16</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
